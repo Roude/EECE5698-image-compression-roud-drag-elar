@@ -1,0 +1,4 @@
+---
+compression_algorithm: "jpeg_baseline"
+compression_parameters:
+  quality_factor: 10
