@@ -1,0 +1,8 @@
+---
+# This tells our python function what image compression algorithm to run
+compression_algorithm: "homemade_jpeg_like"
+
+# This provides arguments to the image compression algorithm. These will be passed in as keyword arguments
+# to the compression algorithm
+compression_parameters:
+  chromiance_downsample_factor: 2
