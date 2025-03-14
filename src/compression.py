@@ -22,6 +22,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from skimage.color import convert_colorspace
 from skimage.io import imread
+from scipy.fftpack import dct, idct
 
 
 class CompressImage:
@@ -34,12 +35,37 @@ class CompressImage:
             "homemade_jpeg_like" : self.jpeg_like
         }
 
+        '''Define Defaults for jpeg-like compression'''
+        self.block_size = 8
+        self.downsample_factor = 2
         self.YCbCr_conversion_matrix = np.array([[65.738, 129.057, 25.064],
                                                  [-37.945, -74.494, 112.439],
                                                  [112.439, -94.154, -18.285]],dtype=np.float32)/256
 
 
         self.YCbCr_conversion_offset = np.array([16, 128, 128]).transpose()
+
+        self.default_chromiance_quantization_table = np.array([[10, 8,  9,  9,  9,  8,  10, 9],
+                                                               [9,  9,  10, 10, 10, 11, 12, 17],
+                                                               [13, 12, 12, 12, 12, 20, 16, 16],
+                                                               [14, 17, 18, 20, 23, 23, 22, 20],
+                                                               [25, 25, 25, 25, 25, 25, 25, 25],
+                                                               [25, 25, 25, 25, 25, 25, 25, 25],
+                                                               [25, 25, 25, 25, 25, 25, 25, 25],
+                                                               [25, 25, 25, 25, 25, 25, 25, 25]],
+                                                              dtype=np.uint8)
+        self.chromiance_quantization_table = self.default_chromiance_quantization_table
+
+        self.default_lumiance_quantization_table = np.array([[6,  4,  4,  6,  10, 16, 20, 24],
+                                                             [5,  5,  6,  8,  10, 23, 24, 22],
+                                                             [6,  5,  6,  10, 16, 23, 28, 22],
+                                                             [6,  7,  9,  12, 20, 35, 32, 25],
+                                                             [7,  9, 15,  22, 27, 44, 41, 31],
+                                                             [10, 14, 22, 26, 32, 42, 45, 37],
+                                                             [20, 26, 31, 35, 41, 48, 48, 40],
+                                                             [29, 37, 38, 39, 45, 40, 41, 40]],
+                                                            dtype=np.uint8)
+        self.lumiance_quantization_table = self.default_lumiance_quantization_table
 
         if not config:
             self.config = {}
@@ -72,6 +98,15 @@ class CompressImage:
         image_array = io.imread(raw_image_file)
         return self.compression_function(image_array, save_location=None, **self.config["compression_parameters"])
 
+    def set_datatype_and_channels(self, image_uncompressed):
+        if image_uncompressed.dtype != np.uint8:
+            image_uncompressed = (255 * (image_uncompressed / np.max(image_uncompressed))).astype(np.uint8)
+
+        # Remove alpha channel if present (JPEG does not support transparency)
+        if image_uncompressed.shape[-1] == 4:
+            image_uncompressed = image_uncompressed[:, :, :3]
+        return image_uncompressed
+
     def jpeg_baseline(self, image_uncompressed, save_location=None, **kwargs):
         """
         :param image_uncompressed: image as a numpy array
@@ -84,12 +119,7 @@ class CompressImage:
         else:
             quality_factor = 100
 
-        if image_uncompressed.dtype != np.uint8:
-            image_uncompressed = (255 * (image_uncompressed / np.max(image_uncompressed))).astype(np.uint8)
-
-        # Remove alpha channel if present (JPEG does not support transparency)
-        if image_uncompressed.shape[-1] == 4:
-            image_uncompressed = image_uncompressed[:, :, :3]
+        image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
 
         if not save_location:
             file_save_location = os.path.join(os.getcwd(), "tmp", f"temp_img_{datetime.now().strftime("%Y%m%d_%H%M%S")}.jpeg")
@@ -109,8 +139,7 @@ class CompressImage:
         """
 
         # Represent as 8-bit unsigned int.
-        if image_uncompressed.dtype != np.uint8:
-            image_uncompressed = (255 * (image_uncompressed / np.max(image_uncompressed))).astype(np.uint8)
+        image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
 
         YCbCrImage = convert_colorspace(image_uncompressed, **kwargs)
 
@@ -122,39 +151,107 @@ class CompressImage:
         :param kwargs:
         :return:
         """
-
-        return np.array(np.tensordot(image_uncompressed, self.YCbCr_conversion_matrix, axes=([2],[1])) + self.YCbCr_conversion_offset,dtype=np.uint8)
+        return np.array(np.tensordot(image_uncompressed,
+                                     self.YCbCr_conversion_matrix,
+                                     axes=([2],[1])) +
+                        self.YCbCr_conversion_offset,
+                        dtype=np.uint8)
 
     def downsample_chromiance(self, YCbCr_image, **kwargs):
         """
         Apply downsampling factor to YCbCr formatted image and save the image as a tuple of 3 matricies with the
         luminance and two chromiance channels.
-        :param YCbCr_image:
-        :return:
+        :param YCbCr_image: The image already converted to YCbCr format
+        :return: A Tuple, element 0 is the lumiance channel, element 1 is the chromiance channels
         """
 
         if "chromiance_downsample_factor" in kwargs:
-            downsample_factor = kwargs["chromiance_downsample_factor"]
+            self.downsample_factor = kwargs["chromiance_downsample_factor"]
         else:
-            downsample_factor = 4
+            self.downsample_factor = 4
 
         lumiance = YCbCr_image[:, :, 0]
 
         ch_CbCr = YCbCr_image[:,:,1:]
 
-        running_average = np.array(ch_CbCr[::downsample_factor, ::downsample_factor,:]/downsample_factor**2,dtype=np.uint8)
+        running_average = np.array(ch_CbCr[::self.downsample_factor, ::self.downsample_factor,:]/self.downsample_factor**2,
+                                   dtype=np.uint8)
         # print(running_average)
-        for idx in range(downsample_factor):
-            for jdx in range(downsample_factor):
+        for idx in range(self.downsample_factor):
+            for jdx in range(self.downsample_factor):
                 if idx == 0 and jdx == 0:
                     continue
                 else:
                     running_average = (running_average +
-                                       ch_CbCr[idx::downsample_factor, jdx::downsample_factor,:]/downsample_factor**2)
+                                       ch_CbCr[idx::self.downsample_factor, jdx::self.downsample_factor,:]/self.downsample_factor**2)
 
-        return lumiance, np.array(running_average,dtype=np.uint8)
+        return [lumiance,
+                np.array(running_average[:,:,0],dtype=np.uint8),
+                np.array(running_average[:,:,1],dtype=np.uint8)]
+
+    def process_blocks(self, downsampled_image, **kwargs):
+        """
+        Perform compression steps that are executed on individual blocks of a user defined size.
+        :param downsampled_image: The output of the function downsample_chromiance
+        :param kwargs:
+        :return: The uncompressed converted and quantized matricies.
+        """
+        if "block_size" in kwargs:
+            self.block_size = kwargs["block_size"]
+
+        block_processed_channels = []
+        for ch_num, channel in enumerate(downsampled_image):
+            block_processed_channels.append(np.zeros(shape=np.shape(channel),dtype=np.int8))
+            for idx in range(0,np.shape(channel)[0], self.block_size):
+                for jdx in range(0, np.shape(channel)[1], self.block_size):
+                    end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else -1
+                    end_jdx = idx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else -1
+                    block_processed_channels[idx:end_idx, jdx:end_jdx] = self.block_dct(channel[idx:end_idx, jdx:end_jdx], **kwargs)
+                    self.quantize_block(block_processed_channels[idx:end_idx, jdx:end_jdx], ch_num, **kwargs)
+        return downsampled_image
+
+    def block_dct(self, image_block, **kwargs):
+        """
+        First scale pixels from 0 to 255 to -128 to 128, then perform DCT on the block
+        :param image_block: An image block of a flexible size, for the DCT to be performed on.
+        :param kwargs:
+        :return: the cosine transformed block
+        """
+        block_for_transform = (image_block.astype(np.int16) - 128).astype(np.int8)
+
+        return np.array(dct(block_for_transform), dtype=np.int8)
 
 
+    def quantize_block(self, frequency_domain_block, ch_num, **kwargs):
+        """
+        Divide each block by the quantization table (passed as a keyword argument or the default).
+        Round to the nearest interger
+        :param frequency_domain_block: The output of block_dct
+        :param ch_num: automatically passed in by process_blocks. Indicates which of the quantization tables to use.
+        :param kwargs:
+        :return: the quantized block
+        """
+        if "chromiance_quantization_table" in kwargs:
+            self.chromiance_quantization_table = kwargs["chromiance_quantization_table"]
+
+        if "lumiance_quantization_table" in kwargs:
+            self.lumiance_quantization_table = kwargs["lumiance_quantization_table"]
+
+        if ch_num == 0:
+            frequency_domain_block = (frequency_domain_block/self.lumiance_quantization_table).astype(np.int8)
+        else:
+            frequency_domain_block = (frequency_domain_block/self.chromiance_quantization_table).astype(np.int8)
+        return frequency_domain_block
+
+    def encode_to_file(self, full_image_transformed_and_blocked, **kwargs):
+        """
+        Turn the image matricies into a data stream. Pre-append the configurations necessary
+        to reconstruct the full image.
+        :param full_image_transformed_and_blocked:
+        :param kwargs:
+        :return:
+        """
+        with open('tmp/intermediate')
 """
 Use this function block to test things out.
 """
