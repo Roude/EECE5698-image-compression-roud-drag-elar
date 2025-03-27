@@ -23,6 +23,9 @@ from plotly.subplots import make_subplots
 from skimage.color import convert_colorspace
 from skimage.io import imread
 from scipy.fftpack import dct, idct
+from utilities import zigzag_order,run_length_encoding,build_huffman_tree,generate_huffman_codes,huffman_encode
+from collections import Counter
+
 
 
 class CompressImage:
@@ -75,7 +78,7 @@ class CompressImage:
             with open(config,'r') as config_file:
                 self.config = yaml.load(config_file, yaml.SafeLoader)
             self.update_configuration(self.config)
-            # print(self.config)
+            print(self.config)
 
 
 
@@ -225,7 +228,7 @@ class CompressImage:
     def quantize_block(self, frequency_domain_block, ch_num, **kwargs):
         """
         Divide each block by the quantization table (passed as a keyword argument or the default).
-        Round to the nearest interger
+        Round to the nearest integer
         :param frequency_domain_block: The output of block_dct
         :param ch_num: automatically passed in by process_blocks. Indicates which of the quantization tables to use.
         :param kwargs:
@@ -243,15 +246,37 @@ class CompressImage:
             frequency_domain_block = (frequency_domain_block/self.chromiance_quantization_table).astype(np.int8)
         return frequency_domain_block
 
+    def entropy_encode(self, quantized_blocks):
+        """
+        Applies Zig-Zag ordering, Run-Length Encoding, and Huffman Encoding
+        :param: quantized_blocks: The output of quantize_block
+        :return: compressed bits, the respective huffman code
+        """
+        encoded_data = []
+        for block in quantized_blocks:
+            zigzag_block = zigzag_order(block)
+            rle_block = run_length_encoding(zigzag_block)
+            encoded_data.append(rle_block)
+
+        # Build Huffman Tree based on symbol frequency
+        flat_rle = [val for block in encoded_data for val, _ in block]
+        freq_dict = Counter(flat_rle)
+        huffman_tree = build_huffman_tree(freq_dict)
+        huffman_codes = generate_huffman_codes(huffman_tree)
+
+        # Encode RLE data using Huffman Codes
+        compressed_bits = [huffman_encode(block, huffman_codes) for block in encoded_data]
+        return compressed_bits, huffman_codes
+
     def encode_to_file(self, full_image_transformed_and_blocked, **kwargs):
         """
-        Turn the image matricies into a data stream. Pre-append the configurations necessary
+        Turn the image matrices into a data stream. Pre-append the configurations necessary
         to reconstruct the full image.
         :param full_image_transformed_and_blocked:
         :param kwargs:
         :return:
         """
-        with open('tmp/intermediate')
+        #with open('tmp/intermediate')
 """
 Use this function block to test things out.
 """
@@ -263,7 +288,6 @@ if __name__ == '__main__':
 
     image_array = imread(os.path.join(os.getcwd(), "assets", "landscape.png"))
 
-
     fig = make_subplots(rows=2, cols=3, shared_xaxes=True, shared_yaxes=True)
 
     converted_colorspace_image = image_compressor.convert_colorspace(image_array)
@@ -272,14 +296,24 @@ if __name__ == '__main__':
     fig.add_trace(go.Image(z=image_array),row=1, col=1)
     fig.add_trace(go.Image(z=converted_colorspace_image), row=1,col=2)
 
-    # print(downsampled_chromiance_image[0])
+
+
+    #print(downsampled_chromiance_image[0])
     # print(downsampled_chromiance_image[1][:,:])
+
     fig.add_trace(go.Heatmap(z=downsampled_chromiance_image[0],colorscale='gray'),
                                                             row=2,
                                                             col=1,
                                                             )
-    fig.add_trace(go.Heatmap(z=downsampled_chromiance_image[1][:,:,0], colorscale='gray'),row=2,col=2)
-    fig.add_trace(go.Heatmap(z=downsampled_chromiance_image[1][:,:,1], colorscale='gray'),row=2, col=3)
+
+    if downsampled_chromiance_image[1].ndim == 3:
+        fig.add_trace(go.Heatmap(z=downsampled_chromiance_image[1][:, :, 0], colorscale='gray'), row=2, col=2)
+        fig.add_trace(go.Heatmap(z=downsampled_chromiance_image[1][:, :, 1], colorscale='gray'), row=2, col=3)
+    else:
+        fig.add_trace(go.Heatmap(z=downsampled_chromiance_image[1], colorscale='gray'), row=2, col=2)
+
+    #fig.add_trace(go.Heatmap(z=downsampled_chromiance_image[1][:,:,0], colorscale='gray'),row=2,col=2)
+    #fig.add_trace(go.Heatmap(z=downsampled_chromiance_image[1][:,:,1], colorscale='gray'),row=2, col=3)
 
     fig.update_yaxes(autorange='reversed', scaleanchor='x', constrain='domain')
     fig.update_xaxes(constrain='domain')
