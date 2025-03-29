@@ -23,52 +23,15 @@ from plotly.subplots import make_subplots
 from skimage.color import convert_colorspace
 from skimage.io import imread
 from scipy.fftpack import dct, idct
-from utilities import zigzag_order,run_length_encoding,build_huffman_tree,generate_huffman_codes,huffman_encode
+from utilities import display_greyscale_image
+from huffman import zigzag_order,run_length_encoding,build_huffman_tree,generate_huffman_codes,huffman_encode
 from collections import Counter
-
-
 
 class CompressImage:
     def __init__(self, config=None):
         """
         Here is where we define what configured string maps to what compression function:
         """
-        self.compression_algorithm_reference = {
-            "jpeg_baseline" : self.jpeg_baseline,
-            "homemade_jpeg_like" : self.jpeg_like
-        }
-
-        '''Define Defaults for jpeg-like compression'''
-        self.block_size = 8
-        self.downsample_factor = 2
-        self.YCbCr_conversion_matrix = np.array([[65.738, 129.057, 25.064],
-                                                 [-37.945, -74.494, 112.439],
-                                                 [112.439, -94.154, -18.285]],dtype=np.float32)/256
-
-
-        self.YCbCr_conversion_offset = np.array([16, 128, 128]).transpose()
-
-        self.default_chromiance_quantization_table = np.array([[10, 8,  9,  9,  9,  8,  10, 9],
-                                                               [9,  9,  10, 10, 10, 11, 12, 17],
-                                                               [13, 12, 12, 12, 12, 20, 16, 16],
-                                                               [14, 17, 18, 20, 23, 23, 22, 20],
-                                                               [25, 25, 25, 25, 25, 25, 25, 25],
-                                                               [25, 25, 25, 25, 25, 25, 25, 25],
-                                                               [25, 25, 25, 25, 25, 25, 25, 25],
-                                                               [25, 25, 25, 25, 25, 25, 25, 25]],
-                                                              dtype=np.uint8)
-        self.chromiance_quantization_table = self.default_chromiance_quantization_table
-
-        self.default_lumiance_quantization_table = np.array([[6,  4,  4,  6,  10, 16, 20, 24],
-                                                             [5,  5,  6,  8,  10, 23, 24, 22],
-                                                             [6,  5,  6,  10, 16, 23, 28, 22],
-                                                             [6,  7,  9,  12, 20, 35, 32, 25],
-                                                             [7,  9, 15,  22, 27, 44, 41, 31],
-                                                             [10, 14, 22, 26, 32, 42, 45, 37],
-                                                             [20, 26, 31, 35, 41, 48, 48, 40],
-                                                             [29, 37, 38, 39, 45, 40, 41, 40]],
-                                                            dtype=np.uint8)
-        self.lumiance_quantization_table = self.default_lumiance_quantization_table
 
         if not config:
             self.config = {}
@@ -78,9 +41,7 @@ class CompressImage:
             with open(config,'r') as config_file:
                 self.config = yaml.load(config_file, yaml.SafeLoader)
             self.update_configuration(self.config)
-            print(self.config)
-
-
+            # print(self.config)
 
     def update_configuration(self, config):
         if isinstance(config, str):
@@ -88,18 +49,14 @@ class CompressImage:
                 self.config = yaml.load(config_file, yaml.SafeLoader)
         else:
             self.config = config
-        self.compression_function = self.get_compression_algorithm()
 
 
-    def get_compression_algorithm(self):
-        return  self.compression_algorithm_reference[self.config["compression_algorithm"]]
-
-    def __call__(self, raw_image_file, config=None):
-        if config:
-            self.update_configuration(config)
-
-        image_array = io.imread(raw_image_file)
-        return self.compression_function(image_array, save_location=None, **self.config["compression_parameters"])
+    # def __call__(self, raw_image_file, config=None):
+    #     if config:
+    #         self.update_configuration(config)
+    #
+    #     image_array = io.imread(raw_image_file)
+    #     return self.compression_function(image_array, save_location=None, **self.config["compression_parameters"])
 
     def set_datatype_and_channels(self, image_uncompressed):
         if image_uncompressed.dtype != np.uint8:
@@ -110,17 +67,24 @@ class CompressImage:
             image_uncompressed = image_uncompressed[:, :, :3]
         return image_uncompressed
 
-    def jpeg_baseline(self, image_uncompressed, save_location=None, **kwargs):
+class BaselineJpeg(CompressImage):
+    def __init__(self, config):
+        super().__init__(config)
+
+    def __call__(self, image, save_location=None, **kwargs):
         """
         :param image_uncompressed: image as a numpy array
         :param save_location: if none is provided, will be saved to the tmp directory. If it is provided,
         omit the .jpeg extension from the filename.
         :return:
         """
-        if "quality_factor" in kwargs.keys():
-            quality_factor = kwargs["quality_factor"]
+        quality_factor = kwargs.get("quality_factor", 100)
+        save_location = kwargs.get("save_location", None)
+
+        if isinstance(image, str):
+            image_uncompressed = io.imread(image)
         else:
-            quality_factor = 100
+            image_uncompressed = image
 
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
 
@@ -128,9 +92,43 @@ class CompressImage:
             file_save_location = os.path.join(os.getcwd(), "tmp", f"temp_img_{datetime.now().strftime("%Y%m%d_%H%M%S")}.jpeg")
         else:
             file_save_location = os.path.join(os.getcwd(),f"{save_location}.jpeg")
+
         imageio.imwrite(file_save_location, image_uncompressed,
                   quality=quality_factor)
         return f"{save_location}.jpeg"
+
+class FlexibleJpeg(CompressImage):
+    def __init__(self, config):
+        super().__init__(config)
+        self.block_size = 8
+        self.downsample_factor = 2
+        self.YCbCr_conversion_matrix = np.array([[65.738, 129.057, 25.064],
+                                                 [-37.945, -74.494, 112.439],
+                                                 [112.439, -94.154, -18.285]], dtype=np.float32) / 256
+
+        self.YCbCr_conversion_offset = np.array([16, 128, 128]).transpose()
+
+        self.default_chromiance_quantization_table = np.array([[10, 8, 9, 9, 9, 8, 10, 9],
+                                                               [9, 9, 10, 10, 10, 11, 12, 17],
+                                                               [13, 12, 12, 12, 12, 20, 16, 16],
+                                                               [14, 17, 18, 20, 23, 23, 22, 20],
+                                                               [25, 25, 25, 25, 25, 25, 25, 25],
+                                                               [25, 25, 25, 25, 25, 25, 25, 25],
+                                                               [25, 25, 25, 25, 25, 25, 25, 25],
+                                                               [25, 25, 25, 25, 25, 25, 25, 25]],
+                                                              dtype=np.uint8)
+        self.chromiance_quantization_table = self.default_chromiance_quantization_table
+
+        self.default_lumiance_quantization_table = np.array([[6, 4, 4, 6, 10, 16, 20, 24],
+                                                             [5, 5, 6, 8, 10, 23, 24, 22],
+                                                             [6, 5, 6, 10, 16, 23, 28, 22],
+                                                             [6, 7, 9, 12, 20, 35, 32, 25],
+                                                             [7, 9, 15, 22, 27, 44, 41, 31],
+                                                             [10, 14, 22, 26, 32, 42, 45, 37],
+                                                             [20, 26, 31, 35, 41, 48, 48, 40],
+                                                             [29, 37, 38, 39, 45, 40, 41, 40]],
+                                                            dtype=np.uint8)
+        self.lumiance_quantization_table = self.default_lumiance_quantization_table
 
     def jpeg_like(self, image_uncompressed, save_location=None, **kwargs):
         """
@@ -276,44 +274,43 @@ class CompressImage:
         :param kwargs:
         :return:
         """
-        #with open('tmp/intermediate')
-"""
+        # with open('tmp')
+        pass
+""" 
 Use this function block to test things out.
 """
+
+compression_algorithm_reference = {
+    "jpeg_baseline": BaselineJpeg,
+    "homemade_jpeg_like": FlexibleJpeg
+}
 if __name__ == '__main__':
 
-    image_compressor = jpeg_compressor = CompressImage(os.path.join(os.getcwd(),
-                                             "compression_configurations",
-                                             "baseline_jpeg_compression.yaml"))
+    baseline_jpeg = BaselineJpeg(os.path.join(os.getcwd(),
+                                              "compression_configurations",
+                                              "baseline_jpeg_compression.yaml"))
+
+    flexible_jpeg = FlexibleJpeg(os.path.join(os.getcwd(),
+                                              "compression_configurations",
+                                              "homemade_compression_jpeg_like.yaml"))
 
     image_array = imread(os.path.join(os.getcwd(), "assets", "landscape.png"))
 
     fig = make_subplots(rows=2, cols=3, shared_xaxes=True, shared_yaxes=True)
 
-    converted_colorspace_image = image_compressor.convert_colorspace(image_array)
-    downsampled_chromiance_image = image_compressor.downsample_chromiance(converted_colorspace_image, chromiance_downsample_factor=2)
+    converted_colorspace_image = flexible_jpeg.convert_colorspace(image_array)
+    downsampled_chromiance_image = flexible_jpeg.downsample_chromiance(converted_colorspace_image, chromiance_downsample_factor=2)
 
     fig.add_trace(go.Image(z=image_array),row=1, col=1)
     fig.add_trace(go.Image(z=converted_colorspace_image), row=1,col=2)
 
 
 
-    #print(downsampled_chromiance_image[0])
-    # print(downsampled_chromiance_image[1][:,:])
+    print(downsampled_chromiance_image)
 
-    fig.add_trace(go.Heatmap(z=downsampled_chromiance_image[0],colorscale='gray'),
-                                                            row=2,
-                                                            col=1,
-                                                            )
-
-    if downsampled_chromiance_image[1].ndim == 3:
-        fig.add_trace(go.Heatmap(z=downsampled_chromiance_image[1][:, :, 0], colorscale='gray'), row=2, col=2)
-        fig.add_trace(go.Heatmap(z=downsampled_chromiance_image[1][:, :, 1], colorscale='gray'), row=2, col=3)
-    else:
-        fig.add_trace(go.Heatmap(z=downsampled_chromiance_image[1], colorscale='gray'), row=2, col=2)
-
-    #fig.add_trace(go.Heatmap(z=downsampled_chromiance_image[1][:,:,0], colorscale='gray'),row=2,col=2)
-    #fig.add_trace(go.Heatmap(z=downsampled_chromiance_image[1][:,:,1], colorscale='gray'),row=2, col=3)
+    display_greyscale_image(fig, downsampled_chromiance_image[0],row=2, col=1)
+    display_greyscale_image(fig, downsampled_chromiance_image[1], row=2, col=2)
+    display_greyscale_image(fig, downsampled_chromiance_image[2], row=2, col=3)
 
     fig.update_yaxes(autorange='reversed', scaleanchor='x', constrain='domain')
     fig.update_xaxes(constrain='domain')
