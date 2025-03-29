@@ -3,18 +3,50 @@ import numpy as np
 from collections import Counter, namedtuple
 import heapq
 
-zigzag_pattern = np.array([
-    [ 0,  1,  5,  6, 14, 15, 27, 28],
-    [ 2,  4,  7, 13, 16, 26, 29, 42],
-    [ 3,  8, 12, 17, 25, 30, 41, 43],
-    [ 9, 11, 18, 24, 31, 40, 44, 53],
-    [10, 19, 23, 32, 39, 45, 52, 54],
-    [20, 22, 33, 38, 46, 51, 55, 60],
-    [21, 34, 37, 47, 50, 56, 59, 61],
-    [35, 36, 48, 49, 57, 58, 62, 63]
-])
+
+def generate_zigzag_pattern(size):
+    # Create an empty matrix of the given size
+    matrix = np.zeros((size, size), dtype=int)
+
+    # Initialize variables to track the current number and the diagonal
+    current = 0
+    for diag in range(2 * size - 1):
+        if diag % 2 == 0:  # Downward diagonal (from top-right to bottom-left)
+            row = max(0, diag - size + 1)
+            col = min(diag, size - 1)
+            while row < size and col >= 0:
+                matrix[row, col] = current
+                current += 1
+                row += 1
+                col -= 1
+        else:  # Upward diagonal (from bottom-left to top-right)
+            row = min(diag, size - 1)
+            col = max(0, diag - size + 1)
+            while row >= 0 and col < size:
+                matrix[row, col] = current
+                current += 1
+                row -= 1
+                col += 1
+
+    return matrix
+
+# Example usage for size = 8
+size = 8
+zigzag_pattern = generate_zigzag_pattern(size)
+print(zigzag_pattern)
+
 
 def zigzag_order(matrix):
+    zigzag_pattern = np.array([
+        [0, 1, 5, 6, 14, 15, 27, 28],
+        [2, 4, 7, 13, 16, 26, 29, 42],
+        [3, 8, 12, 17, 25, 30, 41, 43],
+        [9, 11, 18, 24, 31, 40, 44, 53],
+        [10, 19, 23, 32, 39, 45, 52, 54],
+        [20, 22, 33, 38, 46, 51, 55, 60],
+        [21, 34, 37, 47, 50, 56, 59, 61],
+        [35, 36, 48, 49, 57, 58, 62, 63]
+    ])
     h, w = matrix.shape
     result = np.zeros(h * w, dtype=np.int32)
     for i in range(h):
@@ -55,7 +87,7 @@ def run_length_encoding(zigzag_array):
 
 
 #frequency = absolute Häufigkeit
-#huffman code is prefixed and has the lowest mean codewordlength
+#huffman code is prefixed and has the lowest mean codewordlength, but arithmetic coding might be better
 #TODO check questions below
 #what if chars share the same freq, only nonneg integers right? huffman code to change for each block?
 #online it was proposed to only use the first values of the rle_data - how does that work? doesn't that remove the zeros
@@ -84,8 +116,9 @@ def generate_huffman_codes(node, prefix="", code_dict={}):
         generate_huffman_codes(node.right, prefix + "1", code_dict)
     return code_dict
 
+#TODO: make sure this is not a string
 def huffman_encode(rle_data, huffman_codes):
-    return " ".join(huffman_codes[val] for val, _ in rle_data)
+    return "".join(huffman_codes[val] for val, _ in rle_data)
 
 
 if __name__ == '__main__':

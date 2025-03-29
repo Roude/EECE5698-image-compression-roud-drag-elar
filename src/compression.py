@@ -23,7 +23,7 @@ from plotly.subplots import make_subplots
 from skimage.color import convert_colorspace
 from skimage.io import imread
 from scipy.fftpack import dct, idct
-from utilities import zigzag_order,run_length_encoding,build_huffman_tree,generate_huffman_codes,huffman_encode
+from utilities import zigzag_order,run_length_encoding,build_huffman_tree,generate_huffman_codes,huffman_encode,generate_zigzag_pattern
 from collections import Counter
 
 
@@ -40,6 +40,8 @@ class CompressImage:
 
         '''Define Defaults for jpeg-like compression'''
         self.block_size = 8
+        # default festlegen
+        self.zigzag_pattern = generate_zigzag_pattern(self.block_size)
         self.downsample_factor = 2
         self.YCbCr_conversion_matrix = np.array([[65.738, 129.057, 25.064],
                                                  [-37.945, -74.494, 112.439],
@@ -282,6 +284,7 @@ Use this function block to test things out.
 """
 if __name__ == '__main__':
 
+    #which ones have been tested yet?
     image_compressor = jpeg_compressor = CompressImage(os.path.join(os.getcwd(),
                                              "compression_configurations",
                                              "baseline_jpeg_compression.yaml"))
