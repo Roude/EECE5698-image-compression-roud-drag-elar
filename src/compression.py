@@ -327,7 +327,7 @@ class FlexibleJpeg(CompressImage):
             compressed_file_output.write(str(full_image_transformed_and_blocked))
             compressed_file_output.write(" :: image_end")
     def calculate_size(self, encoded_image, huffman_table, settings):
-        return (sys.getsizeof(encoded_image)/16 + sys.getsizeof(huffman_table) + sys.getsizeof(settings))/1024
+        return (sys.getsizeof(encoded_image)/8 + sys.getsizeof(huffman_table) + sys.getsizeof(settings))/1024
 
 """ 
 Use this function block to test things out.
