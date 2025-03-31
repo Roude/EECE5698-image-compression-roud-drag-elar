@@ -24,7 +24,8 @@ from skimage.color import convert_colorspace
 from skimage.io import imread
 from scipy.fftpack import dct, idct
 from src.utilities import display_greyscale_image
-from src.huffman import zigzag_order,run_length_encoding,build_huffman_tree,generate_huffman_codes,huffman_encode
+from src.huffman import zigzag_order, run_length_encoding, build_huffman_tree, generate_huffman_codes, huffman_encode, \
+    diagonal_traversal
 from collections import Counter
 import pkgutil
 
@@ -155,8 +156,8 @@ class FlexibleJpeg(CompressImage):
         YCbCrImage = self.convert_colorspace(image_uncompressed, **settings)
         downsampled_image = self.downsample_chromiance(YCbCrImage, **settings)
         block_processed_channels = self.process_blocks(downsampled_image, **settings)
-        compressed_image_datastream = self.entropy_encode(block_processed_channels)
-        self.encode_to_file(compressed_image_datastream, settings)
+        compressed_image_datastream, huffman_table = self.entropy_encode(block_processed_channels)
+        self.encode_to_file(compressed_image_datastream, huffman_table, settings)
 
     def convert_colorspace(self, image_uncompressed, **kwargs):
         """
@@ -215,7 +216,7 @@ class FlexibleJpeg(CompressImage):
             for idx in range(0,np.shape(channel)[0], self.block_size):
                 for jdx in range(0, np.shape(channel)[1], self.block_size):
                     end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else -1
-                    end_jdx = idx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else -1
+                    end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else -1
                     block_processed_channels[ch_num][idx:end_idx, jdx:end_jdx] = self.block_dct(channel[idx:end_idx, jdx:end_jdx], **kwargs)
                     self.quantize_block(block_processed_channels[ch_num][idx:end_idx, jdx:end_jdx], ch_num, **kwargs)
         return block_processed_channels
@@ -241,16 +242,39 @@ class FlexibleJpeg(CompressImage):
         :param kwargs:
         :return: the quantized block
         """
+
+        def pad_matrix(matrix, target_rows, target_cols):
+            """
+            Pads a matrix with zeros on the bottom and right side to reach the target dimensions.
+
+            :param matrix: 2D list or NumPy array
+            :param target_rows: Desired number of rows
+            :param target_cols: Desired number of columns
+            :return: Padded NumPy array
+            """
+            matrix = np.array(matrix)
+            original_rows, original_cols = matrix.shape
+
+            if original_rows > target_rows or original_cols > target_cols:
+                raise ValueError("Target dimensions must be greater than or equal to the original dimensions.")
+
+            padded_matrix = np.zeros((target_rows, target_cols), dtype=matrix.dtype)
+            padded_matrix[:original_rows, :original_cols] = matrix
+
+            return padded_matrix
+
         self.chromiance_quantization_table = kwargs.get("chromiance_quantization_table",
                                                         self.default_chromiance_quantization_table)
 
         self.lumiance_quantization_table = kwargs.get("lumiance_quantization_table",
                                                       self.default_lumiance_quantization_table)
+
+        padded_matrix = pad_matrix(frequency_domain_block, 8, 8)
         if ch_num == 0:
-            frequency_domain_block = (frequency_domain_block/self.lumiance_quantization_table).astype(np.int8)
+            padded_frequency_domain_matrix = (padded_matrix/self.lumiance_quantization_table).astype(np.int8)
         else:
-            frequency_domain_block = (frequency_domain_block/self.chromiance_quantization_table).astype(np.int8)
-        return frequency_domain_block
+            padded_frequency_domain_matrix = (padded_matrix/self.chromiance_quantization_table).astype(np.int8)
+        return padded_frequency_domain_matrix[0:frequency_domain_block.shape[0],0:frequency_domain_block.shape[1]]
 
     def entropy_encode(self, quantized_blocks):
         """
@@ -260,7 +284,7 @@ class FlexibleJpeg(CompressImage):
         """
         encoded_data = []
         for block in quantized_blocks:
-            zigzag_block = zigzag_order(block)
+            zigzag_block = diagonal_traversal(block)
             rle_block = run_length_encoding(zigzag_block)
             encoded_data.append(rle_block)
 
@@ -274,7 +298,7 @@ class FlexibleJpeg(CompressImage):
         compressed_bits = [huffman_encode(block, huffman_codes) for block in encoded_data]
         return compressed_bits, huffman_codes
 
-    def encode_to_file(self, full_image_transformed_and_blocked, settings):
+    def encode_to_file(self, full_image_transformed_and_blocked, huffman_table, settings):
         """
         Turn the image matrices into a data stream. Pre-append the configurations necessary
         to reconstruct the full image.
@@ -293,7 +317,9 @@ class FlexibleJpeg(CompressImage):
             compressed_file_output.write("settings_start :: ")
             compressed_file_output.write(str(settings))
             compressed_file_output.write(" :: settings_end :: ")
-            compressed_file_output.write(full_image_transformed_and_blocked)
+            compressed_file_output.write(str(huffman_table))
+            compressed_file_output.write(" :: huffman_table_end :: ")
+            compressed_file_output.write(str(full_image_transformed_and_blocked))
             compressed_file_output.write(" :: image_end")
 
 """ 
