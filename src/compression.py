@@ -5,7 +5,7 @@
 #   convert_color_space(image)
 #   perform_jpeg_compression(converted_image)
 #   save_jpeg(compressed_image)
-
+import sys
 # Functions in this file should be composed of as few sub-routines as possible for
 # readability and modularity.
 
@@ -314,6 +314,11 @@ class FlexibleJpeg(CompressImage):
                                                      f"flex_jpeg_comp_output_{datetime.now().strftime("%Y%m%d_%H%M%S")}.rde")
 
         with open(self.save_location,'w') as compressed_file_output:
+            compressed_file_output.write("theoretical_size :: ")
+            compressed_file_output.write(str(self.calculate_size(full_image_transformed_and_blocked,
+                                                             huffman_table,
+                                                             settings)))
+            compressed_file_output.write(" kB ")
             compressed_file_output.write("settings_start :: ")
             compressed_file_output.write(str(settings))
             compressed_file_output.write(" :: settings_end :: ")
@@ -321,6 +326,8 @@ class FlexibleJpeg(CompressImage):
             compressed_file_output.write(" :: huffman_table_end :: ")
             compressed_file_output.write(str(full_image_transformed_and_blocked))
             compressed_file_output.write(" :: image_end")
+    def calculate_size(self, encoded_image, huffman_table, settings):
+        return (sys.getsizeof(encoded_image)/16 + sys.getsizeof(huffman_table) + sys.getsizeof(settings))/1024
 
 """ 
 Use this function block to test things out.
