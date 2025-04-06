@@ -23,8 +23,8 @@ from plotly.subplots import make_subplots
 from skimage.color import convert_colorspace
 from skimage.io import imread
 from scipy.fftpack import dct, idct
-from src.utilities import display_greyscale_image
-from src.huffman import zigzag_order,run_length_encoding,build_huffman_tree,generate_huffman_codes,huffman_encode
+from utilities import display_greyscale_image
+from huffman import generate_zigzag_pattern,zigzag_order,run_length_encoding,build_huffman_tree,generate_huffman_codes,huffman_encode
 from collections import Counter
 import pkgutil
 
@@ -63,7 +63,7 @@ class CompressImage:
         if image_uncompressed.dtype != np.uint8:
             image_uncompressed = (255 * (image_uncompressed / np.max(image_uncompressed))).astype(np.uint8)
 
-        # Remove alpha channel if present (JPEG does not support transparency)
+        # Remove alpha channel if present (JPEG usually does not support transparency)
         if image_uncompressed.shape[-1] == 4:
             image_uncompressed = image_uncompressed[:, :, :3]
         return image_uncompressed
@@ -111,6 +111,7 @@ class FlexibleJpeg(CompressImage):
 
         self.default_YCbCr_conversion_offset = np.array([16, 128, 128]).transpose()
 
+        #need to be adapted when blocksize is changed
         self.default_chromiance_quantization_table = np.array([[10, 8, 9, 9, 9, 8, 10, 9],
                                                                [9, 9, 10, 10, 10, 11, 12, 17],
                                                                [13, 12, 12, 12, 12, 20, 16, 16],
@@ -134,6 +135,9 @@ class FlexibleJpeg(CompressImage):
         self.lumiance_quantization_table = self.default_lumiance_quantization_table
         self.lumiance_datatype = np.uint8
         self.chromiance_datatype = np.uint8
+
+        self.zigzag_pattern = generate_zigzag_pattern(self.block_size)
+
 
     def __call__(self, image, settings):
         """
@@ -308,6 +312,7 @@ compression_algorithm_reference = {
 
 if __name__ == '__main__':
 
+    #which ones have been tested yet?
     baseline_jpeg = BaselineJpeg(os.path.join(os.getcwd(),
                                               "compression_configurations",
                                               "baseline_jpeg_compression.yaml"))
