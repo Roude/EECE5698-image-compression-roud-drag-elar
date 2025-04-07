@@ -52,14 +52,6 @@ class CompressImage:
         else:
             self.config = config
 
-
-    # def __call__(self, raw_image_file, config=None):
-    #     if config:
-    #         self.update_configuration(config)
-    #
-    #     image_array = io.imread(raw_image_file)
-    #     return self.compression_function(image_array, save_location=None, **self.config["compression_parameters"])
-
     def set_datatype_and_channels(self, image_uncompressed):
         if image_uncompressed.dtype != np.uint8:
             image_uncompressed = (255 * (image_uncompressed / np.max(image_uncompressed))).astype(np.uint8)
@@ -73,14 +65,14 @@ class BaselineJpeg(CompressImage):
     def __init__(self, config):
         super().__init__(config)
 
-    def __call__(self, image, save_location=None, **kwargs):
+    def __call__(self, image,  **kwargs):
         """
         :param image_uncompressed: image as a numpy array
         :param save_location: if none is provided, will be saved to the tmp directory. If it is provided,
         omit the .jpeg extension from the filename.
         :return:
         """
-        quality_factor = kwargs.get("quality_factor", 100)
+        quality_factor = self.config.get("quality_factor", 100)
         save_location = kwargs.get("save_location", None)
 
         if isinstance(image, str):
@@ -91,13 +83,13 @@ class BaselineJpeg(CompressImage):
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
 
         if not save_location:
-            file_save_location = os.path.join(os.getcwd(), "tmp", f"temp_img_{datetime.now().strftime("%Y%m%d_%H%M%S")}.jpeg")
+            save_location = os.path.join(os.getcwd(), "tmp", f"temp_img_{datetime.now().strftime("%Y%m%d_%H%M%S")}.jpeg")
         else:
-            file_save_location = os.path.join(os.getcwd(),f"{save_location}.jpeg")
+            save_location = os.path.join(os.getcwd(),f"{save_location}.jpeg")
 
-        imageio.imwrite(file_save_location, image_uncompressed,
+        imageio.imwrite(save_location, image_uncompressed,
                   quality=quality_factor)
-        return f"{save_location}.jpeg"
+        return save_location
 
 class FlexibleJpeg(CompressImage):
     def __init__(self, config=None):
@@ -343,7 +335,7 @@ if __name__ == '__main__':
 
     baseline_jpeg = BaselineJpeg(os.path.join(os.getcwd(),
                                               "compression_configurations",
-                                              "baseline_jpeg_compression.yaml"))
+                                              "baseline_jpeg_q100.yaml"))
 
     flexible_jpeg = FlexibleJpeg()
 

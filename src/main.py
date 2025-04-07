@@ -4,7 +4,7 @@ from compression import CompressImage
 
 jpeg_compressor = CompressImage(os.path.join(os.getcwd(),
                                              "compression_configurations",
-                                             "baseline_jpeg_compression.yaml"))
+                                             "baseline_jpeg_q100.yaml"))
 
 if __name__ == '__main__':
 
