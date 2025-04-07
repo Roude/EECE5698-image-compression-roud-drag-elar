@@ -33,14 +33,12 @@ def zigzag_order(matrix, pattern):
             result[pattern[i, j]] = matrix[i, j]
     return result
 
-
+# not as fast as numpy
 def diagonal_traversal(matrix):
     """
     Traverses a matrix in a zig-zag diagonal pattern starting from the top-left corner.
-
     Args:
         matrix (list of list of int): The input matrix.
-
     Returns:
         list of int: The elements of the matrix in zig-zag diagonal order.
     """
@@ -84,14 +82,19 @@ def diagonal_traversal(matrix):
 
 #only for zeros, can be extended to all numbers - alternatively LZ77
 def run_length_encoding(zigzag_array):
+    """
+    Run-length encoding specific to JPEG standard
+    :param zigzag_array: 1D array of coefficients in zigzag order
+    :return: List of (value, zero_count) tuples
+    """
     encoded = []
-    count = 0
+    zero_count = 0
     for val in zigzag_array:
         if val == 0:
-            count += 1
+            zero_count += 1
         else:
-            encoded.append((val, count))
-            count = 0
+            encoded.append((val, zero_count))
+            zero_count = 0
     encoded.append((0, 0))  # End-of-Block (EOB)
     return encoded
 
@@ -126,8 +129,7 @@ def generate_huffman_codes(node, prefix="", code_dict=None):
         generate_huffman_codes(node.right, prefix + "1", code_dict)
     return code_dict
 
-
-#TODO: make sure this is not a string
+# ToDo are they all just one string? they should be as we have the ends saved with the EOB
 def huffman_encode(rle_data, huffman_codes):
     return "".join(huffman_codes[(val, count)] for val, count in rle_data)
 

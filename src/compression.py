@@ -281,19 +281,36 @@ class FlexibleJpeg(CompressImage):
 
     def entropy_encode(self, quantized_blocks, **kwargs):
         """
-        Applies Zig-Zag ordering, Run-Length Encoding, and Huffman Encoding
+        Applies Delta encoding for DC coefficients, Zig-Zag ordering, Run-Length Encoding, and Huffman Encoding
         :param: quantized_blocks: The output of quantize_block
         :return: compressed bits, the huffman code
         """
-        # probably faster to initialize this first than to do this every time
         #self.zigzag_pattern = kwargs.get("zigzag_pattern", self.default_zigzag_pattern)
         if self.block_size == 8:
             self.zigzag_pattern = self.default_zigzag_pattern
         else:
             self.zigzag_pattern = generate_zigzag_pattern(self.block_size)
 
-        encoded_data = []
-        for channel in quantized_blocks:
+        #quantized_blocks[0] = luminance
+        #quantized_blocks[1] = Cb
+        #quantized_blocks[2] = Cr
+        # Create separate DC and AC symbols for each channel type
+
+        #Human vision is less sensitive to color variations than to brightness variations,
+        #so we can be more aggressive with compression in the chrominance channels
+        dc_lum_symbols = []  # DC coefficients for luminance (Y)
+        dc_chrom_symbols = []  # DC coefficients for chrominance (Cb, Cr combined)
+        ac_lum_symbols = []  # AC coefficients for luminance
+        ac_chrom_symbols = []  # AC coefficients for chrominance
+
+        # Store encoded data by channel and block
+        encoded_blocks = []
+
+        # Track previous DC coefficients for delta encoding (separate for each channel type)
+        prev_dc_lum = 0  # For luminance
+        prev_dc_chrom = [0, 0]  # For Cb and Cr
+
+        for channel_idx, channel in enumerate(quantized_blocks):
             # Process each block in the channel
             for i in range(0, channel.shape[0], self.block_size):
                 for j in range(0, channel.shape[1], self.block_size):
@@ -302,28 +319,136 @@ class FlexibleJpeg(CompressImage):
                     end_j = min(j + self.block_size, channel.shape[1])
                     block = channel[i:end_i, j:end_j]
 
-                    # Handle non-standard sized blocks at edges, probably not needed as seen before
+                    # Handle non-standard sized blocks at edges
                     if block.shape[0] != self.block_size or block.shape[1] != self.block_size:
-                        # Pad the block to match the expected size
                         padded_block = np.zeros((self.block_size, self.block_size), dtype=block.dtype)
                         padded_block[:block.shape[0], :block.shape[1]] = block
                         block = padded_block
 
-                    zigzag_block = zigzag_order(block, self.zigzag_pattern)
-                    rle_block = run_length_encoding(zigzag_block)
-                    encoded_data.append(rle_block)
+
+                    # Cast to int16 to avoid overflow
+                    #block = block.astype(np.int16)
+
+                    zigzagged = zigzag_order(block, self.zigzag_pattern)
+                    # Get DC coefficient (first value in zigzagged data)
+                    dc_coeff = zigzagged[0]
+
+                    # Apply delta encoding to DC coefficient
+                    if channel_idx == 0:  # Luminance (Y)
+                        delta_dc = dc_coeff - prev_dc_lum
+                        prev_dc_lum = dc_coeff
+                        dc_lum_symbols.append(delta_dc)
+                    else:  # Chrominance (Cb or Cr)
+                        chrom_idx = channel_idx - 1  # 0 for Cb, 1 for Cr
+                        delta_dc = dc_coeff - prev_dc_chrom[chrom_idx]
+                        prev_dc_chrom[chrom_idx] = dc_coeff
+                        dc_chrom_symbols.append(delta_dc)
+
+                    # Process AC coefficients (all except DC)
+                    ac_coeffs = zigzagged[1:]
+                    rle_block = run_length_encoding(ac_coeffs)
+
+                    # Store the RLE-encoded AC coefficients based on channel type
+                    if channel_idx == 0:  # Luminance
+                        ac_lum_symbols.extend(rle_block)
+                    else:  # Chrominance
+                        ac_chrom_symbols.extend(rle_block)
+
+                    # Add to our collection of encoded blocks
+                    encoded_blocks.append((channel_idx, rle_block))
+
+        # Build Huffman tables for each coefficient type
+        # DC Luminance
+        dc_lum_freq = Counter(dc_lum_symbols)
+        dc_lum_tree = build_huffman_tree(dc_lum_freq)
+        dc_lum_codes = generate_huffman_codes(dc_lum_tree)
+
+        # DC Chrominance (Cb, Cr combined)
+        dc_chrom_freq = Counter(dc_chrom_symbols)
+        dc_chrom_tree = build_huffman_tree(dc_chrom_freq)
+        dc_chrom_codes = generate_huffman_codes(dc_chrom_tree)
+
+        # AC Luminance
+        ac_lum_freq = Counter(ac_lum_symbols)
+        ac_lum_tree = build_huffman_tree(ac_lum_freq)
+        ac_lum_codes = generate_huffman_codes(ac_lum_tree)
+
+        # AC Chrominance (Cb, Cr combined)
+        ac_chrom_freq = Counter(ac_chrom_symbols)
+        ac_chrom_tree = build_huffman_tree(ac_chrom_freq)
+        ac_chrom_codes = generate_huffman_codes(ac_chrom_tree)
 
         #actual JPEG usually uses predefined Huffman codes
         # Here we build Huffman Tree based on symbol frequency
-        # we need the zero counter, without it we can't decompress
-        flat_rle = [(val, count) for block in encoded_data for val, count in block]
-        freq_dict = Counter(flat_rle)
-        huffman_tree = build_huffman_tree(freq_dict)
-        huffman_codes = generate_huffman_codes(huffman_tree)
+        # we need the zero counter, without it we can't decompress properly
+        # ToDo apparently leaving out the zero counter doesn't change the final encoding data size
+        #flat_rle = [(val, count) for block in encoded_data for val, count in block]
+        #freq_dict = Counter(flat_rle)
+        #huffman_tree = build_huffman_tree(freq_dict)
+        #huffman_codes = generate_huffman_codes(huffman_tree)
 
+        # Combine all Huffman tables
+        huffman_tables = {
+            'dc_lum': dc_lum_codes,  # DC luminance (Y)
+            'dc_chrom': dc_chrom_codes,  # DC chrominance (Cb, Cr)
+            'ac_lum': ac_lum_codes,  # AC luminance (Y)
+            'ac_chrom': ac_chrom_codes  # AC chrominance (Cb, Cr)
+        }
+        # Encode all blocks using appropriate Huffman tables
+        compressed_bits = []
+
+        # Reset the delta DC tracking for encoding
+        prev_dc_lum = 0
+        prev_dc_chrom = [0, 0]
+
+        for channel_idx, channel in enumerate(quantized_blocks):
+            for i in range(0, channel.shape[0], self.block_size):
+                for j in range(0, channel.shape[1], self.block_size):
+                    # Extract block
+                    end_i = min(i + self.block_size, channel.shape[0])
+                    end_j = min(j + self.block_size, channel.shape[1])
+                    block = channel[i:end_i, j:end_j]
+
+                    if block.shape[0] != self.block_size or block.shape[1] != self.block_size:
+                        padded_block = np.zeros((self.block_size, self.block_size), dtype=block.dtype)
+                        padded_block[:block.shape[0], :block.shape[1]] = block
+                        block = padded_block
+
+                    # Apply zigzag ordering
+                    zigzagged = zigzag_order(block, self.zigzag_pattern)
+
+                    # Get and encode DC coefficient
+                    dc_coeff = zigzagged[0]
+
+                    if channel_idx == 0:  # Luminance (Y)
+                        delta_dc = dc_coeff - prev_dc_lum
+                        prev_dc_lum = dc_coeff
+                        dc_bits = huffman_tables['dc_lum'].get(delta_dc, '')
+                    else:  # Chrominance (Cb or Cr)
+                        chrom_idx = channel_idx - 1
+                        delta_dc = dc_coeff - prev_dc_chrom[chrom_idx]
+                        prev_dc_chrom[chrom_idx] = dc_coeff
+                        dc_bits = huffman_tables['dc_chrom'].get(delta_dc, '')
+
+                    # Process AC coefficients
+                    ac_coeffs = zigzagged[1:]
+                    rle_block = run_length_encoding(ac_coeffs)
+
+                    ac_bits = ""
+                    for symbol in rle_block:
+                        if channel_idx == 0:  # Luminance (Y)
+                            ac_code = huffman_tables['ac_lum'].get(symbol, '')
+                        else:  # Chrominance (Cb or Cr)
+                            ac_code = huffman_tables['ac_chrom'].get(symbol, '')
+                        ac_bits += ac_code
+
+                    # Combine DC and AC bits
+                    block_bits = dc_bits + ac_bits
+                    compressed_bits.append(block_bits)
         # Encode RLE data using Huffman Codes
-        compressed_bits = [huffman_encode(block, huffman_codes) for block in encoded_data]
-        return compressed_bits, huffman_codes
+        #compressed_bits = [huffman_encode(block, huffman_codes) for block in encoded_data]
+        #return compressed_bits, huffman_codes
+        return compressed_bits, huffman_tables
 
     def encode_to_file(self, encoded_data_stream, huffman_table, settings):
         """
@@ -331,7 +456,8 @@ class FlexibleJpeg(CompressImage):
         to reconstruct the full image.
         .rde filetype is our proprietary image compression format :)
         :param encoded_data_stream:
-        :param kwargs:
+        :param huffman_table:
+        :param settings:
         :return:
         """
         self.save_location = settings.get("save_location", "")
@@ -382,8 +508,27 @@ class FlexibleJpeg(CompressImage):
             text_file.write("bit_data :: ")
             text_file.write(str(encoded_data_stream))
             text_file.write(" :: image_end")
-    def calculate_size(self, encoded_image, huffman_table, settings):
-        return (sys.getsizeof(encoded_image)/8 + sys.getsizeof(huffman_table) + sys.getsizeof(settings))/1024
+
+    # ToDo output this into the file or keep as pure debugging data? lossless optimization for all assets?
+    @staticmethod
+    def calculate_size(encoded_image, huffman_table, settings):
+        """
+            Calculate the theoretical size of the compressed data in kilobytes
+            :param encoded_image: The huffman encoded bit data
+            :param huffman_table: The huffman coding table
+            :param settings: Compression settings
+            :return: Size in kilobytes, rounded to 2 decimal places
+        """
+        encoded_image_size = sys.getsizeof(encoded_image) / 8 / 1024
+        huffman_table_size = sys.getsizeof(huffman_table) / 1024
+        settings_size = sys.getsizeof(settings) / 1024
+
+        total_size = encoded_image_size + huffman_table_size + settings_size
+        print(f"Encoded data: {encoded_image_size:.2f} KB")
+        print(f"Huffman table: {huffman_table_size:.2f} KB")
+        print(f"Settings: {settings_size:.2f} KB")
+
+        return round(total_size, 2)
 
 """ 
 Use this function block to test things out.
