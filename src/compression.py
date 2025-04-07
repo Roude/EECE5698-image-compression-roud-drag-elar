@@ -403,7 +403,7 @@ if __name__ == '__main__':
 
     flexible_jpeg = FlexibleJpeg()
 
-    test_image_path = os.path.join(os.getcwd(), "assets", "landscape.png")
+    test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "landscape.png")
     compression_config = os.path.join(os.getcwd(),
                                               "compression_configurations",
                                               "homemade_compression_jpeg_like.yaml")
