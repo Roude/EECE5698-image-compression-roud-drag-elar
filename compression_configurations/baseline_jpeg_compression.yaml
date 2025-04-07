@@ -1,8 +1,0 @@
----
-# This tells our python function what image compression algorithm to run
-compression_algorithm: "jpeg_baseline"
-
-# This provides arguments to the image compression algorithm. These will be passed in as keyword arguments
-# to the compression algorithm
-compression_parameters:
-  quality_factor: 10
