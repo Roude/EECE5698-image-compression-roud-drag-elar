@@ -5,12 +5,11 @@
 #   convert_color_space(image)
 #   perform_jpeg_compression(converted_image)
 #   save_jpeg(compressed_image)
-import sys
 # Functions in this file should be composed of as few sub-routines as possible for
 # readability and modularity.
 
 from tokenize import String
-
+import sys
 import yaml
 from skimage import io
 import imageio.v3 as imageio
@@ -24,8 +23,7 @@ from skimage.color import convert_colorspace
 from skimage.io import imread
 from scipy.fftpack import dct, idct
 from src.utilities import display_greyscale_image
-from src.huffman import zigzag_order, run_length_encoding, build_huffman_tree, generate_huffman_codes, huffman_encode, \
-    diagonal_traversal
+from src.huffman import generate_zigzag_pattern, zigzag_order, run_length_encoding, build_huffman_tree, generate_huffman_codes, huffman_encode
 from collections import Counter
 import pkgutil
 
@@ -102,6 +100,7 @@ class BaselineJpeg(CompressImage):
 class FlexibleJpeg(CompressImage):
     def __init__(self, config=None):
         super().__init__(config)
+        self.zigzag_pattern = None
         self.block_size = 8
         self.downsample_factor = 2
         self.YCbCr_conversion_matrix = None
@@ -135,6 +134,18 @@ class FlexibleJpeg(CompressImage):
         self.lumiance_quantization_table = self.default_lumiance_quantization_table
         self.lumiance_datatype = np.uint8
         self.chromiance_datatype = np.uint8
+
+        self.default_zigzag_pattern = np.array([[0, 1, 5, 6, 14, 15, 27, 28],
+                                                [2, 4, 7, 13, 16, 26, 29, 42],
+                                                [3, 8, 12, 17, 25, 30, 41, 43],
+                                                [9, 11, 18, 24, 31, 40, 44, 53],
+                                                [10, 19, 23, 32, 39, 45, 52, 54],
+                                                [20, 22, 33, 38, 46, 51, 55, 60],
+                                                [21, 34, 37, 47, 50, 56, 59, 61],
+                                                [35, 36, 48, 49, 57, 58, 62, 63]])
+        #self.zigzag_pattern = self.default_zigzag_pattern
+
+
 
     def __call__(self, image, settings):
         """
@@ -269,27 +280,51 @@ class FlexibleJpeg(CompressImage):
         self.lumiance_quantization_table = kwargs.get("lumiance_quantization_table",
                                                       self.default_lumiance_quantization_table)
 
-        padded_matrix = pad_matrix(frequency_domain_block, 8, 8)
+        padded_matrix = pad_matrix(frequency_domain_block, self.block_size, self.block_size)
         if ch_num == 0:
             padded_frequency_domain_matrix = (padded_matrix/self.lumiance_quantization_table).astype(np.int8)
         else:
             padded_frequency_domain_matrix = (padded_matrix/self.chromiance_quantization_table).astype(np.int8)
         return padded_frequency_domain_matrix[0:frequency_domain_block.shape[0],0:frequency_domain_block.shape[1]]
 
-    def entropy_encode(self, quantized_blocks):
+    def entropy_encode(self, quantized_blocks, **kwargs):
         """
         Applies Zig-Zag ordering, Run-Length Encoding, and Huffman Encoding
         :param: quantized_blocks: The output of quantize_block
-        :return: compressed bits, the respective huffman code
+        :return: compressed bits, the huffman code
         """
-        encoded_data = []
-        for block in quantized_blocks:
-            zigzag_block = diagonal_traversal(block)
-            rle_block = run_length_encoding(zigzag_block)
-            encoded_data.append(rle_block)
+        # probably faster to initialize this first than to do this every time
+        #self.zigzag_pattern = kwargs.get("zigzag_pattern", self.default_zigzag_pattern)
+        if self.block_size == 8:
+            self.zigzag_pattern = self.default_zigzag_pattern
+        else:
+            self.zigzag_pattern = generate_zigzag_pattern(self.block_size)
 
-        # Build Huffman Tree based on symbol frequency
-        flat_rle = [val for block in encoded_data for val, _ in block]
+        encoded_data = []
+        for channel in quantized_blocks:
+            # Process each block in the channel
+            for i in range(0, channel.shape[0], self.block_size):
+                for j in range(0, channel.shape[1], self.block_size):
+                    # Extract the block
+                    end_i = min(i + self.block_size, channel.shape[0])
+                    end_j = min(j + self.block_size, channel.shape[1])
+                    block = channel[i:end_i, j:end_j]
+
+                    # Handle non-standard sized blocks at edges, probably not needed as seen before
+                    if block.shape[0] != self.block_size or block.shape[1] != self.block_size:
+                        # Pad the block to match the expected size
+                        padded_block = np.zeros((self.block_size, self.block_size), dtype=block.dtype)
+                        padded_block[:block.shape[0], :block.shape[1]] = block
+                        block = padded_block
+
+                    zigzag_block = zigzag_order(block, self.zigzag_pattern)
+                    rle_block = run_length_encoding(zigzag_block)
+                    encoded_data.append(rle_block)
+
+        #actual JPEG usually uses predefined Huffman codes
+        # Here we build Huffman Tree based on symbol frequency
+        # we need the zero counter, without it we can't decompress
+        flat_rle = [(val, count) for block in encoded_data for val, count in block]
         freq_dict = Counter(flat_rle)
         huffman_tree = build_huffman_tree(freq_dict)
         huffman_codes = generate_huffman_codes(huffman_tree)
@@ -298,12 +333,12 @@ class FlexibleJpeg(CompressImage):
         compressed_bits = [huffman_encode(block, huffman_codes) for block in encoded_data]
         return compressed_bits, huffman_codes
 
-    def encode_to_file(self, full_image_transformed_and_blocked, huffman_table, settings):
+    def encode_to_file(self, encoded_data_stream, huffman_table, settings):
         """
         Turn the image matrices into a data stream. Pre-append the configurations necessary
         to reconstruct the full image.
         .rde filetype is our proprietary image compression format :)
-        :param full_image_transformed_and_blocked:
+        :param encoded_data_stream:
         :param kwargs:
         :return:
         """
@@ -313,19 +348,48 @@ class FlexibleJpeg(CompressImage):
                                                      "tmp",
                                                      f"flex_jpeg_comp_output_{datetime.now().strftime("%Y%m%d_%H%M%S")}.rde")
 
-        with open(self.save_location,'w') as compressed_file_output:
-            compressed_file_output.write("theoretical_size :: ")
-            compressed_file_output.write(str(self.calculate_size(full_image_transformed_and_blocked,
-                                                             huffman_table,
-                                                             settings)))
-            compressed_file_output.write(" kB ")
-            compressed_file_output.write("settings_start :: ")
-            compressed_file_output.write(str(settings))
-            compressed_file_output.write(" :: settings_end :: ")
-            compressed_file_output.write(str(huffman_table))
-            compressed_file_output.write(" :: huffman_table_end :: ")
-            compressed_file_output.write(str(full_image_transformed_and_blocked))
-            compressed_file_output.write(" :: image_end")
+        # Set file paths for both formats
+        self.binary_save_location = f"{self.save_location}.bin.rde"
+        self.text_save_location = f"{self.save_location}.txt.rde"
+
+        # Convert the bit strings to binary data
+        binary_data = bytearray()
+
+        # Process all bit strings into a single binary stream
+        all_bits = "".join(encoded_data_stream)
+        # Ensure the length is multiple of 8 for byte conversion
+        padding_needed = 8 - (len(all_bits) % 8) if len(all_bits) % 8 != 0 else 0
+        all_bits += '0' * padding_needed
+
+        # Convert 8 bits at a time to a byte
+        for i in range(0, len(all_bits), 8):
+            byte = int(all_bits[i:i + 8], 2)  # Convert 8 bits to a byte
+            binary_data.append(byte)
+
+        with open(self.binary_save_location, 'wb') as binary_file:
+            # Header information (as binary)
+            #header = f"theoretical_size :: {self.calculate_size(encoded_data_stream, huffman_table, settings)} kB :: "
+            header = f"settings_start :: {str(settings)} :: settings_end :: "
+            header += f"huffman_table :: {str(huffman_table)} :: huffman_table_end :: "
+            header += f"padding_bits :: {padding_needed} :: "
+
+            binary_file.write(header.encode('utf-8'))
+            binary_file.write(binary_data)
+            binary_file.write(b" :: image_end")
+
+        with open(self.text_save_location, 'w') as text_file:
+            text_file.write("theoretical_size :: ")
+            text_file.write(str(self.calculate_size(encoded_data_stream, huffman_table, settings)))
+            text_file.write(" kB :: ")
+            text_file.write("settings_start :: ")
+            text_file.write(str(settings))
+            text_file.write(" :: settings_end :: ")
+            text_file.write("huffman_table :: ")
+            text_file.write(str(huffman_table))
+            text_file.write(" :: huffman_table_end :: ")
+            text_file.write("bit_data :: ")
+            text_file.write(str(encoded_data_stream))
+            text_file.write(" :: image_end")
     def calculate_size(self, encoded_image, huffman_table, settings):
         return (sys.getsizeof(encoded_image)/8 + sys.getsizeof(huffman_table) + sys.getsizeof(settings))/1024
 

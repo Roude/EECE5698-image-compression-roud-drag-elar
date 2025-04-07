@@ -3,54 +3,34 @@ from collections import Counter, namedtuple
 import heapq
 
 def generate_zigzag_pattern(size):
-    # Create an empty matrix of the given size
     matrix = np.zeros((size, size), dtype=int)
-
-    # Initialize variables to track the current number and the diagonal
     current = 0
     for diag in range(2 * size - 1):
-        if diag % 2 == 0:  # Downward diagonal (from top-right to bottom-left)
-            row = max(0, diag - size + 1)
-            col = min(diag, size - 1)
-            while row < size and col >= 0:
-                matrix[row, col] = current
-                current += 1
-                row += 1
-                col -= 1
-        else:  # Upward diagonal (from bottom-left to top-right)
-            row = min(diag, size - 1)
+        if diag % 2 == 0:  # Even diagonals
             col = max(0, diag - size + 1)
-            while row >= 0 and col < size:
+            row = min(diag, size - 1)
+            while col < size and row >= 0:
                 matrix[row, col] = current
                 current += 1
-                row -= 1
                 col += 1
+                row -= 1
+        else:  # Odd diagonals
+            col = min(diag, size - 1)
+            row = max(0, diag - size + 1)
+            while col >= 0 and row < size:
+                matrix[row, col] = current
+                current += 1
+                col -= 1
+                row += 1
 
     return matrix
 
-# Example usage for size = 8
-size = 8
-zigzag_pattern = generate_zigzag_pattern(size)
-print(zigzag_pattern)
-
-def zigzag_order(matrix):
-    #change this
-    zigzag_pattern = np.array([
-        [0, 1, 5, 6, 14, 15, 27, 28],
-        [2, 4, 7, 13, 16, 26, 29, 42],
-        [3, 8, 12, 17, 25, 30, 41, 43],
-        [9, 11, 18, 24, 31, 40, 44, 53],
-        [10, 19, 23, 32, 39, 45, 52, 54],
-        [20, 22, 33, 38, 46, 51, 55, 60],
-        [21, 34, 37, 47, 50, 56, 59, 61],
-        [35, 36, 48, 49, 57, 58, 62, 63]
-    ])
-
+def zigzag_order(matrix, pattern):
     h, w = matrix.shape
-    result = np.zeros(h * w, dtype=np.int32)
+    result = np.zeros(h * w, dtype=matrix.dtype)
     for i in range(h):
         for j in range(w):
-            result[zigzag_pattern[i, j]] = matrix[i, j]
+            result[pattern[i, j]] = matrix[i, j]
     return result
 
 
@@ -101,19 +81,6 @@ def diagonal_traversal(matrix):
     return result
 
 
-#block = np.array([
-#    [16, 11, 10, 16, 24, 40, 51, 61],
-#    [12, 12, 14, 19, 26, 58, 60, 55],
-#    [14, 13, 16, 24, 40, 57, 69, 56],
-#    [14, 17, 22, 29, 51, 87, 80, 62],
-#    [18, 22, 37, 56, 68, 109, 103, 77],
-#    [24, 35, 55, 64, 81, 104, 113, 92],
-#    [49, 64, 78, 87, 103, 121, 120, 101],
-#    [72, 92, 95, 98, 112, 100, 103, 99]
-#])
-
-#zigzag_result = zigzag_order(block)
-#print(zigzag_result)
 
 #only for zeros, can be extended to all numbers - alternatively LZ77
 def run_length_encoding(zigzag_array):
@@ -128,25 +95,18 @@ def run_length_encoding(zigzag_array):
     encoded.append((0, 0))  # End-of-Block (EOB)
     return encoded
 
-#zigzag_data = [16, 11, 10, 0, 0, 0, 0, 0, 1, 2, 0, 0, 3, 0, 0, 0]
-#rle_result = run_length_encoding(zigzag_data)
-#print(rle_result)  # [(16, 0), (11, 0), (10, 0), (1, 5), (2, 0), (3, 2), (0, 0)]
 
 
 #frequency = absolute Häufigkeit
-#huffman code is prefixed and has the lowest mean codewordlength
-#TODO check questions below
-#what if chars share the same freq, only nonneg integers right? huffman code to change for each block?
-#online it was proposed to only use the first values of the rle_data - how does that work? doesn't that remove the zeros
+#huffman code is prefixed and has the lowest mean codewordlength, still better algorithms out there
 class HuffmanNode(namedtuple("Node", ["char", "freq", "left", "right"])):
     #less than
     def __lt__(self, other):
         return self.freq < other.freq
 
-#Todo make this huffman encoding less naive, use more data than from one block, we want a general dictionary, also consider EOB
 def build_huffman_tree(freq_dict):
     heap = [HuffmanNode(char, freq, None, None) for char, freq in freq_dict.items()]
-    #making a min-heap so we can easily pop the two least frequent symbols
+    #making a min-heap so we can easily pop the two least frequent symbols, dw about same values heapq handles that
     heapq.heapify(heap)
     while len(heap) > 1:
         left = heapq.heappop(heap)
@@ -156,7 +116,9 @@ def build_huffman_tree(freq_dict):
         #the following node contains the entire tree
     return heap[0]
 
-def generate_huffman_codes(node, prefix="", code_dict={}):
+def generate_huffman_codes(node, prefix="", code_dict=None):
+    if code_dict is None:
+        code_dict = {}
     if node.char is not None:
         code_dict[node.char] = prefix
     else:
@@ -167,10 +129,11 @@ def generate_huffman_codes(node, prefix="", code_dict={}):
 
 #TODO: make sure this is not a string
 def huffman_encode(rle_data, huffman_codes):
-    return "".join(huffman_codes[val] for val, _ in rle_data)
-
+    return "".join(huffman_codes[(val, count)] for val, count in rle_data)
 
 if __name__ == '__main__':
+    testmatrix = generate_zigzag_pattern(16)
+    print(testmatrix)
     #how to use huffman encoding
     #runlength encoding data
     rle_data = [(16, 0), (11, 0), (16, 0), (11, 5), (16, 0), (3, 2), (0, 0)]
