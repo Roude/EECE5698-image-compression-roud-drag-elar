@@ -11,6 +11,25 @@ def make_serializable(obj):
     else:
         return obj
 
+'''
+def make_serializable(obj):
+    if isinstance(obj, (np.integer, np.int32, np.int64, np.int8, np.int16)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float32, np.float64)):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, tuple):
+        return tuple(make_serializable(item) for item in obj)
+    elif isinstance(obj, list):
+        return [make_serializable(item) for item in list]
+    elif isinstance(obj, dict):
+        return {make_serializable(k): make_serializable(v) for k, v in obj.items()}
+    else:
+        return obj
+'''
+
+
 def display_greyscale_image(fig, image_array, **kwargs):
     fig.add_trace(go.Heatmap(z=image_array, colorscale='gray'), **kwargs)
 
