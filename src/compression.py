@@ -574,17 +574,20 @@ compression_algorithm_reference = {
 
 if __name__ == '__main__':
 
-    baseline_jpeg = BaselineJpeg(os.path.join(os.getcwd(),
-                                              "compression_configurations",
-                                              "baseline_jpeg_q100.yaml"))
+    baseline_jpeg = BaselineJpeg(os.path.join(os.getcwd(),"compression_configurations", "baseline_jpeg_q100.yaml"))
 
-    flexible_jpeg = FlexibleJpeg()
+    #flexible_jpeg = FlexibleJpeg()
 
     test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "landscape.png")
     compression_config = os.path.join(os.getcwd(),
                                               "compression_configurations",
-                                              "poorquality_compression_jpeg_like.yaml")
-    flexible_jpeg(test_image_path, compression_config)
+                                              "homemade_compression_jpeg_like.yaml")
+    #flexible_jpeg(test_image_path, compression_config)
+
+
+    base_compression_config = os.path.join(os.getcwd(), "compression_configurations", "baseline_jpeg_q100.yaml")
+
+    baseline_jpeg(test_image_path)
 
     # image_array = imread(os.path.join(os.getcwd(), "assets", "landscape.png"))
     #

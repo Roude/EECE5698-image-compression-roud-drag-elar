@@ -13,19 +13,19 @@
 # This file contains the decompression algorithm for FlexibleJpeg compression
 # It implements the inverse operations of compression.py in reverse order
 # This file contains the decompression functionality for various image compression formats
-
 import os
-import yaml
 import numpy as np
-from scipy.fftpack import dct, idct
-from skimage import io
+from scipy.fftpack import idct
 import imageio.v3 as imageio
-from datetime import datetime
-from collections import Counter
 import ast
 from abc import ABC, abstractmethod
+import re
+import json
+import struct
+from collections import Counter
 
 from src.compression import BaselineJpeg, FlexibleJpeg
+from src.huffman import generate_zigzag_pattern
 
 
 class DecompressImage(ABC):
@@ -33,16 +33,16 @@ class DecompressImage(ABC):
     Abstract base class for all decompression algorithms
     Provides a common interface and utility methods for all decompressors
     """
+
     def __init__(self, config=None):
         """Initialize with optional configuration"""
         self.config = config
         self.save_location = None
 
     @abstractmethod
-    def __call__(self, compressed_file, **kwargs):
+    def __call__(self, **kwargs):
         """
         Main method to decompress an image
-        :param compressed_file: Path to the compressed file
         :param kwargs: Additional parameters for decompression
         :return: Decompressed image and save path
         """
@@ -57,18 +57,7 @@ class DecompressImage(ABC):
         """
         if file_path.endswith('.jpeg') or file_path.endswith('.jpg'):
             return "jpeg_baseline"
-        elif file_path.endswith('.rde'):
-            # For .rde files, try to read the header to determine type
-            with open(file_path, 'rb') as f:
-                try:
-                    # Try to read as text first
-                    header = f.read(100).decode('utf-8', errors='ignore')
-                    if "settings_start" in header:
-                        # This is our flexible JPEG format
-                        return "homemade_jpeg_like"
-                except:
-                    pass
-            # Default to homemade format if unsure
+        elif file_path.endswith('.bin.rde'):
             return "homemade_jpeg_like"
         else:
             # Try to infer from file contents or return default
@@ -100,6 +89,9 @@ class DecompressImage(ABC):
         :return: Full path for saving the decompressed image
         """
         input_path, input_ext = os.path.splitext(file_path)
+        if input_ext.lower() == '.rde':
+            input_path = os.path.splitext(input_path)[0]  # Remove .bin part for .bin.rde files
+
         # Default to PNG for all decompressed outputs
         save_path = f"{input_path}{suffix}.png"
         self.save_location = save_path
@@ -115,15 +107,20 @@ class BaselineJpegDecompress(DecompressImage):
     def __init__(self, config=None):
         super().__init__(config)
 
-    def __call__(self, compressed_file, **kwargs):
+    def __call__(self, compressed_file=None, **kwargs):
         """
         Decompress a standard JPEG file
-        :param compressed_file: Path to the JPEG file
+        :param compressed_file: Path to the JPEG file (optional)
         :param kwargs: Additional parameters
         :return: Decompressed image and save path
         """
+        # Default file path if none provided
+        if not compressed_file:
+            compressed_file = os.path.join(os.getcwd(), "tmp", "decomp_test_base.jpeg")
+
         self.set_save_location(compressed_file)
         save_location = kwargs.get("save_location", self.save_location)
+
         decompressed_image = imageio.imread(compressed_file)
         if save_location:
             imageio.imwrite(save_location, decompressed_image)
@@ -145,7 +142,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         # TODO Needed?
         self.upsampling_factor = self.downsample_factor
 
-    def __call__(self, compressed_file, **kwargs):
+    def __call__(self, compressed_file=None, **kwargs):
         """
         Decompress a FlexibleJpeg file
         :param compressed_file: Path to the compressed file (.rde)
@@ -197,53 +194,50 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :return: Tuple of (bit_data, huffman_table, settings)
         """
         # Determine which file format to use (text or binary)
-        # ToDo important for the tests - we only need to do one, either do binary or txt?
-        # ToDo don't waste time reading/writing?
-        # ToDO test the times needed
-        if file_path.endswith('.txt.rde'):
-            with open(file_path, 'r') as file:
+        # Todo immediately transfer the arrays? no file reading?
+        # TODO try to make it simpler on the compression side
+        # get this shit working, perhaps with the txt easier?
+        if file_path.endswith('.bin.rde'):
+            with open(file_path, 'rb') as file:
+                # Read entire file as bytes first
                 content = file.read()
 
-                # Extract settings
-                settings_start = content.find("settings_start :: ") + len("settings_start :: ")
-                settings_end = content.find(" :: settings_end")
-                settings = content[settings_start:settings_end]
+                # Find the boundary between header and binary data
+                header_end = content.find(b"\n", content.find(b"padding_bits"))
 
-                # Extract Huffman table
-                huffman_start = content.find("huffman_table :: ") + len("huffman_table :: ")
-                huffman_end = content.find(" :: huffman_table_end")
-                huffman_table_str = content[huffman_start:huffman_end]
-                huffman_table = ast.literal_eval(huffman_table_str)
-
-                # Extract bit data
-                bit_data_start = content.find("bit_data :: ") + len("bit_data :: ")
-                bit_data_end = content.find(" :: image_end")
-                bit_data = ast.literal_eval(content[bit_data_start:bit_data_end])
-
-        elif file_path.endswith('.bin.rde'):
-            with open(file_path, 'rb') as file:
-                content = file.read().decode('utf-8')
+                # Process the header part as text
+                header_text = content[:header_end].decode('utf-8', errors='replace')
 
                 # Extract settings
-                settings_start = content.find("settings_start :: ") + len("settings_start :: ")
-                settings_end = content.find(" :: settings_end")
-                settings = content[settings_start:settings_end]
+                settings_start = header_text.find("settings_start :: ") + len("settings_start :: ")
+                settings_end = header_text.find(" :: settings_end")
+                settings = header_text[settings_start:settings_end]
 
                 # Extract Huffman table
-                huffman_start = content.find("huffman_table :: ") + len("huffman_table :: ")
-                huffman_end = content.find(" :: huffman_table_end")
-                huffman_table_str = content[huffman_start:huffman_end]
-                huffman_table = ast.literal_eval(huffman_table_str)
+                huffman_start = header_text.find("huffman_table :: ") + len("huffman_table :: ")
+                huffman_end = header_text.find(" :: huffman_table_end")
+                huffman_table_str = header_text[huffman_start:huffman_end]
+
+                try:
+                    huffman_table = ast.literal_eval(huffman_table_str)
+                except (SyntaxError, ValueError) as e:
+                    # Handle potential syntax errors in the Huffman table
+                    print(f"Error parsing Huffman table: {e}")
+                    # debugging: create a simplified dictionary if parsing fails
+                    huffman_table = {}
 
                 # Extract padding information
-                padding_start = content.find("padding_bits :: ") + len("padding_bits :: ")
-                padding_end = content.find(" :: ", padding_start)
-                padding = int(content[padding_start:padding_end])
+                padding_start = header_text.find("padding_bits :: ") + len("padding_bits :: ")
+                padding_end = header_text.find(" ::", padding_start)
+                padding = int(header_text[padding_start:padding_end])
 
-                # Extract binary data
-                binary_start = content.find(" :: ", padding_end) + 4
-                binary_end = content.find(" :: image_end")
-                binary_data = content[binary_start:binary_end].encode('latin1')
+                # Extract binary data (everything after the header)
+                binary_data = content[header_end + 1:]
+
+                # Find position of the image_end marker
+                image_end_pos = binary_data.find(b" :: image_end")
+                if image_end_pos != -1:
+                    binary_data = binary_data[:image_end_pos]
 
                 # Convert binary to bit string
                 bit_data = ""
@@ -253,6 +247,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
                 # Remove padding
                 if padding > 0:
                     bit_data = bit_data[:-padding]
+
         else:
             raise ValueError(f"Unsupported file format: {file_path}")
 
@@ -552,38 +547,23 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         return rgb_image
 
 
-# Update the decompression.py file to correspond to compression.py
+# Dictionary mapping compression types to their decompressor classes
 compression_algorithm_reference = {
     "jpeg_baseline": BaselineJpegDecompress,
     "homemade_jpeg_like": FlexibleJpegDecompress
 }
 
-# Example usage - Command-line interface for decompressing images
+# Example usage - Simple script for decompressing a specific file
 if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser(description='Decompress an image file')
-    parser.add_argument('--input', required=True, help='Path to compressed image file')
-    parser.add_argument('--output', help='Path to save decompressed image (optional)')
-    parser.add_argument('--type', choices=list(compression_algorithm_reference.keys()),
-                        help='Compression algorithm type (auto-detected if not specified)')
-
-    args = parser.parse_args()
-
-    # Auto-detect compression type if not specified
-    if not args.type:
-        comp_type = DecompressImage.detect_compression_type(args.input)
-    else:
-        comp_type = args.type
-
     try:
-        # Create appropriate decompressor
-        decompressor = DecompressImage.factory(comp_type)
+        # Create a FlexibleJpegDecompress instance
+        decompressor = FlexibleJpegDecompress()
+        test_image_path = os.path.join(os.getcwd(), "tmp", "decomp_test.bin.rde")
 
-        # Decompress the image
-        decompressed_image, save_path = decompressor(args.input, save_location=args.output)
+        # Decompress the image from the fixed path
+        decompressed_image, save_path = decompressor(test_image_path)
 
-        print(f"Successfully decompressed image from {args.input}")
+        print(f"Successfully decompressed image from tmp/decomp_test.bin.rde")
         print(f"Decompressed image saved to: {save_path}")
 
     except Exception as e:
