@@ -473,23 +473,11 @@ class FlexibleJpeg(CompressImage):
         self.binary_save_location = f"{self.save_location}.bin.rde"
         self.text_save_location = f"{self.save_location}.txt.rde"
 
-        # Process all bit strings into a single binary stream
-        all_bits = "".join(encoded_data_stream)
-        # Ensure the length is multiple of 8 for byte conversion
-        padding_needed = 8 - (len(all_bits) % 8) if len(all_bits) % 8 != 0 else 0
-        all_bits += '0' * padding_needed
-
-        binary_data = bytearray()
-        for i in range(0, len(all_bits), 8):
-            byte = int(all_bits[i:i + 8], 2)  # Convert 8 bits to a byte
-            binary_data.append(byte)
-
         huffman_table_str = str({str(k): v for k, v in huffman_tables.items()})
 
         serializable_tables = {}
         for table_name, table in huffman_tables.items():
             serializable_tables[table_name] = {}
-
             for key, value in table.items():
                 # Handle different key types
                 if isinstance(key, tuple):
@@ -501,20 +489,49 @@ class FlexibleJpeg(CompressImage):
                 else:
                     serializable_tables[table_name][str(key)] = value
 
-        with open(self.binary_save_location, 'wb') as binary_file:
-            # Header information (as binary)
-            #header = f"theoretical_size :: {self.calculate_size(encoded_data_stream, huffman_table, settings)} kB :: "
-            header = f"settings_start :: {str(settings)} :: settings_end ::\n"
-            header += f"huffman_table :: {str(serializable_tables)} :: huffman_table_end ::\n"
-            header += f"padding_bits :: {padding_needed} ::\n"
+        serializable_settings = {}
+        for key, value in settings.items():
+            if hasattr(value, 'tolist') and callable(getattr(value, 'tolist')):
+                serializable_settings[key] = value.tolist()
+            else:
+                serializable_settings[key] = value
 
-            binary_file.write(header.encode('utf-8'))
+        # Process all bit strings into a single binary stream
+        all_bits = "".join(encoded_data_stream)
+        # Ensure the length is multiple of 8 for byte conversion
+        padding_needed = 8 - (len(all_bits) % 8) if len(all_bits) % 8 != 0 else 0
+        all_bits += '0' * padding_needed
+
+        binary_data = bytearray()
+        for i in range(0, len(all_bits), 8):
+            byte = int(all_bits[i:i + 8], 2)  # Convert 8 bits to a byte
+            binary_data.append(byte)
+
+        # Create header as JSON for better parsing
+        import json
+        header = {
+            "settings": serializable_settings,
+            "huffman_tables": serializable_tables,
+            "padding_bits": padding_needed
+        }
+
+        header_json = json.dumps(header).encode('utf-8')
+
+        # Write to file with clear separator between header and binary data
+        with open(self.binary_save_location, 'wb') as binary_file:
+            # Write header length as 4-byte integer
+            header_length = len(header_json)
+            binary_file.write(header_length.to_bytes(4, byteorder='big'))
+
+            # Write header
+            binary_file.write(header_json)
+
+            # Write binary data
             binary_file.write(binary_data)
-            binary_file.write(b" :: image_end")
 
         with open(self.text_save_location, 'w') as text_file:
             text_file.write("theoretical_size :: ")
-            text_file.write(str(self.calculate_size(encoded_data_stream, serializable_tables, settings)))
+            text_file.write(str(self.calculate_size(encoded_data_stream, serializable_tables, serializable_settings)))
             text_file.write(" kB :: ")
             text_file.write("settings_start :: ")
             text_file.write(str(settings))
@@ -526,7 +543,7 @@ class FlexibleJpeg(CompressImage):
             text_file.write(str(encoded_data_stream))
             text_file.write(" :: image_end")
 
-    def calculate_size(self, encoded_image, serialized_huffman_tables, settings):
+    def calculate_size(self, encoded_image, serialized_huffman_tables, serialized_settings):
         import json
         import gzip
 
@@ -539,17 +556,8 @@ class FlexibleJpeg(CompressImage):
         huffman_compressed = gzip.compress(huffman_json)
         huffman_tables_size = len(huffman_compressed) / 1024
 
-        # Convert settings to a serializable format
-        serializable_settings = {}
-        for key, value in settings.items():
-            if hasattr(value, 'tolist') and callable(getattr(value, 'tolist')):
-                # Convert numpy arrays to lists
-                serializable_settings[key] = value.tolist()
-            else:
-                serializable_settings[key] = value
-
         # Calculate settings size
-        settings_json = json.dumps(serializable_settings).encode('utf-8')
+        settings_json = json.dumps(serialized_settings).encode('utf-8')
         settings_size = len(settings_json) / 1024
 
         total_size = encoded_image_size + huffman_tables_size + settings_size
@@ -574,20 +582,20 @@ compression_algorithm_reference = {
 
 if __name__ == '__main__':
 
-    baseline_jpeg = BaselineJpeg(os.path.join(os.getcwd(),"compression_configurations", "baseline_jpeg_q100.yaml"))
+    #baseline_jpeg = BaselineJpeg(os.path.join(os.getcwd(),"compression_configurations", "baseline_jpeg_q100.yaml"))
 
-    #flexible_jpeg = FlexibleJpeg()
+    flexible_jpeg = FlexibleJpeg()
 
     test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "landscape.png")
     compression_config = os.path.join(os.getcwd(),
                                               "compression_configurations",
                                               "homemade_compression_jpeg_like.yaml")
-    #flexible_jpeg(test_image_path, compression_config)
+    flexible_jpeg(test_image_path, compression_config)
 
 
-    base_compression_config = os.path.join(os.getcwd(), "compression_configurations", "baseline_jpeg_q100.yaml")
+    #base_compression_config = os.path.join(os.getcwd(), "compression_configurations", "baseline_jpeg_q100.yaml")
 
-    baseline_jpeg(test_image_path)
+    #baseline_jpeg(test_image_path)
 
     # image_array = imread(os.path.join(os.getcwd(), "assets", "landscape.png"))
     #

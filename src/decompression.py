@@ -196,62 +196,56 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         # Determine which file format to use (text or binary)
         # Todo immediately transfer the arrays? no file reading?
         # TODO try to make it simpler on the compression side
+        # otherwise somewhere a switch needs to occur
         # get this shit working, perhaps with the txt easier?
-        if file_path.endswith('.bin.rde'):
-            with open(file_path, 'rb') as file:
-                # Read entire file as bytes first
-                content = file.read()
+        with open(file_path, 'rb') as file:
+            # Read header length (first 4 bytes)
+            header_length_bytes = file.read(4)
+            header_length = int.from_bytes(header_length_bytes, byteorder='big')
 
-                # Find the boundary between header and binary data
-                header_end = content.find(b"\n", content.find(b"padding_bits"))
+            # Read header
+            header_json = file.read(header_length)
 
-                # Process the header part as text
-                header_text = content[:header_end].decode('utf-8', errors='replace')
+            # Read the rest as binary data
+            binary_data = file.read()
 
-                # Extract settings
-                settings_start = header_text.find("settings_start :: ") + len("settings_start :: ")
-                settings_end = header_text.find(" :: settings_end")
-                settings = header_text[settings_start:settings_end]
+            # Parse header
+            import json
+            header = json.loads(header_json.decode('utf-8'))
 
-                # Extract Huffman table
-                huffman_start = header_text.find("huffman_table :: ") + len("huffman_table :: ")
-                huffman_end = header_text.find(" :: huffman_table_end")
-                huffman_table_str = header_text[huffman_start:huffman_end]
+            settings = header["settings"]
+            huffman_tables = header["huffman_tables"]
+            padding = header["padding_bits"]
 
-                try:
-                    huffman_table = ast.literal_eval(huffman_table_str)
-                except (SyntaxError, ValueError) as e:
-                    # Handle potential syntax errors in the Huffman table
-                    print(f"Error parsing Huffman table: {e}")
-                    # debugging: create a simplified dictionary if parsing fails
-                    huffman_table = {}
+            # Convert huffman tables back to proper format
+            processed_tables = {}
+            for table_name, table in huffman_tables.items():
+                processed_tables[table_name] = {}
+                for str_key, value in table.items():
+                    # Convert string keys back to their original types
+                    if str_key.startswith('[') and str_key.endswith(']'):
+                        # Convert string representation of list back to tuple
+                        import ast
+                        key = tuple(ast.literal_eval(str_key))
+                    else:
+                        try:
+                            # Try to convert to integer if it's a number
+                            key = int(str_key)
+                        except ValueError:
+                            key = str_key
 
-                # Extract padding information
-                padding_start = header_text.find("padding_bits :: ") + len("padding_bits :: ")
-                padding_end = header_text.find(" ::", padding_start)
-                padding = int(header_text[padding_start:padding_end])
+                    processed_tables[table_name][key] = value
 
-                # Extract binary data (everything after the header)
-                binary_data = content[header_end + 1:]
+            # Convert binary data to bit stream
+            bit_data = ""
+            for byte in binary_data:
+                bit_data += format(byte, '08b')
 
-                # Find position of the image_end marker
-                image_end_pos = binary_data.find(b" :: image_end")
-                if image_end_pos != -1:
-                    binary_data = binary_data[:image_end_pos]
+            # Remove padding
+            if padding > 0:
+                bit_data = bit_data[:-padding]
 
-                # Convert binary to bit string
-                bit_data = ""
-                for byte in binary_data:
-                    bit_data += format(byte, '08b')
-
-                # Remove padding
-                if padding > 0:
-                    bit_data = bit_data[:-padding]
-
-        else:
-            raise ValueError(f"Unsupported file format: {file_path}")
-
-        return bit_data, huffman_table, settings
+        return bit_data, processed_tables, settings
 
     def entropy_decode(self, compressed_bits, huffman_codes):
         """
