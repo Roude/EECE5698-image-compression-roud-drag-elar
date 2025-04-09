@@ -26,6 +26,10 @@ from src.utilities import display_greyscale_image
 from src.huffman import generate_zigzag_pattern, zigzag_order, run_length_encoding, build_huffman_tree, generate_huffman_codes, huffman_encode
 from collections import Counter
 import pkgutil
+import json
+
+import time #for debugging purposes
+
 
 class CompressImage:
     def __init__(self, config=None):
@@ -296,6 +300,10 @@ class FlexibleJpeg(CompressImage):
         :param: quantized_blocks: The output of quantize_block
         :return: compressed bits, the huffman code
         """
+        #elapsed = time.time() - start_time
+        print('Entropy encoding started')
+        #print(' - Begin preliminary encoding ({self.elapsed:.3f}s')
+        print(' - Begin preliminary encoding')
         if self.block_size == 8:
             self.zigzag_pattern = self.default_zigzag_pattern
         else:
@@ -364,6 +372,7 @@ class FlexibleJpeg(CompressImage):
                     # Add to our collection of encoded blocks
                     encoded_blocks.append((channel_idx, rle_block))
 
+        print(' - Begin Huffman table building')
         # Build Huffman tables for each coefficient type
         # DC Luminance
         # see if one can't use signs for this
@@ -404,6 +413,7 @@ class FlexibleJpeg(CompressImage):
         # Reset the delta DC tracking for encoding
         prev_dc_lum = 0
         prev_dc_chrom = [0, 0]
+        print(' - Begin encoding')
 
         for channel_idx, channel in enumerate(quantized_blocks):
             for i in range(0, channel.shape[0], self.block_size):
@@ -473,7 +483,7 @@ class FlexibleJpeg(CompressImage):
         self.binary_save_location = f"{self.save_location}.bin.rde"
         self.text_save_location = f"{self.save_location}.txt.rde"
 
-        huffman_table_str = str({str(k): v for k, v in huffman_tables.items()})
+        #huffman_table_str = str({str(k): v for k, v in huffman_tables.items()})
 
         serializable_tables = {}
         for table_name, table in huffman_tables.items():
@@ -502,59 +512,75 @@ class FlexibleJpeg(CompressImage):
         padding_needed = 8 - (len(all_bits) % 8) if len(all_bits) % 8 != 0 else 0
         all_bits += '0' * padding_needed
 
+        #print(len(all_bits)/8)
+        #how_many = Counter(str(all_bits))
+        #print(how_many)
+
         binary_data = bytearray()
         for i in range(0, len(all_bits), 8):
             byte = int(all_bits[i:i + 8], 2)  # Convert 8 bits to a byte
             binary_data.append(byte)
 
+
+        # Convert to hex representation for cleaner viewing
+        #hex_representation = binary_data.hex()
+
         # Create header as JSON for better parsing
-        import json
+        # useful for txt as well?
         header = {
             "settings": serializable_settings,
             "huffman_tables": serializable_tables,
             "padding_bits": padding_needed
         }
-
+        #TODO use this for txt as well?
         header_json = json.dumps(header).encode('utf-8')
 
         # Write to file with clear separator between header and binary data
+
+        #TODO maybe you don't need wb
         with open(self.binary_save_location, 'wb') as binary_file:
             # Write header length as 4-byte integer
             header_length = len(header_json)
+            #shows the length of it
             binary_file.write(header_length.to_bytes(4, byteorder='big'))
 
             # Write header
             binary_file.write(header_json)
 
             # Write binary data
-            binary_file.write(binary_data)
+            #binary_file.write(binary_data)
 
         with open(self.text_save_location, 'w') as text_file:
             text_file.write("theoretical_size :: ")
             text_file.write(str(self.calculate_size(encoded_data_stream, serializable_tables, serializable_settings)))
             text_file.write(" kB :: ")
             text_file.write("settings_start :: ")
-            text_file.write(str(settings))
+            # this or settings?
+            text_file.write(str(serializable_settings))
             text_file.write(" :: settings_end :: ")
             text_file.write("huffman_table :: ")
-            text_file.write(huffman_table_str)
+            #this one still contains the np stuff
+            text_file.write(str(serializable_tables))
             text_file.write(" :: huffman_table_end :: ")
             text_file.write("bit_data :: ")
-            text_file.write(str(encoded_data_stream))
+            #text_file.write(str(encoded_data_stream))
             text_file.write(" :: image_end")
 
     def calculate_size(self, encoded_image, serialized_huffman_tables, serialized_settings):
-        import json
-        import gzip
 
+
+
+        # TODO also include the header encoding information in the calculations
         # Calculate encoded image size
         all_bits = "".join(encoded_image)
         encoded_image_size = len(all_bits) / 8 / 1024  # Convert bits to KB
 
         # Calculate huffman tables size
         huffman_json = json.dumps(serialized_huffman_tables).encode('utf-8')
-        huffman_compressed = gzip.compress(huffman_json)
-        huffman_tables_size = len(huffman_compressed) / 1024
+        # TODO why are we using this here?
+        #huffman_compressed = gzip.compress(huffman_json)
+        #huffman_tables_size = len(huffman_compressed) / 1024
+        huffman_tables_size = len(huffman_json) / 1024
 
         # Calculate settings size
         settings_json = json.dumps(serialized_settings).encode('utf-8')
@@ -583,6 +609,7 @@ compression_algorithm_reference = {
 if __name__ == '__main__':
 
     #baseline_jpeg = BaselineJpeg(os.path.join(os.getcwd(),"compression_configurations", "baseline_jpeg_q100.yaml"))
+    #start_time = time.time()
 
     flexible_jpeg = FlexibleJpeg()
 
@@ -591,6 +618,8 @@ if __name__ == '__main__':
                                               "compression_configurations",
                                               "homemade_compression_jpeg_like.yaml")
     flexible_jpeg(test_image_path, compression_config)
+
+
 
 
     #base_compression_config = os.path.join(os.getcwd(), "compression_configurations", "baseline_jpeg_q100.yaml")

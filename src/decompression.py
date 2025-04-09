@@ -193,57 +193,80 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :param file_path: Path to the compressed file
         :return: Tuple of (bit_data, huffman_table, settings)
         """
-        # Determine which file format to use (text or binary)
-        # Todo immediately transfer the arrays? no file reading?
-        # TODO try to make it simpler on the compression side
-        # otherwise somewhere a switch needs to occur
-        # get this shit working, perhaps with the txt easier?
-        with open(file_path, 'rb') as file:
-            # Read header length (first 4 bytes)
-            header_length_bytes = file.read(4)
-            header_length = int.from_bytes(header_length_bytes, byteorder='big')
+        print('Decoding process started')
+        print('- Begin extraction')
 
-            # Read header
-            header_json = file.read(header_length)
+        with open(file_path, 'r') as file:
+            content = file.read()
 
-            # Read the rest as binary data
-            binary_data = file.read()
+            # Extract settings
+            settings_start = content.find("settings_start :: ") + len("settings_start :: ")
+            settings_end = content.find(" :: settings_end")
+            settings_str = content[settings_start:settings_end]
 
-            # Parse header
-            import json
-            header = json.loads(header_json.decode('utf-8'))
+            # Extract Huffman table
+            huffman_start = content.find("huffman_table :: ") + len("huffman_table :: ")
+            huffman_end = content.find(" :: huffman_table_end")
+            huffman_table_str = content[huffman_start:huffman_end]
 
-            settings = header["settings"]
-            huffman_tables = header["huffman_tables"]
-            padding = header["padding_bits"]
+            # Extract bit data
+            bit_data_start = content.find("bit_data :: ") + len("bit_data :: ")
+            bit_data_end = content.find(" :: image_end")
 
-            # Convert huffman tables back to proper format
+            #print(huffman_table_str)
+            #print(settings_str)
+            print('- Extracted succesfully')
+
+            if bit_data_end == -1:  # If "image_end" marker not found
+                bit_data_str = content[bit_data_start:]
+            else:
+                bit_data_str = content[bit_data_start:bit_data_end]
+
+            # Process settings to a proper Python dictionary
+            settings = eval(settings_str)
+
+            # Process Huffman tables
+            # The Huffman tables in the file contain numpy int16 values that need to be properly processed
+            # We'll convert the string representation to a usable dictionary
+            raw_tables = eval(huffman_table_str)
+
+            print('- Evaluated succesfully')
+
+            print(len(raw_tables))
+            # Process the huffman tables to convert string keys back to proper types
             processed_tables = {}
-            for table_name, table in huffman_tables.items():
+            for table_name, table in raw_tables.items():
                 processed_tables[table_name] = {}
-                for str_key, value in table.items():
-                    # Convert string keys back to their original types
-                    if str_key.startswith('[') and str_key.endswith(']'):
-                        # Convert string representation of list back to tuple
-                        import ast
-                        key = tuple(ast.literal_eval(str_key))
+                for key_str, value in table.items():
+                    # Handle tuple keys
+                    if key_str.startswith('(') and key_str.endswith(')'):
+                        # Convert string tuple representation back to actual tuple
+                        key_parts = key_str.strip('()').split(',')
+                        if len(key_parts) == 2:
+                            # Handle tuples with two elements (typically for AC coefficients)
+                            first_part = int(key_parts[0].strip())
+                            second_part = int(key_parts[1].strip())
+                            key = (first_part, second_part)
+                        else:
+                            # Single element "tuple" - convert to int
+                            key = int(key_parts[0].strip())
                     else:
-                        try:
-                            # Try to convert to integer if it's a number
-                            key = int(str_key)
-                        except ValueError:
-                            key = str_key
+                        # Regular integer keys
+                        key = int(key_str)
 
                     processed_tables[table_name][key] = value
+            print(len(processed_tables))
 
-            # Convert binary data to bit stream
-            bit_data = ""
-            for byte in binary_data:
-                bit_data += format(byte, '08b')
+            # Process bit data - this might be an empty string if bit_data section is empty
+            if bit_data_str.strip():
+                try:
+                    bit_data = eval(bit_data_str)
+                except:
+                    bit_data = bit_data_str
+            else:
+                bit_data = ""
 
-            # Remove padding
-            if padding > 0:
-                bit_data = bit_data[:-padding]
+            print('Decoding process ended')
 
         return bit_data, processed_tables, settings
 
@@ -549,16 +572,12 @@ compression_algorithm_reference = {
 
 # Example usage - Simple script for decompressing a specific file
 if __name__ == '__main__':
-    try:
-        # Create a FlexibleJpegDecompress instance
-        decompressor = FlexibleJpegDecompress()
-        test_image_path = os.path.join(os.getcwd(), "tmp", "decomp_test.bin.rde")
+    # Create a FlexibleJpegDecompress instance
+    decompressor = FlexibleJpegDecompress()
+    test_image_path = os.path.join(os.getcwd(), "tmp", "decomp_test.txt.rde")
 
-        # Decompress the image from the fixed path
-        decompressed_image, save_path = decompressor(test_image_path)
+    # Decompress the image from the fixed path
+    decompressed_image, save_path = decompressor(test_image_path)
 
-        print(f"Successfully decompressed image from tmp/decomp_test.bin.rde")
-        print(f"Decompressed image saved to: {save_path}")
-
-    except Exception as e:
-        print(f"Error decompressing image: {e}")
+    print(f"Successfully decompressed image from tmp/decomp_test.bin.rde")
+    print(f"Decompressed image saved to: {save_path}")
