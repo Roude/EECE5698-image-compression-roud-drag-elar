@@ -234,7 +234,6 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             raw_tables = eval(huffman_table_str)
             # check this
             bit_data = eval(bit_data_str)
-            #print(type(bit_data))
             exit()
 
 

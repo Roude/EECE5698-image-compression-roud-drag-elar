@@ -161,7 +161,6 @@ class FlexibleJpeg(CompressImage):
                 settings = yaml.safe_load(settings_file)
 
         self.image_dimensions = image_uncompressed.shape[:2]
-        print(self.image_dimensions)
 
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
         YCbCrImage = self.convert_colorspace(image_uncompressed, **settings)
