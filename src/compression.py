@@ -328,7 +328,10 @@ class FlexibleJpeg(CompressImage):
         prev_dc_lum = 0  # For luminance
         prev_dc_chrom = [0, 0]  # For Cb and Cr
 
+
+
         for channel_idx, channel in enumerate(quantized_blocks):
+            print(channel.shape[0])
             # Process each block in the channel
             for i in range(0, channel.shape[0], self.block_size):
                 for j in range(0, channel.shape[1], self.block_size):
@@ -409,6 +412,8 @@ class FlexibleJpeg(CompressImage):
             'ac_chrom': ac_chrom_codes  # AC chrominance (Cb, Cr)
         }
 
+        #print("Decoder DC Lum Table:", dc_lum_codes)
+
         #print(huffman_tables)
         # Encode all blocks using appropriate Huffman tables
         compressed_bits = []
@@ -438,6 +443,7 @@ class FlexibleJpeg(CompressImage):
 
                     # Get and encode DC coefficient
                     dc_coeff = zigzagged[0]
+                    #print(dc_coeff)
 
                     if channel_idx == 0:  # Luminance (Y)
                         delta_dc = dc_coeff - prev_dc_lum
@@ -465,6 +471,7 @@ class FlexibleJpeg(CompressImage):
                     block_bits = dc_bits + ac_bits
                     compressed_bits.append(block_bits)
         #compressed_bits contains the blocks each - to string shows that they are with commata
+        print("First 16 bits:", ''.join(str(int(bit)) for bit in compressed_bits[:16]))
         return compressed_bits, huffman_tables
 
     def encode_to_file(self, encoded_data_stream, huffman_tables, settings):
@@ -569,7 +576,7 @@ class FlexibleJpeg(CompressImage):
             text_file.write(" :: huffman_table_end :: ")
             text_file.write("bit_data :: ")
             #use all bits rather than the string
-            text_file.write(str(all_bits))
+            #text_file.write(str(all_bits))
             text_file.write(" :: image_end")
 
     def calculate_size(self, all_bits, serialized_huffman_tables, serialized_settings):

@@ -23,9 +23,10 @@ import re
 import json
 import struct
 from collections import Counter
+from src.utilities import parse_huffman_table
 
 from src.compression import BaselineJpeg, FlexibleJpeg
-from src.huffman import generate_zigzag_pattern, inverse_zigzag_order, run_length_decoding
+from src.huffman import generate_zigzag_pattern, inverse_zigzag_order
 
 
 
@@ -141,6 +142,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
 
         # Rename downsampling_factor to upsampling_factor
         # TODO Needed?
+        self.image_dimensions = None
         self.upsampling_factor = self.downsample_factor
 
     def __call__(self, compressed_file=None, **kwargs):
@@ -151,8 +153,6 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :return: Decompressed image and save path
         """
         self.set_save_location(compressed_file)
-
-        self.image_dimensions = None
 
         # Override with user-provided save location if available
         save_location = kwargs.get("save_location", self.save_location)
@@ -196,7 +196,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :param file_path: Path to the compressed file
         :return: Tuple of (bit_data, huffman_table, settings)
         """
-        print('Decoding process started')
+        print('File decoding process started')
         print('- Begin extraction')
 
         with open(file_path, 'r') as file:
@@ -219,8 +219,6 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             bit_data_start = content.find("bit_data :: ") + len("bit_data :: ")
             bit_data_end = content.find(" :: image_end")
 
-            #print(huffman_table_str)
-            #print(settings_str)
             print('- Extracted succesfully')
 
             if bit_data_end == -1:  # If "image_end" marker not found
@@ -228,22 +226,26 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             else:
                 bit_data_str = content[bit_data_start:bit_data_end]
 
+            ### BE CAREFUL WITH eval
             # Process settings to a proper Python dictionary
             settings = eval(settings_str)
+            #huffman_tables = eval(huffman_table_str)
+            huffman_tables = parse_huffman_table(huffman_table_str)
 
-            raw_tables = eval(huffman_table_str)
-            # check this
-            bit_data = eval(bit_data_str)
-            exit()
+            #print("Loaded tables:",huffman_tables.keys())
 
+            #use bool perhaps?
+            #bit_data = np.array([bool(int(c)) for c in bit_data_str], dtype=np.uint8)
 
             #with open("huffman_tables_decomp.json", "w") as f:
-                #json.dump(raw_tables, f, indent=2)
+                #json.dump(huffman_tables, f, indent=2)
+
             self.image_dimensions = eval(dims)
+
             print('- Evaluated succesfully')
 
-        print('Decoding process ended')
-        return bit_data, raw_tables, settings
+        print('File decoding process ended')
+        return bit_data_str, huffman_tables, settings
 
     def entropy_decode(self, compressed_bits, huffman_tables):
         """
@@ -252,7 +254,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :param huffman_tables: Huffman codes dictionary
         :return: List of quantized blocks
         """
-        print('Decoding process started')
+        print('Entropy decoding process started')
         print('- Begin separating and inverting huffman tables')
         # Create separate reverse lookup dictionaries for each table
         dc_lum_table = {}
@@ -282,38 +284,42 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             'ac_lum': ac_lum_table,
             'ac_chrom': ac_chrom_table
         }
+
+
+        # with open("huffman_tables_decomp.json", "w") as f:
+        # json.dump(huffman_tables, f, indent=2)
+
+        #print("Decoder DC Lum Table:", dc_lum_table)
         #easier to use known channel dimensions
         # Decode the bit stream
         chrominance_dimensions = (self.image_dimensions[0] // self.downsample_factor,
                              self.image_dimensions[1] // self.downsample_factor)
         # todo begin with decompressed
 
-        decoded_blocks = [np.empty(self.image_dimensions, dtype=np.uint8), np.empty(chrominance_dimensions, dtype=np.uint8), np.empty(chrominance_dimensions, dtype=np.uint8)]
+        decoded_blocks = [np.empty(self.image_dimensions, dtype=np.int16), np.empty(chrominance_dimensions, dtype=np.uint16), np.empty(chrominance_dimensions, dtype=np.uint16)]
 
+        print("First 16 bits:", ''.join(str(int(bit)) for bit in compressed_bits[:50]))
         # Track previous DC coefficients for delta decoding
-        prev_dc_lum = 0
-        prev_dc_chrom = [0, 0]
+        #schauen dass das hier resettet wird
+        prev_dc = [0, 0, 0]
+        current_pos = 0  # Current bit position in the array
+        bit_length = len(compressed_bits)
 
-        # Track current block positions for each channel
-        block_positions = [0, 0, 0]  # Tracks block index for Y, Cb, Cr
+        num_total_y_blocks = (self.image_dimensions[0] // self.block_size) * (self.image_dimensions[1] // self.block_size)
+        num_total_c_blocks = (chrominance_dimensions[0] // self.block_size) * (chrominance_dimensions[1] // self.block_size)
+        num_total_blocks = num_total_y_blocks + 2 * num_total_c_blocks
 
-        print('- Begin bitstream decoding')
-        for block_bits in compressed_bits:
+        code_lengths = [len(code) for code in dc_lum_table.keys()]
+        #print("Code length distribution:", Counter(code_lengths))
+
+        for block_num in range(num_total_blocks):
             # Determine which channel we're processing
-            # The original encoding alternates between Y, Cb, Cr
-            # So we need to track which channel this block belongs to
-            if block_positions[0] * 2 < block_positions[1] + block_positions[2]:
-                # More chrominance blocks than luminance, next block is Y
-                channel_idx = 0
+            if block_num < num_total_y_blocks:
+                channel_idx = 0  # Y
+            elif block_num < num_total_y_blocks + num_total_c_blocks:
+                channel_idx = 1  # Cb
             else:
-                # More luminance blocks, next block is Cb or Cr
-                if block_positions[1] <= block_positions[2]:
-                    channel_idx = 1  # Cb
-                else:
-                    channel_idx = 2  # Cr
-
-            block_positions[channel_idx] += 1
-
+                channel_idx = 2  # Cr
             # Get the appropriate reverse tables
             if channel_idx == 0:  # Luminance (Y)
                 dc_table = reverse_tables['dc_lum']
@@ -323,78 +329,56 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
                 ac_table = reverse_tables['ac_chrom']
 
             # Decode DC coefficient
-            dc_coeff = None
-            current_bits = ''
-            #what does this actually do, shouldn't it be block_bits-current_bits or their index?
-            remaining_bits = block_bits
-
-            # Find the longest matching DC code
-            for i in range(1, len(remaining_bits) + 1):
-                code = remaining_bits[:i]
+            dc_diff = None
+            max_dc_length = max(len(code) for code in dc_table.keys())
+            # Search for matching DC code
+            for l in range(1, min(max_dc_length + 1, bit_length - current_pos + 1)):
+                # Build the code by checking bits directly
+                code = ''.join(str(int(bit)) for bit in compressed_bits[current_pos:current_pos + l])
                 if code in dc_table:
-                    dc_coeff = dc_table[code]
-                    remaining_bits = remaining_bits[i:]
+                    dc_diff = int(dc_table[code])
+                    current_pos += l
                     break
 
-            if dc_coeff is None:
-                raise ValueError("Invalid bitstream: No matching DC code found")
+                if dc_diff is None:
+                    raise ValueError(f"Invalid bitstream: No matching DC code found at position {current_pos}")
 
-            # Apply inverse delta encoding to get the actual DC value
-            if channel_idx == 0:  # Luminance (Y)
-                dc_value = dc_coeff + prev_dc_lum
-                prev_dc_lum = dc_value
-            else:  # Chrominance (Cb or Cr)
-                chrom_idx = channel_idx - 1
-                dc_value = dc_coeff + prev_dc_chrom[chrom_idx]
-                prev_dc_chrom[chrom_idx] = dc_value
-
+                # Add the difference to the previous DC value
+                dc_value = dc_diff + prev_dc[channel_idx]
+                prev_dc[channel_idx] = dc_value  # Save for the next block
+#
             # Decode AC coefficients
             ac_coeffs = []
-            current_run = []
             eob_found = False
+            max_ac_length = max(len(code) for code in ac_table.keys())
 
-            while remaining_bits and not eob_found:
-                # Find the longest matching AC code
+            while not eob_found and len(ac_coeffs) < (self.block_size * self.block_size - 1):
+                # Search for matching AC code
                 ac_symbol = None
-                for i in range(1, len(remaining_bits) + 1):
-                    code = remaining_bits[:i]
+                for l in range(1, min(max_ac_length + 1, bit_length - current_pos + 1)):
+                    code = ''.join(str(int(bit)) for bit in compressed_bits[current_pos:current_pos + l])
                     if code in ac_table:
                         ac_symbol = ac_table[code]
-                        remaining_bits = remaining_bits[i:]
+                        current_pos += l
                         break
 
                 if ac_symbol is None:
-                    raise ValueError("Invalid bitstream: No matching AC code found")
+                    raise ValueError(f"Invalid bitstream: No matching AC code found at position {current_pos}")
 
-                if ac_symbol == 'EOB':  # End of block
+                ac_value, run_length = ac_symbol
+
+                if (ac_value, run_length) == (0,0):  # End of block
                     eob_found = True
                 else:
-                    # AC symbol is a tuple of (run_length, size)
-                    run_length, size = ac_symbol
                     # Add zeros for the run length
                     ac_coeffs.extend([0] * run_length)
-                    # The next 'size' bits represent the coefficient value
-                    if size > 0:
-                        if len(remaining_bits) < size:
-                            raise ValueError("Invalid bitstream: Not enough bits for AC coefficient")
-                        value_bits = remaining_bits[:size]
-                        remaining_bits = remaining_bits[size:]
-                        # Convert bits to integer (two's complement)
-                        value = int(value_bits, 2)
-                        if value_bits[0] == '1':  # Positive number
-                            ac_coeffs.append(value)
-                        else:  # Negative number
-                            ac_coeffs.append(value - (1 << size))
-                    else:
-                        ac_coeffs.append(0)
+                    ac_coeffs.append(ac_value)
+                    # Pad with zeros if EOB was reached early
+            ac_coeffs.extend([0] * (self.block_size * self.block_size - 1 - len(ac_coeffs)))
 
-            # Pad with zeros if EOB was reached early
-            total_ac_coeffs = self.block_size * self.block_size - 1
-            while len(ac_coeffs) < total_ac_coeffs:
-                ac_coeffs.append(0)
+            zigzag_coeffs = [dc_value] + ac_coeffs
 
-            # Combine DC and AC coefficients
-            zigzag_coeffs = [dc_value] + ac_coeffs[:total_ac_coeffs]
+            #print(zigzag_coeffs)
 
             # Convert from zigzag to block
             block = inverse_zigzag_order(zigzag_coeffs, self.zigzag_pattern, self.block_size)
@@ -406,7 +390,14 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
                 rows, cols = chrominance_dimensions
 
             # Calculate block position in the channel
-            block_idx = block_positions[channel_idx] - 1
+            if channel_idx == 0:
+                block_idx = block_num
+            elif channel_idx == 1:
+                block_idx = block_num - num_total_y_blocks
+            else:
+                block_idx = block_num - num_total_y_blocks - num_total_c_blocks
+
+            #ToDo check if they are not exactly divisible
             blocks_per_row = cols // self.block_size
             i = (block_idx // blocks_per_row) * self.block_size
             j = (block_idx % blocks_per_row) * self.block_size
@@ -416,11 +407,9 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             end_j = min(j + self.block_size, cols)
             decoded_blocks[channel_idx][i:end_i, j:end_j] = block[:end_i - i, :end_j - j]
 
-        print('- Decoding completed')
-
+        print('Entropy decoding completed')
+        #print(decoded_blocks[0])
         exit()
-        # Convert RLE blocks back to quantized blocks
-        #quantized_blocks = self.rle_decode_blocks(decoded_blocks)
         return decoded_blocks
 
 

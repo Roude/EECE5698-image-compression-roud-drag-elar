@@ -34,11 +34,10 @@ def zigzag_order(matrix, pattern):
     return result
 
 
-def inverse_zigzag_order(flattened_array, pattern):
-    h, w = pattern.shape
-    original_matrix = np.zeros((h, w), dtype=flattened_array.dtype)
-    for i in range(h):
-        for j in range(w):
+def inverse_zigzag_order(flattened_array, pattern, block_size):
+    original_matrix = np.zeros((block_size, block_size), dtype=np.int16)
+    for i in range(block_size):
+        for j in range(block_size):
             original_matrix[i, j] = flattened_array[pattern[i, j]]
     return original_matrix
 
@@ -59,22 +58,6 @@ def run_length_encoding(zigzag_array):
             zero_count = 0
     encoded.append((0, 0))  # End-of-Block (EOB)
     return encoded
-
-#length should be 63 because dc is out
-def run_length_decoding(encoded, expected_length=63):
-    zigzag_array = []
-    for val, zero_count in encoded[:-1]:
-        zigzag_array.extend([0] * zero_count)
-        zigzag_array.append(val)
-
-    # Pad remaining with zeros (if needed)
-    remaining_zeros = expected_length - len(zigzag_array)
-    if remaining_zeros > 0:
-        zigzag_array.extend([0] * remaining_zeros)
-
-    return np.array(zigzag_array, dtype=int)
-
-
 
 #frequency = absolute Häufigkeit
 #huffman code is prefixed and has the lowest mean codewordlength, still better algorithms out there

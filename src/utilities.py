@@ -11,6 +11,39 @@ def make_serializable(obj):
     else:
         return obj
 
+
+def parse_huffman_table(huffman_table_str):
+    """Parse Huffman table string and ensure proper tuple types"""
+    import ast
+    from collections.abc import Mapping
+
+    def convert_value(v):
+        if isinstance(v, str) and v.startswith('(') and v.endswith(')'):
+            try:
+                return ast.literal_eval(v)  # Convert string tuple to real tuple
+            except (ValueError, SyntaxError):
+                return v
+        return v
+
+    # Safely evaluate the main dictionary
+    raw_tables = ast.literal_eval(huffman_table_str)
+
+    if not isinstance(raw_tables, Mapping):
+        raise ValueError("Huffman table must be a dictionary")
+
+    # Process each component table
+    fixed_tables = {}
+    for table_name, table in raw_tables.items():
+        if not isinstance(table, Mapping):
+            raise ValueError(f"Table {table_name} must be a dictionary")
+
+        fixed_table = {}
+        for symbol, code in table.items():
+            fixed_table[convert_value(symbol)] = code
+
+        fixed_tables[table_name] = fixed_table
+
+    return fixed_tables
 '''
 def make_serializable(obj):
     if isinstance(obj, (np.integer, np.int32, np.int64, np.int8, np.int16)):
