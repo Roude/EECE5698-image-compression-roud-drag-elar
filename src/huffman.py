@@ -42,53 +42,6 @@ def inverse_zigzag_order(flattened_array, pattern):
             original_matrix[i, j] = flattened_array[pattern[i, j]]
     return original_matrix
 
-# not as fast as numpy
-def diagonal_traversal(matrix):
-    """
-    Traverses a matrix in a zig-zag diagonal pattern starting from the top-left corner.
-    Args:
-        matrix (list of list of int): The input matrix.
-    Returns:
-        list of int: The elements of the matrix in zig-zag diagonal order.
-    """
-    if not matrix.any():
-        return []
-
-    rows, cols = len(matrix), len(matrix[0])
-    result = []
-
-    diagonals = []
-
-    # Collect diagonals starting from first column
-    for r in range(rows):
-        i, j = r, 0
-        diagonal = []
-        while i >= 0 and j < cols:
-            diagonal.append(matrix[i][j])
-            i -= 1
-            j += 1
-        diagonals.append(diagonal)
-
-    # Collect diagonals starting from top row (excluding first element to avoid duplication)
-    for c in range(1, cols):
-        i, j = rows - 1, c
-        diagonal = []
-        while i >= 0 and j < cols:
-            diagonal.append(matrix[i][j])
-            i -= 1
-            j += 1
-        diagonals.append(diagonal)
-
-    # Flatten the diagonals in a zig-zag pattern
-    for idx, diagonal in enumerate(diagonals):
-        if idx % 2 == 1:
-            diagonal.reverse()
-        result.extend(diagonal)
-
-    return result
-
-
-
 #only for zeros, can be extended to all numbers - alternatively LZ77
 def run_length_encoding(zigzag_array):
     """
@@ -107,8 +60,8 @@ def run_length_encoding(zigzag_array):
     encoded.append((0, 0))  # End-of-Block (EOB)
     return encoded
 
-
-def run_length_decoding(encoded, expected_length=64):
+#length should be 63 because dc is out
+def run_length_decoding(encoded, expected_length=63):
     zigzag_array = []
     for val, zero_count in encoded[:-1]:
         zigzag_array.extend([0] * zero_count)

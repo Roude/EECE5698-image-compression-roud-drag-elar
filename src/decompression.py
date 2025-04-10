@@ -25,7 +25,7 @@ import struct
 from collections import Counter
 
 from src.compression import BaselineJpeg, FlexibleJpeg
-from src.huffman import generate_zigzag_pattern, inverse_zigzag_order
+from src.huffman import generate_zigzag_pattern, inverse_zigzag_order, run_length_decoding
 
 
 
@@ -169,7 +169,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
 
         # Rename downsampling_factor to upsampling_factor for clarity
         # TODO DOUBLE?
-        self.upsampling_factor = settings.get("chromiance_downsample_factor", self.downsample_factor)
+        self.upsampling_factor = settings.get("chrominance_downsample_factor", self.downsample_factor)
 
         # Set zigzag pattern based on block size
         if self.block_size == 8:
@@ -181,7 +181,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         # Inverse of compression basically
         quantized_blocks = self.entropy_decode(bit_data, huffman_table)
         unprocessed_blocks = self.process_blocks_inverse(quantized_blocks)
-        upsampled_image = self.upsample_chromiance(unprocessed_blocks)
+        upsampled_image = self.upsample_chrominance(unprocessed_blocks)
         rgb_image = self.convert_colorspace_inverse(upsampled_image)
 
         # Save the decompressed image
@@ -232,11 +232,15 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             settings = eval(settings_str)
 
             raw_tables = eval(huffman_table_str)
+            # check this
             bit_data = eval(bit_data_str)
+            #print(type(bit_data))
+            exit()
+
+
             #with open("huffman_tables_decomp.json", "w") as f:
                 #json.dump(raw_tables, f, indent=2)
             self.image_dimensions = eval(dims)
-            print(type(self.image_dimensions))
             print('- Evaluated succesfully')
 
         print('Decoding process ended')
@@ -281,11 +285,11 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         }
         #easier to use known channel dimensions
         # Decode the bit stream
-        chromiance_dimensions = (self.image_dimensions[0] // self.downsample_factor,
+        chrominance_dimensions = (self.image_dimensions[0] // self.downsample_factor,
                              self.image_dimensions[1] // self.downsample_factor)
         # todo begin with decompressed
 
-        decoded_blocks = [np.empty(self.image_dimensions, dtype=np.uint8), np.empty(chromiance_dimensions, dtype=np.uint8), np.empty(chromiance_dimensions, dtype=np.uint8)]
+        decoded_blocks = [np.empty(self.image_dimensions, dtype=np.uint8), np.empty(chrominance_dimensions, dtype=np.uint8), np.empty(chrominance_dimensions, dtype=np.uint8)]
 
         # Track previous DC coefficients for delta decoding
         prev_dc_lum = 0
@@ -322,6 +326,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             # Decode DC coefficient
             dc_coeff = None
             current_bits = ''
+            #what does this actually do, shouldn't it be block_bits-current_bits or their index?
             remaining_bits = block_bits
 
             # Find the longest matching DC code
@@ -410,78 +415,17 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             # Place the block in the appropriate channel
             end_i = min(i + self.block_size, rows)
             end_j = min(j + self.block_size, cols)
-            channels[channel_idx][i:end_i, j:end_j] = block[:end_i - i, :end_j - j]
+            decoded_blocks[channel_idx][i:end_i, j:end_j] = block[:end_i - i, :end_j - j]
 
         print('- Decoding completed')
 
-
-
+        exit()
         # Convert RLE blocks back to quantized blocks
-        quantized_blocks = self.rle_decode_blocks(decoded_blocks)
-        return quantized_blocks
+        #quantized_blocks = self.rle_decode_blocks(decoded_blocks)
+        return decoded_blocks
 
-    def huffman_decode_block(self, bits, reverse_huffman):
-        """
-        Decode a single block of Huffman encoded bits
-        :param bits: Bit string for a single block
-        :param reverse_huffman: Reversed Huffman code dictionary
-        :return: List of decoded symbols
-        """
-        decoded = []
-        current_code = ""
-        for bit in bits:
-            current_code += bit
-            if current_code in reverse_huffman:
-                symbol = reverse_huffman[current_code]
-                decoded.append(symbol)
-                current_code = ""
-        return decoded
 
-    def rle_decode_blocks(self, rle_blocks):
-        """
-        Convert Run-Length Encoded blocks to quantized blocks
-        :param rle_blocks: List of RLE encoded blocks
-        :return: List of quantized blocks
-        """
-        quantized_blocks = []
-        for rle_block in rle_blocks:
-            # Convert RLE to zigzagged block
-            zigzag_block = []
-            for val, count in rle_block:
-                # Add zeros based on the count
-                zigzag_block.extend([0] * count)
-                # Add the non-zero value (unless it's the EOB marker)
-                if val != 0 or (val == 0 and count == 0):  # Special case for EOB
-                    zigzag_block.append(val)
-
-            # Ensure we have the right number of elements
-            while len(zigzag_block) < self.block_size * self.block_size:
-                zigzag_block.append(0)
-
-            # Truncate if we have too many elements (shouldn't happen with proper encoding)
-            zigzag_block = zigzag_block[:self.block_size * self.block_size]
-
-            # Convert zigzag to block
-            block = self.inverse_zigzag_order(zigzag_block)
-            quantized_blocks.append(block)
-
-        return quantized_blocks
-
-    def inverse_zigzag_order(self, zigzag_array):
-        """
-        Convert a zigzag array back to a 2D block
-        This is the reverse of the zigzag_order method in huffman.py
-        :param zigzag_array: 1D array in zigzag order
-        :return: 2D block
-        """
-        block = np.zeros((self.block_size, self.block_size), dtype=np.int8)
-        for i in range(self.block_size):
-            for j in range(self.block_size):
-                index = self.zigzag_pattern[i, j]
-                if index < len(zigzag_array):
-                    block[i, j] = zigzag_array[index]
-        return block
-
+    #TODO check order, we want the reverse pipeline
     def process_blocks_inverse(self, quantized_blocks):
         """
         Process blocks in reverse order: dequantize and perform inverse DCT
@@ -582,7 +526,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         if channel_num == 0:  # Luminance channel
             qtable = self.lumiance_quantization_table
         else:  # Chrominance channels
-            qtable = self.chromiance_quantization_table
+            qtable = self.chrominance_quantization_table
 
         # Ensure quantization table matches block size
         if qtable.shape[0] < self.block_size or qtable.shape[1] < self.block_size:
@@ -614,7 +558,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
 
         return idct_block
 
-    def upsample_chromiance(self, channels):
+    def upsample_chrominance(self, channels):
         """
         Upsample chrominance channels to match luminance channel dimensions
         :param channels: List of [Y, Cb, Cr] channels

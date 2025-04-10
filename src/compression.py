@@ -99,7 +99,7 @@ class FlexibleJpeg(CompressImage):
         self.zigzag_pattern = None
         self.block_size = 8
         self.quality_factor = 50
-        self.chromiance_aggression_factor = 3
+        self.chrominance_aggression_factor = 3
         self.lumiance_aggression_factor = 1.5
         self.downsample_factor = 2
         self.YCbCr_conversion_matrix = None
@@ -110,7 +110,7 @@ class FlexibleJpeg(CompressImage):
 
         self.default_YCbCr_conversion_offset = np.array([16, 128, 128]).transpose()
 
-        self.default_chromiance_quantization_table = np.array([[10, 8, 9, 9, 9, 8, 10, 9],
+        self.default_chrominance_quantization_table = np.array([[10, 8, 9, 9, 9, 8, 10, 9],
                                                                [9, 9, 10, 10, 10, 11, 12, 17],
                                                                [13, 12, 12, 12, 12, 20, 16, 16],
                                                                [14, 17, 18, 20, 23, 23, 22, 20],
@@ -119,7 +119,7 @@ class FlexibleJpeg(CompressImage):
                                                                [25, 25, 25, 25, 25, 25, 25, 25],
                                                                [25, 25, 25, 25, 25, 25, 25, 25]],
                                                               dtype=np.uint8)
-        self.chromiance_quantization_table = self.default_chromiance_quantization_table
+        self.chrominance_quantization_table = self.default_chrominance_quantization_table
 
         self.default_lumiance_quantization_table = np.array([[6, 4, 4, 6, 10, 16, 20, 24],
                                                              [5, 5, 6, 8, 10, 23, 24, 22],
@@ -132,7 +132,7 @@ class FlexibleJpeg(CompressImage):
                                                             dtype=np.uint8)
         self.lumiance_quantization_table = self.default_lumiance_quantization_table
         self.lumiance_datatype = np.uint8
-        self.chromiance_datatype = np.uint8
+        self.chrominance_datatype = np.uint8
 
         self.default_zigzag_pattern = np.array([[0, 1, 5, 6, 14, 15, 27, 28],
                                                 [2, 4, 7, 13, 16, 26, 29, 42],
@@ -165,7 +165,7 @@ class FlexibleJpeg(CompressImage):
 
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
         YCbCrImage = self.convert_colorspace(image_uncompressed, **settings)
-        downsampled_image = self.downsample_chromiance(YCbCrImage, **settings)
+        downsampled_image = self.downsample_chrominance(YCbCrImage, **settings)
         block_processed_channels = self.process_blocks(downsampled_image, **settings)
         compressed_image_datastream, huffman_tables = self.entropy_encode(block_processed_channels)
         self.encode_to_file(compressed_image_datastream, huffman_tables, settings)
@@ -185,15 +185,15 @@ class FlexibleJpeg(CompressImage):
                         self.YCbCr_conversion_offset,
                         dtype=np.uint8)
 
-    def downsample_chromiance(self, YCbCr_image, **kwargs):
+    def downsample_chrominance(self, YCbCr_image, **kwargs):
         """
         Apply downsampling factor to YCbCr formatted image and save the image as a tuple of 3 matricies with the
-        luminance and two chromiance channels.
+        luminance and two chrominance channels.
         :param YCbCr_image: The image already converted to YCbCr format
-        :return: A Tuple, element 0 is the lumiance channel, element 1 is the chromiance channels
+        :return: A Tuple, element 0 is the lumiance channel, element 1 is the chrominance channels
         """
 
-        self.downsample_factor = kwargs.get("chromiance_downsample_factor", 4)
+        self.downsample_factor = kwargs.get("chrominance_downsample_factor", 4)
 
         lumiance = YCbCr_image[:, :, 0]
         ch_CbCr = YCbCr_image[:,:,1:]
@@ -215,7 +215,7 @@ class FlexibleJpeg(CompressImage):
     def process_blocks(self, downsampled_image, **kwargs):
         """
         Perform compression steps that are executed on individual blocks of a user defined size.
-        :param downsampled_image: The output of the function downsample_chromiance
+        :param downsampled_image: The output of the function downsample_chrominance
         :param kwargs:
         :return: The uncompressed converted and quantized matricies.
         """
@@ -285,7 +285,7 @@ class FlexibleJpeg(CompressImage):
             return matrix
 
         #quality_factor = kwargs.get("quality_factor", 50)
-        #ToDO create emphasis matrix for chromiance or lumiance
+        #ToDO create emphasis matrix for chrominance or lumiance
 
         self.lumiance_quantization_table = kwargs.get("lumiance_quantization_table",
                                                       self.default_lumiance_quantization_table)
@@ -294,7 +294,7 @@ class FlexibleJpeg(CompressImage):
         if ch_num == 0:
             padded_frequency_domain_matrix = (padded_matrix/self.lumiance_quantization_table).astype(np.int8)
         else:
-            padded_frequency_domain_matrix = (padded_matrix/self.chromiance_quantization_table).astype(np.int8)
+            padded_frequency_domain_matrix = (padded_matrix / self.chrominance_quantization_table).astype(np.int8)
         return padded_frequency_domain_matrix[0:frequency_domain_block.shape[0],0:frequency_domain_block.shape[1]]
 
     def entropy_encode(self, quantized_blocks, **kwargs):
@@ -465,6 +465,7 @@ class FlexibleJpeg(CompressImage):
                     # Combine DC and AC bits
                     block_bits = dc_bits + ac_bits
                     compressed_bits.append(block_bits)
+        #compressed_bits contains the blocks each - to string shows that they are with commata
         return compressed_bits, huffman_tables
 
     def encode_to_file(self, encoded_data_stream, huffman_tables, settings):
@@ -550,17 +551,13 @@ class FlexibleJpeg(CompressImage):
             header_length = len(header_json)
             #shows the length of it
             binary_file.write(header_length.to_bytes(4, byteorder='big'))
-
-            # Write header
             binary_file.write(header_json)
-
-            # Write binary data
             #binary_file.write(binary_data)
 
         with open(self.text_save_location, 'w') as text_file:
             #first won't include itself
             text_file.write("theoretical_size :: ")
-            text_file.write(str(self.calculate_size(encoded_data_stream, serializable_tables, serializable_settings)))
+            text_file.write(str(self.calculate_size(all_bits, serializable_tables, serializable_settings)))
             text_file.write(" kB :: ")
             text_file.write(" :: image_dimensions :: ")
             text_file.write(str(self.image_dimensions))
@@ -572,13 +569,13 @@ class FlexibleJpeg(CompressImage):
             text_file.write(str(serializable_tables))
             text_file.write(" :: huffman_table_end :: ")
             text_file.write("bit_data :: ")
-            text_file.write(str(encoded_data_stream))
+            #use all bits rather than the string
+            text_file.write(str(all_bits))
             text_file.write(" :: image_end")
 
-    def calculate_size(self, encoded_image, serialized_huffman_tables, serialized_settings):
+    def calculate_size(self, all_bits, serialized_huffman_tables, serialized_settings):
         # doesn't include miniscule header information
         # Calculate encoded image size
-        all_bits = "".join(encoded_image)
         encoded_image_size = len(all_bits) / 8 / 1024  # Convert bits to KB
 
         # Calculate huffman tables size
