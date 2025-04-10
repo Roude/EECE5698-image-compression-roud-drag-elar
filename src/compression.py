@@ -160,6 +160,9 @@ class FlexibleJpeg(CompressImage):
             with open(settings, 'r') as settings_file:
                 settings = yaml.safe_load(settings_file)
 
+        self.image_dimensions = image_uncompressed.shape[:2]
+        print(self.image_dimensions)
+
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
         YCbCrImage = self.convert_colorspace(image_uncompressed, **settings)
         downsampled_image = self.downsample_chromiance(YCbCrImage, **settings)
@@ -321,6 +324,7 @@ class FlexibleJpeg(CompressImage):
         # Store encoded data by channel and block
         encoded_blocks = []
 
+        #quantized_blocks[0] = np.zeros(self.image_dimensions)
         # Track previous DC coefficients for delta encoding (separate for each channel type)
         prev_dc_lum = 0  # For luminance
         prev_dc_chrom = [0, 0]  # For Cb and Cr
@@ -499,6 +503,9 @@ class FlexibleJpeg(CompressImage):
                 else:
                     serializable_tables[table_name][str(key)] = value
 
+        with open("huffman_tables_comp.json", "w") as f:
+            json.dump(serializable_tables, f, indent=2)
+
         serializable_settings = {}
         for key, value in settings.items():
             if hasattr(value, 'tolist') and callable(getattr(value, 'tolist')):
@@ -551,26 +558,25 @@ class FlexibleJpeg(CompressImage):
             #binary_file.write(binary_data)
 
         with open(self.text_save_location, 'w') as text_file:
+            #first won't include itself
             text_file.write("theoretical_size :: ")
             text_file.write(str(self.calculate_size(encoded_data_stream, serializable_tables, serializable_settings)))
             text_file.write(" kB :: ")
-            text_file.write("settings_start :: ")
+            text_file.write(" :: image_dimensions :: ")
+            text_file.write(str(self.image_dimensions))
+            text_file.write(" :: settings_start :: ")
             # this or settings?
             text_file.write(str(serializable_settings))
             text_file.write(" :: settings_end :: ")
             text_file.write("huffman_table :: ")
-            #this one still contains the np stuff
             text_file.write(str(serializable_tables))
             text_file.write(" :: huffman_table_end :: ")
             text_file.write("bit_data :: ")
-            #text_file.write(str(encoded_data_stream))
+            text_file.write(str(encoded_data_stream))
             text_file.write(" :: image_end")
 
     def calculate_size(self, encoded_image, serialized_huffman_tables, serialized_settings):
-
-
-
-        # TODO also include the header encoding information in the calculations
+        # doesn't include miniscule header information
         # Calculate encoded image size
         all_bits = "".join(encoded_image)
         encoded_image_size = len(all_bits) / 8 / 1024  # Convert bits to KB

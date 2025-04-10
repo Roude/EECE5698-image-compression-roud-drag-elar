@@ -33,6 +33,15 @@ def zigzag_order(matrix, pattern):
             result[pattern[i, j]] = matrix[i, j]
     return result
 
+
+def inverse_zigzag_order(flattened_array, pattern):
+    h, w = pattern.shape
+    original_matrix = np.zeros((h, w), dtype=flattened_array.dtype)
+    for i in range(h):
+        for j in range(w):
+            original_matrix[i, j] = flattened_array[pattern[i, j]]
+    return original_matrix
+
 # not as fast as numpy
 def diagonal_traversal(matrix):
     """
@@ -97,6 +106,20 @@ def run_length_encoding(zigzag_array):
             zero_count = 0
     encoded.append((0, 0))  # End-of-Block (EOB)
     return encoded
+
+
+def run_length_decoding(encoded, expected_length=64):
+    zigzag_array = []
+    for val, zero_count in encoded[:-1]:
+        zigzag_array.extend([0] * zero_count)
+        zigzag_array.append(val)
+
+    # Pad remaining with zeros (if needed)
+    remaining_zeros = expected_length - len(zigzag_array)
+    if remaining_zeros > 0:
+        zigzag_array.extend([0] * remaining_zeros)
+
+    return np.array(zigzag_array, dtype=int)
 
 
 
