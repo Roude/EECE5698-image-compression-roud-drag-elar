@@ -328,10 +328,11 @@ class FlexibleJpeg(CompressImage):
         prev_dc_lum = 0  # For luminance
         prev_dc_chrom = [0, 0]  # For Cb and Cr
 
+        all_dc_values = []  # To collect all DC coefficients
+
 
 
         for channel_idx, channel in enumerate(quantized_blocks):
-            print(channel.shape[0])
             # Process each block in the channel
             for i in range(0, channel.shape[0], self.block_size):
                 for j in range(0, channel.shape[1], self.block_size):
@@ -352,6 +353,7 @@ class FlexibleJpeg(CompressImage):
                     zigzagged = zigzag_order(block, self.zigzag_pattern)
                     # Get DC coefficient (first value in zigzagged data)
                     dc_coeff = zigzagged[0]
+                    all_dc_values.append(dc_coeff)  # Collect every DC coefficient
 
                     # Apply delta encoding to DC coefficient
                     # purpose is to create more lower absolute values
@@ -423,6 +425,8 @@ class FlexibleJpeg(CompressImage):
         prev_dc_chrom = [0, 0]
         print(' - Begin encoding')
 
+        #print(quantized_blocks[0])
+
         for channel_idx, channel in enumerate(quantized_blocks):
             for i in range(0, channel.shape[0], self.block_size):
                 for j in range(0, channel.shape[1], self.block_size):
@@ -440,6 +444,8 @@ class FlexibleJpeg(CompressImage):
 
                     # Apply zigzag ordering
                     zigzagged = zigzag_order(block, self.zigzag_pattern)
+                    if channel_idx == 0 and i == 24 and j == 24:
+                        print(zigzagged)
 
                     # Get and encode DC coefficient
                     dc_coeff = zigzagged[0]
@@ -470,8 +476,14 @@ class FlexibleJpeg(CompressImage):
                     # Combine DC and AC bits
                     block_bits = dc_bits + ac_bits
                     compressed_bits.append(block_bits)
+
+        # At the end of your function, add:
+        if all_dc_values:
+            max_dc_value = max(all_dc_values)
+            min_dc_value = min(all_dc_values)
+            print(f"Maximum DC coefficient: {max_dc_value}")
+            print(f"Minimum DC coefficient: {min_dc_value}")
         #compressed_bits contains the blocks each - to string shows that they are with commata
-        print("First 16 bits:", ''.join(str(int(bit)) for bit in compressed_bits[:16]))
         return compressed_bits, huffman_tables
 
     def encode_to_file(self, encoded_data_stream, huffman_tables, settings):
@@ -522,9 +534,13 @@ class FlexibleJpeg(CompressImage):
 
         # Process all bit strings into a single binary stream
         all_bits = "".join(encoded_data_stream)
+        #print(all_bits[513:513 + 20])
+
         # Ensure the length is multiple of 8 for byte conversion
         padding_needed = 8 - (len(all_bits) % 8) if len(all_bits) % 8 != 0 else 0
         all_bits += '0' * padding_needed
+
+        #print("First 16 bits:", ''.join(str(int(bit)) for bit in all_bits[:50]))
 
         #print(len(all_bits)/8)
         #how_many = Counter(str(all_bits))
