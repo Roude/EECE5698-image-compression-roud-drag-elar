@@ -29,7 +29,10 @@ import pkgutil
 import json
 
 import time #for debugging purposes
-
+#makes it so it doesn't print the np.int16 shit
+np.set_printoptions(formatter={
+    'object': lambda x: str(x) if not isinstance(x, tuple) else f"({x[0]}, {x[1]})"
+})
 
 class CompressImage:
     def __init__(self, config=None):
@@ -161,11 +164,14 @@ class FlexibleJpeg(CompressImage):
                 settings = yaml.safe_load(settings_file)
 
         self.image_dimensions = image_uncompressed.shape[:2]
+        #print(self.image_dimensions)
 
         if self.image_dimensions[0] % self.block_size != 0 or self.image_dimensions[1] % self.block_size != 0:
             print('Warning! dimensions not divisible by', {self.blocksize})
 
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
+        #TODO check out the data format
+        #print(image_uncompressed)
         YCbCrImage = self.convert_colorspace(image_uncompressed, **settings)
         downsampled_image = self.downsample_chrominance(YCbCrImage, **settings)
         block_processed_channels = self.process_blocks(downsampled_image, **settings)
@@ -287,8 +293,7 @@ class FlexibleJpeg(CompressImage):
             return matrix
 
         #quality_factor = kwargs.get("quality_factor", 50)
-        #ToDO create emphasis matrix for chrominance or lumiance
-
+        #ToDO implement emphasis matrix for chrominance or lumiance
         self.lumiance_quantization_table = kwargs.get("lumiance_quantization_table",
                                                       self.default_lumiance_quantization_table)
 
@@ -309,6 +314,7 @@ class FlexibleJpeg(CompressImage):
         print('Entropy encoding started')
         #print(' - Begin preliminary encoding ({self.elapsed:.3f}s')
         print(' - Begin preliminary encoding')
+        #print(quantized_blocks)
         if self.block_size == 8:
             self.zigzag_pattern = self.default_zigzag_pattern
         else:
@@ -324,7 +330,6 @@ class FlexibleJpeg(CompressImage):
         ac_chrom_symbols = []  # AC coefficients for chrominance
 
         # Track previous DC values separately for each channel
-
         prev_dc = [0, 0, 0]  # [Y, Cb, Cr]
 
         # Calculate total blocks per channel (must match decompression logic)
@@ -333,71 +338,46 @@ class FlexibleJpeg(CompressImage):
 
         num_y_blocks = (self.image_dimensions[0] // self.block_size) * (self.image_dimensions[1] // self.block_size)
         num_c_blocks = (chrominance_dimensions[0] // self.block_size) * (chrominance_dimensions[1] // self.block_size)
+        num_total_blocks = num_y_blocks + 2 * num_c_blocks
 
         # Process blocks in decompression order: ALL Y -> ALL Cb -> ALL Cr
         all_blocks = []
 
-        all_delta_dc = []  # To collect all DC coefficients
+        #all_delta_dc = []  # To collect all DC coefficients
 
-        # 1. Process Y channel (channel_idx=0)
-        channel_idx = 0
-        channel = quantized_blocks[channel_idx].astype(np.int16)
+        for channel_idx, channel in enumerate(quantized_blocks):
+            #print(channel_idx)
+            # easiest fix to stop integer overflow later during the calculations
+            channel = quantized_blocks[channel_idx].astype(np.int16)
+            # print(channel)
+            for i in range(0, channel.shape[0], self.block_size):
+                for j in range(0, channel.shape[1], self.block_size):
+                    block = self._get_padded_block(channel, i, j)
+                    zigzagged = zigzag_order(block, self.zigzag_pattern)
 
-        for i in range(0, channel.shape[0], self.block_size):
-            for j in range(0, channel.shape[1], self.block_size):
-                block = self._get_padded_block(channel, i, j)
-                zigzagged = zigzag_order(block, self.zigzag_pattern)
+                    # DC encoding (Y channel)
+                    delta_dc = zigzagged[0] - prev_dc[channel_idx]
+                    prev_dc[channel_idx] = zigzagged[0]
+                    # print(channel_idx)
+                    # print('delta:',delta_dc)
+                    # print('dc:',zigzagged[0])
+                    # print('i:',i)
+                    # print('j:',j)
 
-                # DC encoding (Y channel)
-                delta_dc = zigzagged[0] - prev_dc[channel_idx]
-                prev_dc[channel_idx] = zigzagged[0]
-                dc_lum_symbols.append(delta_dc)
-                all_delta_dc.append(delta_dc)
-
-                # AC encoding
-                rle_block = run_length_encoding(zigzagged[1:])
-                ac_lum_symbols.extend(rle_block)
-                all_blocks.append((channel_idx, delta_dc, rle_block))
-
-        # 2. Process Cb channel (channel_idx=1)
-        channel_idx = 1
-        channel = quantized_blocks[channel_idx].astype(np.int16)
-        for i in range(0, channel.shape[0], self.block_size):
-            for j in range(0, channel.shape[1], self.block_size):
-                block = self._get_padded_block(channel, i, j)
-                zigzagged = zigzag_order(block, self.zigzag_pattern)
-
-                # DC encoding (Cb channel)
-                delta_dc = zigzagged[0] - prev_dc[channel_idx]
-                prev_dc[channel_idx] = zigzagged[0]
-                dc_chrom_symbols.append(delta_dc)
-
-                # AC encoding
-                rle_block = run_length_encoding(zigzagged[1:])
-                ac_chrom_symbols.extend(rle_block)
-                all_blocks.append((channel_idx, delta_dc, rle_block))
-
-        # 3. Process Cr channel (channel_idx=2)
-        channel_idx = 2
-        channel = quantized_blocks[channel_idx].astype(np.int16)
-        for i in range(0, channel.shape[0], self.block_size):
-            for j in range(0, channel.shape[1], self.block_size):
-                block = self._get_padded_block(channel, i, j)
-                zigzagged = zigzag_order(block, self.zigzag_pattern)
-
-                # DC encoding (Cr channel)
-                delta_dc = zigzagged[0] - prev_dc[channel_idx]
-                prev_dc[channel_idx] = zigzagged[0]
-                dc_chrom_symbols.append(delta_dc)
-
-                # AC encoding
-                rle_block = run_length_encoding(zigzagged[1:])
-                ac_chrom_symbols.extend(rle_block)
-                all_blocks.append((channel_idx, delta_dc, rle_block))
+                    # AC encoding
+                    rle_block = run_length_encoding(zigzagged[1:])
+                    #adding both to symbols
+                    if channel_idx == 0:
+                        dc_lum_symbols.append(delta_dc)
+                        ac_lum_symbols.extend(rle_block)
+                    else:
+                        ac_chrom_symbols.extend(rle_block)
+                        dc_chrom_symbols.append(delta_dc)
+                    combined = np.array([delta_dc] + rle_block, dtype=object)
+                    all_blocks.append(combined)
+        #print(all_blocks)
 
         print(' - Begin Huffman table building')
-        all_delta_dc_list =  [int(x) for x in all_delta_dc]
-        print(all_delta_dc_list)
 
         def build_huffman_table(symbols):
             freq = Counter(symbols)
@@ -419,33 +399,48 @@ class FlexibleJpeg(CompressImage):
             'ac_lum': ac_lum_codes,  # AC luminance (Y)
             'ac_chrom': ac_chrom_codes  # AC chrominance (Cb, Cr)
         }
-
         #print("Decoder DC Lum Table:", dc_lum_codes)
+
         # Encode all blocks using appropriate Huffman tables
         compressed_bits = []
 
         # Reset the delta DC tracking for encoding
-        prev_dc = [0, 0, 0]
-        print(' - Begin encoding')
-        # TODO befülle ich den Block falsch? Padding falsch für mich??
-        for channel_idx, delta_dc, rle_block in all_blocks:
+        print(' - Begin Huffman encoding')
+
+        block_index = 0
+        for block in all_blocks:
+            # Determine which channel we're processing based on block index
+            if block_index < num_y_blocks:
+                channel_idx = 0  # Y
+            elif block_index < num_y_blocks + num_c_blocks:
+                channel_idx = 1  # Cb
+            else:
+                channel_idx = 2  # Cr
+
+            # Extract delta_dc and rle_block from the combined array
+            delta_dc = block[0]
+            rle_block = block[1:]
+
             # DC encoding
             if channel_idx == 0:
-                dc_bits = huffman_tables['dc_lum'].get(delta_dc, '')
+                dc_bits = dc_lum_codes.get(delta_dc, '')
             else:
-                dc_bits = huffman_tables['dc_chrom'].get(delta_dc, '')
+                dc_bits = dc_chrom_codes.get(delta_dc, '')
 
             # AC encoding
             ac_bits = []
             for symbol in rle_block:
                 if channel_idx == 0:
-                    ac_bits.append(huffman_tables['ac_lum'].get(symbol, ''))
+                    ac_bits.append(ac_lum_codes.get(symbol, ''))
                 else:
-                    ac_bits.append(huffman_tables['ac_chrom'].get(symbol, ''))
-
+                    ac_bits.append(ac_chrom_codes.get(symbol, ''))
+            # Combine DC and AC bits
             compressed_bits.append(dc_bits + ''.join(ac_bits))
+            block_index += 1
 
+        print('Entropy encoding ended')
         return compressed_bits, huffman_tables
+
 
     def _get_padded_block(self, channel, i, j):
         """Helper to handle edge blocks with padding"""
@@ -480,7 +475,6 @@ class FlexibleJpeg(CompressImage):
 
         #huffman_table_str = str({str(k): v for k, v in huffman_tables.items()})
         serializable_tables = make_serializable_table(huffman_tables)
-
 
         with open("huffman_tables_comp.json", "w") as f:
             json.dump(serializable_tables, f, indent=2)
@@ -605,7 +599,7 @@ if __name__ == '__main__':
 
     flexible_jpeg = FlexibleJpeg()
 
-    test_image_path = os.path.join(os.getcwd(), "assets", "unit_test_images", "blank_16x16.tif")
+    test_image_path = os.path.join(os.getcwd(), "assets", "unit_test_images", "gradients_16x32.tif")
     compression_config = os.path.join(os.getcwd(),
                                               "compression_configurations",
                                               "homemade_compression_jpeg_like.yaml")
