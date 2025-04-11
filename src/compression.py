@@ -343,16 +343,20 @@ class FlexibleJpeg(CompressImage):
         # Process blocks in decompression order: ALL Y -> ALL Cb -> ALL Cr
         all_blocks = []
         #all_delta_dc = []  # To collect all DC coefficients
-        #TODO didn't actually make it 100 percent symmetric to previous one
         block_index = 0
         for channel_idx, channel in enumerate(quantized_blocks):
             #print(channel_idx)
             # easiest fix to stop integer overflow later during the calculations
             channel = quantized_blocks[channel_idx].astype(np.int16)
+            if channel_idx == 0:
+                print(channel)
+                print(len(channel))
             # print(channel)
             for i in range(0, channel.shape[0], self.block_size):
                 for j in range(0, channel.shape[1], self.block_size):
                     block = self._get_padded_block(channel, i, j)
+                    #if block_index == 10:
+                        #print(block)
                     zigzagged = zigzag_order(block, self.zigzag_pattern)
                     #if block_index == 0:
                         #print(zigzagged)
@@ -377,10 +381,8 @@ class FlexibleJpeg(CompressImage):
                         ac_chrom_symbols.extend(rle_block)
                     combined = np.array([delta_dc] + rle_block, dtype=object)
                     all_blocks.append(combined)
-                    if block_index == 8:
-                        print(zigzagged)
                     block_index += 1
-        print(len(all_blocks))
+        #print(len(all_blocks))
 
         print(' - Begin Huffman table building')
 
@@ -391,7 +393,7 @@ class FlexibleJpeg(CompressImage):
             return codes
 
         # Build Huffman tables for each coefficient type
-        # TODO make the values of the dicts not strings
+        # TODO make the values of the dicts not strings - probably not necessary as long as they also get printed
         dc_lum_codes = build_huffman_table(dc_lum_symbols)
         dc_chrom_codes = build_huffman_table(dc_chrom_symbols)
         ac_lum_codes = build_huffman_table(ac_lum_symbols)
@@ -405,9 +407,6 @@ class FlexibleJpeg(CompressImage):
             'ac_lum': ac_lum_codes,  # AC luminance (Y)
             'ac_chrom': ac_chrom_codes  # AC chrominance (Cb, Cr)
         }
-        #first = next(iter(dc_chrom_codes.values()))
-        #typ = type(first)
-        #print(f"The keys are of type: {typ}")
 
         # Encode all blocks using appropriate Huffman tables
         compressed_bits = []
@@ -426,8 +425,6 @@ class FlexibleJpeg(CompressImage):
             else:
                 channel_idx = 2  # Cr
 
-
-            #TODO COMPARE EVERY PART HERE WITH DECOMPRESSION
             #if block_index == 8:
                 #print(block)
                 #print(len(block))
@@ -577,7 +574,7 @@ class FlexibleJpeg(CompressImage):
 
         # Calculate huffman tables size
         huffman_json = json.dumps(serialized_huffman_tables).encode('utf-8')
-        # TODO why are we using this here?
+        # TODO use this at some point
         #huffman_compressed = gzip.compress(huffman_json)
         #huffman_tables_size = len(huffman_compressed) / 1024
         huffman_tables_size = len(huffman_json) / 1024

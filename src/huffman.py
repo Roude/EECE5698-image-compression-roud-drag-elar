@@ -50,6 +50,7 @@ def run_length_encoding(zigzag_array):
     """
     encoded = []
     #force a zero here, otherwise a problem with EOB, equivalent of getting rid of that during quantization
+    # TODO move this into process blocks or something, keep this as a fallback though
     zigzag_array[-1] = 0
     zero_count = 0
     for val in zigzag_array:
