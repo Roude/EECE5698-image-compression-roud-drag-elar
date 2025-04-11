@@ -225,8 +225,8 @@ class FlexibleJpeg(CompressImage):
             block_processed_channels.append(np.zeros(shape=np.shape(channel),dtype=np.int8))
             for idx in range(0,np.shape(channel)[0], self.block_size):
                 for jdx in range(0, np.shape(channel)[1], self.block_size):
-                    end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else -1
-                    end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else -1
+                    end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else None
+                    end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else None
                     block_processed_channels[ch_num][idx:end_idx, jdx:end_jdx] = self.block_dct(channel[idx:end_idx, jdx:end_jdx], **kwargs)
                     self.quantize_block(block_processed_channels[ch_num][idx:end_idx, jdx:end_jdx], ch_num, **kwargs)
         return block_processed_channels
@@ -638,7 +638,7 @@ if __name__ == '__main__':
 
     flexible_jpeg = FlexibleJpeg()
 
-    test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "landscape.png")
+    test_image_path = os.path.join(os.getcwd(), "assets", "unit_test_images", "blank_16x16.tif")
     compression_config = os.path.join(os.getcwd(),
                                               "compression_configurations",
                                               "homemade_compression_jpeg_like.yaml")
