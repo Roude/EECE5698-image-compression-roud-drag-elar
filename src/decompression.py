@@ -23,7 +23,7 @@ import re
 import json
 import struct
 from collections import Counter
-from src.utilities import parse_huffman_table
+from src.utilities import parse_huffman_table, make_serializable_table
 
 from src.compression import BaselineJpeg, FlexibleJpeg
 from src.huffman import generate_zigzag_pattern, inverse_zigzag_order
@@ -257,38 +257,20 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         print('Entropy decoding process started')
         print('- Begin separating and inverting huffman tables')
         # Create separate reverse lookup dictionaries for each table
-        dc_lum_table = {}
-        dc_chrom_table = {}
-        ac_lum_table = {}
-        ac_chrom_table = {}
 
-        # Process each table separately to avoid using dictionaries as keys
-        for table_name, table in huffman_tables.items():
-            if table_name == 'dc_lum':
-                for symbol, code in table.items():
-                    dc_lum_table[code] = symbol
-            elif table_name == 'dc_chrom':
-                for symbol, code in table.items():
-                    dc_chrom_table[code] = symbol
-            elif table_name == 'ac_lum':
-                for symbol, code in table.items():
-                    ac_lum_table[code] = symbol
-            elif table_name == 'ac_chrom':
-                for symbol, code in table.items():
-                    ac_chrom_table[code] = symbol
+        serializable_huffman = make_serializable_table(huffman_tables)
 
-        # Store the reverse tables in a dictionary for easier access
-        reverse_tables = {
-            'dc_lum': dc_lum_table,
-            'dc_chrom': dc_chrom_table,
-            'ac_lum': ac_lum_table,
-            'ac_chrom': ac_chrom_table
+        serializable_reverse_huffman = {
+            table_name: {v: k for k, v in table.items()}  # Invert key-value pairs
+            for table_name, table in serializable_huffman.items()
         }
+        with open("huffman_tables_decomp_reverse.json", "w") as f:
+            json.dump(serializable_reverse_huffman, f, indent=2)
 
-        def get_min_max_key_lengths(huffman_table):
+        def get_min_max_key_lengths(serializable_reverse_huffman):
             # Get the lengths of all keys (as binary strings)
             key_lengths = []
-            for key in huffman_table.keys():
+            for key in serializable_reverse_huffman.keys():
                 # Case 1: Key is an integer (e.g., 0b101, 5, etc.)
                 if isinstance(key, int):
                     # If key is 0, binary length is 1 (special case)
@@ -305,11 +287,10 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
                     key_lengths.append(1)
             return (min(key_lengths), max(key_lengths))
 
-        # Example usage:
-        dc_lum_min, dc_lum_max = get_min_max_key_lengths(dc_lum_table)
-        dc_chrom_min, dc_chrom_max = get_min_max_key_lengths(dc_chrom_table)
-        ac_lum_min, ac_lum_max = get_min_max_key_lengths(ac_lum_table)
-        ac_chrom_min, ac_chrom_max = get_min_max_key_lengths(ac_chrom_table)
+        dc_lum_min, dc_lum_max = get_min_max_key_lengths(serializable_reverse_huffman['dc_lum'])
+        dc_chrom_min, dc_chrom_max = get_min_max_key_lengths(serializable_reverse_huffman['dc_chrom'])
+        ac_lum_min, ac_lum_max = get_min_max_key_lengths(serializable_reverse_huffman['ac_lum'])
+        ac_chrom_min, ac_chrom_max = get_min_max_key_lengths(serializable_reverse_huffman['ac_chrom'])
 
 
         # with open("huffman_tables_decomp.json", "w") as f:
@@ -327,7 +308,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         #print("First 16 bits:", ''.join(str(int(bit)) for bit in compressed_bits[:50]))
         # Track previous DC coefficients for delta decoding
         #schauen dass das hier resettet wird
-        prev_dc = [0, 0, 0]
+        prev_dc_coeff = [0, 0, 0]
         current_pos = 0  # Current bit position in the array
         bit_length = len(compressed_bits)
 
@@ -348,38 +329,45 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
                 channel_idx = 2  # Cr
             # Get the appropriate reverse tables
             if channel_idx == 0:  # Luminance (Y)
-                dc_table = reverse_tables['dc_lum']
-                ac_table = reverse_tables['ac_lum']
+                dc_table = serializable_reverse_huffman['dc_lum']
+                ac_table = serializable_reverse_huffman['ac_lum']
                 min_dc_length = dc_lum_min
                 max_dc_length = dc_lum_max
                 min_ac_length = ac_lum_min
                 max_ac_length = ac_lum_max
 
             else:  # Chrominance (Cb or Cr)
-                dc_table = reverse_tables['dc_chrom']
-                ac_table = reverse_tables['ac_chrom']
+                dc_table = serializable_reverse_huffman['dc_chrom']
+                ac_table = serializable_reverse_huffman['ac_chrom']
                 min_dc_length = dc_chrom_min
                 max_dc_length = dc_chrom_max
                 min_ac_length = ac_chrom_min
                 max_ac_length = ac_chrom_max
 
             # Decode DC coefficient
-            dc_diff = None
+            delta_dc = None
+            # try this? eigentlich ist der code ja präfixfrei
+            code_found = False
             # Search for matching DC code
-            for l in range(min_dc_length, min(max_dc_length + 1, bit_length - current_pos + 1)):
+            for l in range(min_dc_length, min(max_dc_length+1, bit_length - current_pos + 1)):
                 # Build the code by checking bits directly
                 code = ''.join(str(int(bit)) for bit in compressed_bits[current_pos:current_pos + l])
                 #print(f"Checking {l}-bit code: '{code}'")
-                if code in dc_table:
+                if code in dc_table and not code_found:
                     #print(f"MATCH FOUND! Code '{code}' -> {dc_table[code]}")
-                    dc_diff = int(dc_table[code])
+                    #print('Match found at', current_pos, 'length', l)
+                    delta_dc = int(dc_table[code])
+                    code_found = True
                     current_pos += l
-                    dc_value = dc_diff + prev_dc[channel_idx]
-                    prev_dc[channel_idx] = dc_value
+                    dc_coeff = delta_dc + prev_dc_coeff[channel_idx]
+                    prev_dc_coeff[channel_idx] = dc_coeff
+                    # TODO this does not align with what we had in the compression algorithm, check for ac
+                    if block_num < 20:
+                        print(delta_dc)
                     break
 
             #FUCK INDENTATION
-            if dc_diff is None:
+            if delta_dc is None:
                 raise ValueError(f"Invalid bitstream: No matching DC code found at position {current_pos}")
 
             # Decode AC coefficients
@@ -400,7 +388,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
 
                 if ac_symbol is None:
                     raise ValueError(f"Invalid bitstream: No matching AC code found at position {current_pos}")
-
+                #TODO COMPARE 2ND BLOCK
                 ac_value, run_length = ac_symbol
 
                 if (ac_value, run_length) == (0,0):  # End of block
@@ -413,10 +401,10 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             ac_coeffs.extend([0] * (self.block_size * self.block_size - 1 - len(ac_coeffs)))
             #print(compressed_bits[513:513 + 20])
 
-            zigzag_coeffs = [dc_value] + ac_coeffs
+            zigzag_coeffs = [dc_coeff] + ac_coeffs
 
-            if block_num == 2:
-                print(zigzag_coeffs)
+            #if block_num == 2:
+                #print(zigzag_coeffs)
 
             # Convert from zigzag to block
             block = inverse_zigzag_order(zigzag_coeffs, self.zigzag_pattern, self.block_size)

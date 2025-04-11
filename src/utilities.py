@@ -4,6 +4,8 @@ from collections import Counter, namedtuple
 import heapq
 import numpy as np
 from plotly import graph_objects as go
+#from torch.distributed.rpc.internal import serialize
+
 
 def make_serializable(obj):
     if isinstance(obj, np.array):
@@ -44,6 +46,38 @@ def parse_huffman_table(huffman_table_str):
         fixed_tables[table_name] = fixed_table
 
     return fixed_tables
+
+
+import numpy as np
+import json
+
+
+def make_serializable_table(tables):
+    serializable_tables = {}
+    for table_name, table in tables.items():
+        serializable_tables[table_name] = {}
+        for key, value in table.items():
+            # Convert numpy types to native Python types
+            if isinstance(key, tuple):
+                # Option 1: Convert tuple to a string (e.g., "(0,1)")
+                serialized_key = str(
+                    tuple(int(x) if isinstance(x, (np.integer, np.int16, np.int32)) else x for x in key))
+
+                # Option 2: Convert tuple to a list (JSON-compatible)
+                # serialized_key = [int(x) if isinstance(x, (np.integer, np.int16, np.int32)) else x for x in key]
+            elif isinstance(key, (np.integer, np.int16, np.int32)):
+                serialized_key = int(key)
+            else:
+                serialized_key = key  # Keep as-is (int, str, etc.)
+
+            # Ensure the value is serializable
+            if isinstance(value, (np.integer, np.int16, np.int32)):
+                serialized_value = int(value)
+            else:
+                serialized_value = value
+
+            serializable_tables[table_name][serialized_key] = serialized_value
+    return serializable_tables
 '''
 def make_serializable(obj):
     if isinstance(obj, (np.integer, np.int32, np.int64, np.int8, np.int16)):
