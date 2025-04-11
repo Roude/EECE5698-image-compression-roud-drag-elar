@@ -268,6 +268,11 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             table_name: {v: k for k, v in table.items()}  # Invert key-value pairs
             for table_name, table in huffman_tables.items()
         }
+
+        #print(reverse_huffman['dc_chrom'])
+        #first = next(iter(reverse_huffman['dc_chrom'].values()))
+        #typ = type(first)
+        #print(f"The keys are of type: {typ}")
         #with open("huffman_tables_decomp_reverse.json", "w") as f:
             #json.dump(reverse_huffman, f, indent=2)
 
@@ -315,9 +320,10 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         prev_dc_coeff = [0, 0, 0]
         current_pos = 0  # Current bit position in the array
         bit_length = len(compressed_bits)
+        #print(num_total_y_blocks)
 
         #for testing purposes
-        #TODO replace
+        #TODO replace as this is memory inefficient and might kill your system for bigger pictures
         bit_stream = ''.join(compressed_bits)  # Join all compressed bits into a single stream
         bit_length = len(bit_stream)
 
@@ -399,6 +405,9 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             ac_coeffs.extend([0] * (self.block_size * self.block_size - 1 - len(ac_coeffs)))
 
             zigzag_coeffs = [dc_coeff] + ac_coeffs
+            if block_num == 8:
+                print(zigzag_coeffs)
+                print(len(zigzag_coeffs))
 
             # Convert from zigzag to block
             block = inverse_zigzag_order(zigzag_coeffs, self.zigzag_pattern, self.block_size)
@@ -428,7 +437,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             decoded_blocks[channel_idx][i:end_i, j:end_j] = block[:end_i - i, :end_j - j]
 
         print('Entropy decoding completed')
-        print(decoded_blocks[1])
+        #print(decoded_blocks[1])
         exit()
         return decoded_blocks
 
