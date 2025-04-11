@@ -262,19 +262,19 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         print('- Begin separating and inverting huffman tables')
         # Create separate reverse lookup dictionaries for each table
 
-        serializable_huffman = make_serializable_table(huffman_tables)
+        #serializable_huffman = make_serializable_table(huffman_tables)
 
-        serializable_reverse_huffman = {
+        reverse_huffman = {
             table_name: {v: k for k, v in table.items()}  # Invert key-value pairs
-            for table_name, table in serializable_huffman.items()
+            for table_name, table in huffman_tables.items()
         }
-        with open("huffman_tables_decomp_reverse.json", "w") as f:
-            json.dump(serializable_reverse_huffman, f, indent=2)
+        #with open("huffman_tables_decomp_reverse.json", "w") as f:
+            #json.dump(reverse_huffman, f, indent=2)
 
-        def get_min_max_key_lengths(serializable_reverse_huffman):
+        def get_min_max_key_lengths(reverse_huffman):
             # Get the lengths of all keys (as binary strings)
             key_lengths = []
-            for key in serializable_reverse_huffman.keys():
+            for key in reverse_huffman.keys():
                 # Case 1: Key is an integer (e.g., 0b101, 5, etc.)
                 if isinstance(key, int):
                     # If key is 0, binary length is 1 (special case)
@@ -291,34 +291,35 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
                     key_lengths.append(1)
             return (min(key_lengths), max(key_lengths))
 
-        dc_lum_min, dc_lum_max = get_min_max_key_lengths(serializable_reverse_huffman['dc_lum'])
-        dc_chrom_min, dc_chrom_max = get_min_max_key_lengths(serializable_reverse_huffman['dc_chrom'])
-        ac_lum_min, ac_lum_max = get_min_max_key_lengths(serializable_reverse_huffman['ac_lum'])
-        ac_chrom_min, ac_chrom_max = get_min_max_key_lengths(serializable_reverse_huffman['ac_chrom'])
+        dc_lum_min, dc_lum_max = get_min_max_key_lengths(reverse_huffman['dc_lum'])
+        dc_chrom_min, dc_chrom_max = get_min_max_key_lengths(reverse_huffman['dc_chrom'])
+        ac_lum_min, ac_lum_max = get_min_max_key_lengths(reverse_huffman['ac_lum'])
+        ac_chrom_min, ac_chrom_max = get_min_max_key_lengths(reverse_huffman['ac_chrom'])
 
+        #print(reverse_huffman['ac_chrom'])
 
         # with open("huffman_tables_decomp.json", "w") as f:
         # json.dump(huffman_tables, f, indent=2)
 
-        #print("Decoder DC Lum Table:", dc_lum_table)
-        #easier to use known channel dimensions
-        # Decode the bit stream
         chrominance_dimensions = (self.image_dimensions[0] // self.downsample_factor,
                              self.image_dimensions[1] // self.downsample_factor)
-        # todo begin with decompressed
+        num_total_y_blocks = (self.image_dimensions[0] // self.block_size) * (
+                    self.image_dimensions[1] // self.block_size)
+        num_total_c_blocks = (chrominance_dimensions[0] // self.block_size) * (
+                    chrominance_dimensions[1] // self.block_size)
+        num_total_blocks = num_total_y_blocks + 2 * num_total_c_blocks
 
         decoded_blocks = [np.empty(self.image_dimensions, dtype=np.int16), np.empty(chrominance_dimensions, dtype=np.uint16), np.empty(chrominance_dimensions, dtype=np.uint16)]
 
-        #print("First 16 bits:", ''.join(str(int(bit)) for bit in compressed_bits[:50]))
-        # Track previous DC coefficients for delta decoding
-        #schauen dass das hier resettet wird
+        #schauen dass das hier resettet wird?
         prev_dc_coeff = [0, 0, 0]
         current_pos = 0  # Current bit position in the array
         bit_length = len(compressed_bits)
 
-        num_total_y_blocks = (self.image_dimensions[0] // self.block_size) * (self.image_dimensions[1] // self.block_size)
-        num_total_c_blocks = (chrominance_dimensions[0] // self.block_size) * (chrominance_dimensions[1] // self.block_size)
-        num_total_blocks = num_total_y_blocks + 2 * num_total_c_blocks
+        #for testing purposes
+        #TODO replace
+        bit_stream = ''.join(compressed_bits)  # Join all compressed bits into a single stream
+        bit_length = len(bit_stream)
 
         #code_lengths = [len(code) for code in dc_lum_table.keys()]
         #print("Code length distribution:", Counter(code_lengths))
@@ -333,16 +334,16 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
                 channel_idx = 2  # Cr
             # Get the appropriate reverse tables
             if channel_idx == 0:  # Luminance (Y)
-                dc_table = serializable_reverse_huffman['dc_lum']
-                ac_table = serializable_reverse_huffman['ac_lum']
+                dc_table = reverse_huffman['dc_lum']
+                ac_table = reverse_huffman['ac_lum']
                 min_dc_length = dc_lum_min
                 max_dc_length = dc_lum_max
                 min_ac_length = ac_lum_min
                 max_ac_length = ac_lum_max
 
             else:  # Chrominance (Cb or Cr)
-                dc_table = serializable_reverse_huffman['dc_chrom']
-                ac_table = serializable_reverse_huffman['ac_chrom']
+                dc_table = reverse_huffman['dc_chrom']
+                ac_table = reverse_huffman['ac_chrom']
                 min_dc_length = dc_chrom_min
                 max_dc_length = dc_chrom_max
                 min_ac_length = ac_chrom_min
@@ -351,23 +352,17 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             # Decode DC coefficient
             delta_dc = None
             # try this? eigentlich ist der code ja präfixfrei
-            code_found = False
+            #code_found = False
             # Search for matching DC code
-            for l in range(min_dc_length, min(max_dc_length+1, bit_length - current_pos + 1)):
+            for l in range(min_dc_length, min(max_dc_length + 1, bit_length - current_pos + 1)):
                 # Build the code by checking bits directly
-                code = ''.join(str(int(bit)) for bit in compressed_bits[current_pos:current_pos + l])
-                #print(f"Checking {l}-bit code: '{code}'")
-                if code in dc_table and not code_found:
-                    #print(f"MATCH FOUND! Code '{code}' -> {dc_table[code]}")
-                    #print('Match found at', current_pos, 'length', l)
+                code = bit_stream[current_pos:current_pos + l]
+                if code in dc_table:
                     delta_dc = int(dc_table[code])
-                    code_found = True
+                    #code_found = True
                     current_pos += l
                     dc_coeff = delta_dc + prev_dc_coeff[channel_idx]
                     prev_dc_coeff[channel_idx] = dc_coeff
-                    # TODO this does not align with what we had in the compression algorithm, check for ac
-                    if block_num < 20:
-                        print(delta_dc)
                     break
 
             #FUCK INDENTATION
@@ -377,38 +372,33 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             # Decode AC coefficients
             ac_coeffs = []
             eob_found = False
-            #print("DC Table Samples:", list(dc_table.items())[:10])
-            #print("AC Table Samples:", list(ac_table.items())[:10])
 
             while not eob_found and len(ac_coeffs) < (self.block_size * self.block_size - 1):
                 # Search for matching AC code
                 ac_symbol = None
                 for l in range(min_ac_length, min(max_ac_length + 1, bit_length - current_pos + 1)):
-                    code = ''.join(str(int(bit)) for bit in compressed_bits[current_pos:current_pos + l])
+                    code = bit_stream[current_pos:current_pos + l]
                     if code in ac_table:
                         ac_symbol = ac_table[code]
                         current_pos += l
                         break
+                #print(type(ac_symbol))
 
                 if ac_symbol is None:
                     raise ValueError(f"Invalid bitstream: No matching AC code found at position {current_pos}")
-                #TODO COMPARE 2ND BLOCK
-                ac_value, run_length = ac_symbol
-
-                if (ac_value, run_length) == (0,0):  # End of block
+                if ac_symbol == (0, 0):  # End of block
                     eob_found = True
                 else:
+                    # Extract run length and value correctly
+                    # The AC symbols are stored as tuples (value, run_length) - matching the encoding
+                    ac_value, run_length = ac_symbol
                     # Add zeros for the run length
                     ac_coeffs.extend([0] * run_length)
                     ac_coeffs.append(ac_value)
                     # Pad with zeros if EOB was reached early
             ac_coeffs.extend([0] * (self.block_size * self.block_size - 1 - len(ac_coeffs)))
-            #print(compressed_bits[513:513 + 20])
 
             zigzag_coeffs = [dc_coeff] + ac_coeffs
-
-            #if block_num == 2:
-                #print(zigzag_coeffs)
 
             # Convert from zigzag to block
             block = inverse_zigzag_order(zigzag_coeffs, self.zigzag_pattern, self.block_size)
@@ -438,7 +428,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             decoded_blocks[channel_idx][i:end_i, j:end_j] = block[:end_i - i, :end_j - j]
 
         print('Entropy decoding completed')
-        #print(decoded_blocks[0])
+        print(decoded_blocks[1])
         exit()
         return decoded_blocks
 
@@ -647,7 +637,7 @@ compression_algorithm_reference = {
 if __name__ == '__main__':
     # Create a FlexibleJpegDecompress instance
     decompressor = FlexibleJpegDecompress()
-    test_image_path = os.path.join(os.getcwd(), "tmp", "decomp_test_full.txt.rde")
+    test_image_path = os.path.join(os.getcwd(), "tmp", "flex_jpeg_comp.txt.rde")
 
     # Decompress the image from the fixed path
     decompressed_image, save_path = decompressor(test_image_path)

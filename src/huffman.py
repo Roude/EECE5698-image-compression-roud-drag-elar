@@ -49,6 +49,8 @@ def run_length_encoding(zigzag_array):
     :return: List of (value, zero_count) tuples
     """
     encoded = []
+    #force a zero here, otherwise a problem with EOB, equivalent of getting rid of that during quantization
+    zigzag_array[-1] = 0
     zero_count = 0
     for val in zigzag_array:
         if val == 0:

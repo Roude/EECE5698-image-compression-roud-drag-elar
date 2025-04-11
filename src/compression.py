@@ -344,7 +344,8 @@ class FlexibleJpeg(CompressImage):
         all_blocks = []
 
         #all_delta_dc = []  # To collect all DC coefficients
-
+        #TODO didn't actually make it 100 percent symmetric to previous one
+        block_index = 0
         for channel_idx, channel in enumerate(quantized_blocks):
             #print(channel_idx)
             # easiest fix to stop integer overflow later during the calculations
@@ -354,6 +355,8 @@ class FlexibleJpeg(CompressImage):
                 for j in range(0, channel.shape[1], self.block_size):
                     block = self._get_padded_block(channel, i, j)
                     zigzagged = zigzag_order(block, self.zigzag_pattern)
+                    #if block_index == 0:
+                        #print(zigzagged)
 
                     # DC encoding (Y channel)
                     delta_dc = zigzagged[0] - prev_dc[channel_idx]
@@ -375,6 +378,9 @@ class FlexibleJpeg(CompressImage):
                         dc_chrom_symbols.append(delta_dc)
                     combined = np.array([delta_dc] + rle_block, dtype=object)
                     all_blocks.append(combined)
+                    if block_index == 10:
+                        print(combined)
+                    block_index += 1
         #print(all_blocks)
 
         print(' - Begin Huffman table building')
@@ -408,6 +414,7 @@ class FlexibleJpeg(CompressImage):
         print(' - Begin Huffman encoding')
 
         block_index = 0
+        #print(len(all_blocks))
         for block in all_blocks:
             # Determine which channel we're processing based on block index
             if block_index < num_y_blocks:
@@ -417,6 +424,11 @@ class FlexibleJpeg(CompressImage):
             else:
                 channel_idx = 2  # Cr
 
+
+            #TODO COMPARE EVERY PART HERE WITH DECOMPRESSION
+            if block_index == 10:
+                print(block)
+                print(len(block))
             # Extract delta_dc and rle_block from the combined array
             delta_dc = block[0]
             rle_block = block[1:]
@@ -465,9 +477,9 @@ class FlexibleJpeg(CompressImage):
         """
         self.save_location = settings.get("save_location", "")
         if self.save_location == "":
-            self.save_location = os.path.join(os.getcwd(),
-                                                     "tmp",
-                                                     f"flex_jpeg_comp_output_{datetime.now().strftime("%Y%m%d_%H%M%S")}")
+            #self.save_location = os.path.join(os.getcwd(), "tmp", f"flex_jpeg_comp_output_{datetime.now().strftime("%Y%m%d_%H%M%S")}")
+            self.save_location = os.path.join(os.getcwd(), "tmp",
+                                              f"flex_jpeg_comp")
 
         # Set file paths for both formats
         self.binary_save_location = f"{self.save_location}.bin.rde"
