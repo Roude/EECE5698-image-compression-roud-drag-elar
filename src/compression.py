@@ -504,8 +504,9 @@ class FlexibleJpeg(CompressImage):
 
         #does not include some overhead from signifiers
         print('Total theoretical size: ', self.calculate_size(all_bits, serializable_tables, serializable_settings), 'kB')
-        '''
-                with open(self.debugging_save_location, 'w') as text_file:
+
+        #with open(self.debugging_save_location, 'w') as text_file:
+        """
             text_file.write("image_dimensions :: ")
             text_file.write(str(self.image_dimensions))
             text_file.write(" :: settings_start :: ")
@@ -517,7 +518,8 @@ class FlexibleJpeg(CompressImage):
             text_file.write("bit_data :: ")
             text_file.write(str(all_bits))
             text_file.write(" :: image_end")
-        '''
+        """
+
 
 
     def calculate_size(self, all_bits, serialized_huffman_tables, serialized_settings):
