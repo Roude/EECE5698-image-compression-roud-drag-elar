@@ -233,26 +233,16 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             else:
                 bit_data_str = content[bit_data_start:bit_data_end]
 
-            ### BE CAREFUL WITH eval
             # Process settings to a proper Python dictionary
             settings = ast.literal_eval(settings_str)
-            #huffman_tables = eval(huffman_table_str)
             huffman_tables = parse_huffman_table(huffman_table_str)
-
-            #print("Loaded tables:",huffman_tables.keys())
-
-            #use bool perhaps?
-            #bit_data = np.array([bool(int(c)) for c in bit_data_str], dtype=np.uint8)
-
-            #with open("huffman_tables_decomp.json", "w") as f:
-                #json.dump(huffman_tables, f, indent=2)
-
-            self.image_dimensions = eval(dims)
+            bit_data = np.array([bool(int(c)) for c in bit_data_str], dtype=np.bool)
+            self.image_dimensions = ast.literal_eval(dims)
 
             print('- Evaluated succesfully')
 
         print('File decoding process ended')
-        return bit_data_str, huffman_tables, settings
+        return bit_data, huffman_tables, settings
 
     def entropy_decode(self, compressed_bits, huffman_tables):
         """
@@ -419,6 +409,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             decoded_blocks[channel_idx][i:end_i, j:end_j] = block[:end_i - i, :end_j - j]
 
         print('Entropy decoding completed')
+        print(decoded_blocks[2])
         return decoded_blocks
 
 
@@ -626,7 +617,7 @@ compression_algorithm_reference = {
 if __name__ == '__main__':
     # Create a FlexibleJpegDecompress instance
     decompressor = FlexibleJpegDecompress()
-    test_image_path = os.path.join(os.getcwd(), "tmp", "flex_jpeg_comp.rde")
+    test_image_path = os.path.join(os.getcwd(), "tmp", "flex_jpeg_compverbose.rde")
 
     # Decompress the image from the fixed path
     decompressed_image, save_path = decompressor(test_image_path)

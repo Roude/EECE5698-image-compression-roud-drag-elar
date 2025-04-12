@@ -460,8 +460,8 @@ class FlexibleJpeg(CompressImage):
                                               f"flex_jpeg_comp")
 
         # Set file paths for both formats
-        #self.binary_save_location = f"{self.save_location}.bin.rde"
-        self.text_save_location = f"{self.save_location}.rde"
+        self.binary_save_location = f"{self.save_location}.rde"
+        self.debugging_save_location = f"{self.save_location}.verbose.rde"
 
         serializable_tables = make_serializable_table(huffman_tables)
 
@@ -511,13 +511,10 @@ class FlexibleJpeg(CompressImage):
             #binary_file.write(header_length.to_bytes(4, byteorder='big'))
             #binary_file.write(header_json)
             #binary_file.write(binary_data)
-
-        with open(self.text_save_location, 'w') as text_file:
-            #first won't include itself
-            text_file.write("theoretical_size :: ")
-            text_file.write(str(self.calculate_size(all_bits, serializable_tables, serializable_settings)))
-            text_file.write(" kB :: ")
-            text_file.write(" :: image_dimensions :: ")
+        #does not include some overhead from signifiers
+        print('Total theoretical size: ', self.calculate_size(all_bits, serializable_tables, serializable_settings), 'kB')
+        with open(self.debugging_save_location, 'w') as text_file:
+            text_file.write("image_dimensions :: ")
             text_file.write(str(self.image_dimensions))
             text_file.write(" :: settings_start :: ")
             text_file.write(str(serializable_settings))
@@ -526,7 +523,6 @@ class FlexibleJpeg(CompressImage):
             text_file.write(str(serializable_tables))
             text_file.write(" :: huffman_table_end :: ")
             text_file.write("bit_data :: ")
-            #use all bits rather than the string
             text_file.write(str(all_bits))
             text_file.write(" :: image_end")
 
