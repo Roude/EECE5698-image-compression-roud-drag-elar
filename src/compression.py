@@ -22,6 +22,8 @@ from plotly.subplots import make_subplots
 from skimage.color import convert_colorspace
 from skimage.io import imread
 from scipy.fftpack import dct, idct
+from torch.nn.functional import channel_shuffle
+
 from src.utilities import display_greyscale_image, make_serializable_table
 from src.huffman import generate_zigzag_pattern, zigzag_order, run_length_encoding, build_huffman_tree, generate_huffman_codes, huffman_encode
 from collections import Counter
@@ -154,9 +156,12 @@ class FlexibleJpeg(CompressImage):
         :param kwargs:
         :return:
         """
-        # Represent as 8-bit unsigned int.
+        #TODO implement quality factor
+        #TODO look into how imread works
+
         if isinstance(image, str):
             image_uncompressed = io.imread(image)
+            self.original_path = image
         else:
             image_uncompressed = image
         if isinstance(settings, str):
@@ -164,6 +169,7 @@ class FlexibleJpeg(CompressImage):
                 settings = yaml.safe_load(settings_file)
 
         self.image_dimensions = image_uncompressed.shape[:2]
+        self.channel_amount = image_uncompressed.shape[2]
         #print(self.image_dimensions)
         # Calculate total blocks per channel (must match decompression logic)
         self.chrominance_dimensions = (self.image_dimensions[0] // self.downsample_factor,
@@ -201,7 +207,7 @@ class FlexibleJpeg(CompressImage):
                                      axes=([2],[1])) +
                         self.YCbCr_conversion_offset,
                         dtype=np.uint8)
-
+    #TODO perhaps establish vertical and horizontal downsampling instead of all as one
     def downsample_chrominance(self, YCbCr_image, **kwargs):
         """
         Apply downsampling factor to YCbCr formatted image and save the image as a tuple of 3 matricies with the
@@ -307,10 +313,13 @@ class FlexibleJpeg(CompressImage):
                                                       self.default_lumiance_quantization_table)
 
         padded_matrix = pad_matrix(frequency_domain_block, self.block_size, self.block_size)
+        #print(padded_matrix)
         if ch_num == 0:
             padded_frequency_domain_matrix = (padded_matrix / self.lumiance_quantization_table).astype(np.int8)
         else:
             padded_frequency_domain_matrix = (padded_matrix / self.chrominance_quantization_table).astype(np.int8)
+        # needs to be zero for RLE to be successful
+        padded_frequency_domain_matrix[-1] = 0
         return padded_frequency_domain_matrix[0:frequency_domain_block.shape[0],0:frequency_domain_block.shape[1]]
 
     def entropy_encode(self, quantized_blocks, **kwargs):
@@ -330,6 +339,7 @@ class FlexibleJpeg(CompressImage):
         #Human vision is less sensitive to color variations than to brightness variations
         #so we can be more aggressive with compression in the chrominance channels
         # ac and dc use different distributions thus it makes sense to separate them
+        # using different dictionaries is only beneficial as long as the quantization earlier is strong enough
         dc_lum_symbols = []  # DC coefficients for luminance (Y)
         dc_chrom_symbols = []  # DC coefficients for chrominance (Cb, Cr combined)
         ac_lum_symbols = []  # AC coefficients for luminance
@@ -490,7 +500,6 @@ class FlexibleJpeg(CompressImage):
             "padding_bits": padding_needed,
             "image_dimensions": self.image_dimensions
         }
-        #TODO use this for txt as well?
         header_json = json.dumps(header).encode('utf-8')
 
         # Write binary version
@@ -503,7 +512,29 @@ class FlexibleJpeg(CompressImage):
             binary_file.write(binary_data)
 
         #does not include some overhead from signifiers
-        print('Total theoretical size: ', self.calculate_size(all_bits, serializable_tables, serializable_settings), 'kB')
+        compressed_size_theoretical = self.calculate_size(all_bits, serializable_tables, serializable_settings)
+        print('Total theoretical size: ', compressed_size_theoretical, 'kB')
+
+        compressed_size = os.path.getsize(self.binary_save_location)
+        uncompressed_size = os.path.getsize(self.original_path)
+
+        # For a standard RGB image:
+        height, width = self.image_dimensions
+        channels = self.channel_amount
+        # assuming one byte per channel
+        uncompressed_size_theoretical = height * width * channels
+
+        # Calculate compression ratio
+        # Or other way around?
+        compression_ratio = compressed_size / uncompressed_size
+
+        # Print results
+        print('Theoretical compressed size: ', compressed_size_theoretical, 'kB')
+        print(f'Actual compressed size: {compressed_size / 1024:.2f} kB')
+        print(f'Theoretical uncompressed  size: {uncompressed_size_theoretical / 1024:.2f} kB')
+        print(f'Actual uncompressed size: {uncompressed_size / 1024:.2f} kB')
+        print(f'Compression ratio: {compression_ratio:.2f}:1')
+        print(f'Space savings: {(1 - compression_ratio) * 100:.2f}%')
 
         #with open(self.debugging_save_location, 'w') as text_file:
         """
@@ -566,6 +597,8 @@ if __name__ == '__main__':
     flexible_jpeg = FlexibleJpeg()
 
     test_image_path = os.path.join(os.getcwd(), "assets", "unit_test_images", "gradients_16x32.tif")
+    #test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "landscape.png")
+
     compression_config = os.path.join(os.getcwd(),
                                               "compression_configurations",
                                               "homemade_compression_jpeg_like.yaml")
