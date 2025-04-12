@@ -187,10 +187,13 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         unprocessed_blocks = self.process_blocks_inverse(quantized_blocks)
         upsampled_image = self.upsample_chrominance(unprocessed_blocks)
         rgb_image = self.convert_colorspace_inverse(upsampled_image)
+        print(f"Successfully decompressed image")
 
         # Save the decompressed image
         if save_location:
             imageio.imwrite(save_location, rgb_image.astype(np.uint8))
+
+        print(f"Decompressed image saved to: {save_location}")
 
         return rgb_image, save_location
 
@@ -232,7 +235,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
 
             ### BE CAREFUL WITH eval
             # Process settings to a proper Python dictionary
-            settings = eval(settings_str)
+            settings = ast.literal_eval(settings_str)
             #huffman_tables = eval(huffman_table_str)
             huffman_tables = parse_huffman_table(huffman_table_str)
 
@@ -405,6 +408,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
                 block_idx = block_num - num_total_y_blocks - num_total_c_blocks
 
             #ToDo check if they are not exactly divisible, does this get unnecessarily repeated, init before the loop
+            #TODO what happens when image resolution and chromiance resolution are not divisible by block_size
             blocks_per_row = cols // self.block_size
             i = (block_idx // blocks_per_row) * self.block_size
             j = (block_idx % blocks_per_row) * self.block_size
@@ -415,7 +419,6 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             decoded_blocks[channel_idx][i:end_i, j:end_j] = block[:end_i - i, :end_j - j]
 
         print('Entropy decoding completed')
-        print(decoded_blocks)
         return decoded_blocks
 
 
@@ -623,10 +626,7 @@ compression_algorithm_reference = {
 if __name__ == '__main__':
     # Create a FlexibleJpegDecompress instance
     decompressor = FlexibleJpegDecompress()
-    test_image_path = os.path.join(os.getcwd(), "tmp", "flex_jpeg_comp.txt.rde")
+    test_image_path = os.path.join(os.getcwd(), "tmp", "flex_jpeg_comp.rde")
 
     # Decompress the image from the fixed path
     decompressed_image, save_path = decompressor(test_image_path)
-
-    print(f"Successfully decompressed image")
-    print(f"Decompressed image saved to: {save_path}")

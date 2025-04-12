@@ -165,13 +165,22 @@ class FlexibleJpeg(CompressImage):
 
         self.image_dimensions = image_uncompressed.shape[:2]
         #print(self.image_dimensions)
+        # Calculate total blocks per channel (must match decompression logic)
+        self.chrominance_dimensions = (self.image_dimensions[0] // self.downsample_factor,
+                                  self.image_dimensions[1] // self.downsample_factor)
 
+        self.num_y_blocks = (self.image_dimensions[0] // self.block_size) * (self.image_dimensions[1] // self.block_size)
+        self.num_c_blocks = (self.chrominance_dimensions[0] // self.block_size) * (self.chrominance_dimensions[1] // self.block_size)
+        #num_total_blocks = num_y_blocks + 2 * num_c_blocks
+
+        #TODO try to make it compatible - might not even be an issue?
         if self.image_dimensions[0] % self.block_size != 0 or self.image_dimensions[1] % self.block_size != 0:
-            print('Warning! dimensions not divisible by', {self.blocksize})
+            print('Warning! Image Dimensions not divisible by', {self.blocksize})
+
+        if self.chrominance_dimensions[0] % self.block_size != 0 or self.chrominance_dimensions[1] % self.block_size != 0:
+            print('Warning! Chromiance dimensions not divisible by', {self.blocksize})
 
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
-        #TODO check out the data format
-        #print(image_uncompressed)
         YCbCrImage = self.convert_colorspace(image_uncompressed, **settings)
         downsampled_image = self.downsample_chrominance(YCbCrImage, **settings)
         block_processed_channels = self.process_blocks(downsampled_image, **settings)
@@ -299,7 +308,7 @@ class FlexibleJpeg(CompressImage):
 
         padded_matrix = pad_matrix(frequency_domain_block, self.block_size, self.block_size)
         if ch_num == 0:
-            padded_frequency_domain_matrix = (padded_matrix/self.lumiance_quantization_table).astype(np.int8)
+            padded_frequency_domain_matrix = (padded_matrix / self.lumiance_quantization_table).astype(np.int8)
         else:
             padded_frequency_domain_matrix = (padded_matrix / self.chrominance_quantization_table).astype(np.int8)
         return padded_frequency_domain_matrix[0:frequency_domain_block.shape[0],0:frequency_domain_block.shape[1]]
@@ -310,11 +319,8 @@ class FlexibleJpeg(CompressImage):
         :param: quantized_blocks: The output of quantize_block
         :return: compressed bits, the huffman code
         """
-        #elapsed = time.time() - start_time
         print('Entropy encoding started')
-        #print(' - Begin preliminary encoding ({self.elapsed:.3f}s')
         print(' - Begin preliminary encoding')
-        #print(quantized_blocks)
         if self.block_size == 8:
             self.zigzag_pattern = self.default_zigzag_pattern
         else:
@@ -332,31 +338,15 @@ class FlexibleJpeg(CompressImage):
         # Track previous DC values separately for each channel
         prev_dc = [0, 0, 0]  # [Y, Cb, Cr]
 
-        # Calculate total blocks per channel (must match decompression logic)
-        chrominance_dimensions = (self.image_dimensions[0] // self.downsample_factor,
-                                  self.image_dimensions[1] // self.downsample_factor)
-
-        num_y_blocks = (self.image_dimensions[0] // self.block_size) * (self.image_dimensions[1] // self.block_size)
-        num_c_blocks = (chrominance_dimensions[0] // self.block_size) * (chrominance_dimensions[1] // self.block_size)
-        num_total_blocks = num_y_blocks + 2 * num_c_blocks
-
         # Process blocks in decompression order: ALL Y -> ALL Cb -> ALL Cr
         all_blocks = []
-        #all_delta_dc = []  # To collect all DC coefficients
         block_index = 0
         for channel_idx, channel in enumerate(quantized_blocks):
-            #print(channel_idx)
             # easiest fix to stop integer overflow later during the calculations
             channel = quantized_blocks[channel_idx].astype(np.int16)
-            if channel_idx == 0:
-                print(channel)
-                print(len(channel))
-            # print(channel)
             for i in range(0, channel.shape[0], self.block_size):
                 for j in range(0, channel.shape[1], self.block_size):
                     block = self._get_padded_block(channel, i, j)
-                    #if block_index == 10:
-                        #print(block)
                     zigzagged = zigzag_order(block, self.zigzag_pattern)
                     #if block_index == 0:
                         #print(zigzagged)
@@ -364,11 +354,6 @@ class FlexibleJpeg(CompressImage):
                     # DC encoding (Y channel)
                     delta_dc = zigzagged[0] - prev_dc[channel_idx]
                     prev_dc[channel_idx] = zigzagged[0]
-                    # print(channel_idx)
-                    # print('delta:',delta_dc)
-                    # print('dc:',zigzagged[0])
-                    # print('i:',i)
-                    # print('j:',j)
 
                     # AC encoding
                     rle_block = run_length_encoding(zigzagged[1:])
@@ -382,7 +367,6 @@ class FlexibleJpeg(CompressImage):
                     combined = np.array([delta_dc] + rle_block, dtype=object)
                     all_blocks.append(combined)
                     block_index += 1
-        #print(len(all_blocks))
 
         print(' - Begin Huffman table building')
 
@@ -398,8 +382,7 @@ class FlexibleJpeg(CompressImage):
         dc_chrom_codes = build_huffman_table(dc_chrom_symbols)
         ac_lum_codes = build_huffman_table(ac_lum_symbols)
         ac_chrom_codes = build_huffman_table(ac_chrom_symbols)
-        #actual JPEG usually uses predefined Huffman codes
-        # apparently leaving out the zero counter doesn't change the final encoding data size
+        # actual JPEG usually uses predefined Huffman codes - makes it quicker
         # Combine all Huffman tables
         huffman_tables = {
             'dc_lum': dc_lum_codes,  # DC luminance (Y)
@@ -415,19 +398,15 @@ class FlexibleJpeg(CompressImage):
         print(' - Begin Huffman encoding')
 
         block_index = 0
-        #print(len(all_blocks))
         for block in all_blocks:
             # Determine which channel we're processing based on block index
-            if block_index < num_y_blocks:
+            if block_index < self.num_y_blocks:
                 channel_idx = 0  # Y
-            elif block_index < num_y_blocks + num_c_blocks:
+            elif block_index < self.num_y_blocks + self.num_c_blocks:
                 channel_idx = 1  # Cb
             else:
                 channel_idx = 2  # Cr
 
-            #if block_index == 8:
-                #print(block)
-                #print(len(block))
             # Extract delta_dc and rle_block from the combined array
             delta_dc = block[0]
             rle_block = block[1:]
@@ -481,10 +460,9 @@ class FlexibleJpeg(CompressImage):
                                               f"flex_jpeg_comp")
 
         # Set file paths for both formats
-        self.binary_save_location = f"{self.save_location}.bin.rde"
-        self.text_save_location = f"{self.save_location}.txt.rde"
+        #self.binary_save_location = f"{self.save_location}.bin.rde"
+        self.text_save_location = f"{self.save_location}.rde"
 
-        #huffman_table_str = str({str(k): v for k, v in huffman_tables.items()})
         serializable_tables = make_serializable_table(huffman_tables)
 
         with open("huffman_tables_comp.json", "w") as f:
@@ -506,29 +484,17 @@ class FlexibleJpeg(CompressImage):
 
         # Process all bit strings into a single binary stream
         all_bits = "".join(encoded_data_stream)
-        #print(all_bits[513:513 + 20])
 
         # Ensure the length is multiple of 8 for byte conversion
         padding_needed = 8 - (len(all_bits) % 8) if len(all_bits) % 8 != 0 else 0
         all_bits += '0' * padding_needed
-
-        #print("First 16 bits:", ''.join(str(int(bit)) for bit in all_bits[:50]))
-
-        #print(len(all_bits)/8)
-        #how_many = Counter(str(all_bits))
-        #print(how_many)
 
         binary_data = bytearray()
         for i in range(0, len(all_bits), 8):
             byte = int(all_bits[i:i + 8], 2)  # Convert 8 bits to a byte
             binary_data.append(byte)
 
-
-        # Convert to hex representation for cleaner viewing
-        #hex_representation = binary_data.hex()
-
         # Create header as JSON for better parsing
-        # useful for txt as well?
         header = {
             "settings": serializable_settings,
             "huffman_tables": serializable_tables,
@@ -538,14 +504,12 @@ class FlexibleJpeg(CompressImage):
         header_json = json.dumps(header).encode('utf-8')
 
         # Write to file with clear separator between header and binary data
-
-        #TODO maybe you don't need wb
-        with open(self.binary_save_location, 'wb') as binary_file:
+        #with open(self.binary_save_location, 'wb') as binary_file:
             # Write header length as 4-byte integer
-            header_length = len(header_json)
+            #header_length = len(header_json)
             #shows the length of it
-            binary_file.write(header_length.to_bytes(4, byteorder='big'))
-            binary_file.write(header_json)
+            #binary_file.write(header_length.to_bytes(4, byteorder='big'))
+            #binary_file.write(header_json)
             #binary_file.write(binary_data)
 
         with open(self.text_save_location, 'w') as text_file:
@@ -556,7 +520,6 @@ class FlexibleJpeg(CompressImage):
             text_file.write(" :: image_dimensions :: ")
             text_file.write(str(self.image_dimensions))
             text_file.write(" :: settings_start :: ")
-            # this or settings?
             text_file.write(str(serializable_settings))
             text_file.write(" :: settings_end :: ")
             text_file.write("huffman_table :: ")
