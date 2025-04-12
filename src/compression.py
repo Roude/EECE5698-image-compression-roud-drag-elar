@@ -464,17 +464,6 @@ class FlexibleJpeg(CompressImage):
         self.debugging_save_location = f"{self.save_location}.verbose.rde"
 
         serializable_tables = make_serializable_table(huffman_tables)
-
-        with open("huffman_tables_comp.json", "w") as f:
-            json.dump(serializable_tables, f, indent=2)
-
-        serializable_reverse_tables = {
-            table_name: {v: k for k, v in table.items()}  # Invert key-value pairs
-            for table_name, table in serializable_tables.items()
-        }
-        with open("huffman_tables_comp_reverse.json", "w") as f:
-            json.dump(serializable_reverse_tables, f, indent=2)
-
         serializable_settings = {}
         for key, value in settings.items():
             if hasattr(value, 'tolist') and callable(getattr(value, 'tolist')):
@@ -498,22 +487,25 @@ class FlexibleJpeg(CompressImage):
         header = {
             "settings": serializable_settings,
             "huffman_tables": serializable_tables,
-            "padding_bits": padding_needed
+            "padding_bits": padding_needed,
+            "image_dimensions": self.image_dimensions
         }
         #TODO use this for txt as well?
         header_json = json.dumps(header).encode('utf-8')
 
-        # Write to file with clear separator between header and binary data
-        #with open(self.binary_save_location, 'wb') as binary_file:
-            # Write header length as 4-byte integer
-            #header_length = len(header_json)
-            #shows the length of it
-            #binary_file.write(header_length.to_bytes(4, byteorder='big'))
-            #binary_file.write(header_json)
-            #binary_file.write(binary_data)
+        # Write binary version
+        with open(self.binary_save_location, 'wb') as binary_file:
+            # Write header length as 4-byte integer (big-endian)
+            binary_file.write(len(header_json).to_bytes(4, byteorder='big'))
+            # Write header JSON
+            binary_file.write(header_json)
+            # Write binary data
+            binary_file.write(binary_data)
+
         #does not include some overhead from signifiers
         print('Total theoretical size: ', self.calculate_size(all_bits, serializable_tables, serializable_settings), 'kB')
-        with open(self.debugging_save_location, 'w') as text_file:
+        '''
+                with open(self.debugging_save_location, 'w') as text_file:
             text_file.write("image_dimensions :: ")
             text_file.write(str(self.image_dimensions))
             text_file.write(" :: settings_start :: ")
@@ -525,6 +517,8 @@ class FlexibleJpeg(CompressImage):
             text_file.write("bit_data :: ")
             text_file.write(str(all_bits))
             text_file.write(" :: image_end")
+        '''
+
 
     def calculate_size(self, all_bits, serialized_huffman_tables, serialized_settings):
         # doesn't include miniscule header information
@@ -544,9 +538,9 @@ class FlexibleJpeg(CompressImage):
 
         total_size = encoded_image_size + huffman_tables_size + settings_size
 
-        print(f"Encoded data: {encoded_image_size:.2f} KB")
-        print(f"Huffman table: {huffman_tables_size:.2f} KB")
-        print(f"Settings: {settings_size:.2f} KB")
+        print(f"Encoded data: {encoded_image_size:.2f} kB")
+        print(f"Huffman table: {huffman_tables_size:.2f} kB")
+        print(f"Settings: {settings_size:.2f} kB")
 
         return round(total_size, 2)
 

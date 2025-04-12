@@ -23,10 +23,11 @@ import re
 import json
 import struct
 from collections import Counter
-from src.utilities import parse_huffman_table, make_serializable_table
+from src.utilities import parse_huffman_table, make_serializable_table, bytes_to_bools
 
 from src.compression import BaselineJpeg, FlexibleJpeg
 from src.huffman import generate_zigzag_pattern, inverse_zigzag_order
+
 
 #makes it so it doesn't print
 np.set_printoptions(formatter={
@@ -205,42 +206,62 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         """
         print('File decoding process started')
         print('- Begin extraction')
+        if file_path.endswith('.verbose.rde'):
+            with open(file_path, 'r') as file:
+                content = file.read()
 
-        with open(file_path, 'r') as file:
-            content = file.read()
+                dims_start = content.find("image_dimensions :: ") + len("image_dimensions :: ")
+                dims_end = content.find(" :: settings_start")
+                dims = content[dims_start:dims_end]
+                # Extract settings
+                settings_start = content.find("settings_start :: ") + len("settings_start :: ")
+                settings_end = content.find(" :: settings_end")
+                settings_str = content[settings_start:settings_end]
 
-            dims_start = content.find("image_dimensions :: ") + len("image_dimensions :: ")
-            dims_end = content.find(" :: settings_start")
-            dims = content[dims_start:dims_end]
-            # Extract settings
-            settings_start = content.find("settings_start :: ") + len("settings_start :: ")
-            settings_end = content.find(" :: settings_end")
-            settings_str = content[settings_start:settings_end]
+                # Extract Huffman table
+                huffman_start = content.find("huffman_table :: ") + len("huffman_table :: ")
+                huffman_end = content.find(" :: huffman_table_end")
+                huffman_table_str = content[huffman_start:huffman_end]
 
-            # Extract Huffman table
-            huffman_start = content.find("huffman_table :: ") + len("huffman_table :: ")
-            huffman_end = content.find(" :: huffman_table_end")
-            huffman_table_str = content[huffman_start:huffman_end]
+                # Extract bit data
+                bit_data_start = content.find("bit_data :: ") + len("bit_data :: ")
+                bit_data_end = content.find(" :: image_end")
 
-            # Extract bit data
-            bit_data_start = content.find("bit_data :: ") + len("bit_data :: ")
-            bit_data_end = content.find(" :: image_end")
+                print('- Extracted succesfully')
 
-            print('- Extracted succesfully')
+                if bit_data_end == -1:  # If "image_end" marker not found
+                    bit_data_str = content[bit_data_start:]
+                else:
+                    bit_data_str = content[bit_data_start:bit_data_end]
 
-            if bit_data_end == -1:  # If "image_end" marker not found
-                bit_data_str = content[bit_data_start:]
-            else:
-                bit_data_str = content[bit_data_start:bit_data_end]
+                # Process settings to a proper Python dictionary
+                settings = ast.literal_eval(settings_str)
+                # Safely evaluate the main dictionary
+                raw_tables = ast.literal_eval(huffman_table_str)
+                huffman_tables = parse_huffman_table(raw_tables)
+                bit_data = np.array([bool(int(c)) for c in bit_data_str], dtype=np.bool)
+                self.image_dimensions = ast.literal_eval(dims)
+        elif file_path.endswith('.rde'):
+            with open(file_path, 'rb') as file:
+                # Read header length (first 4 bytes)
+                header_length = int.from_bytes(file.read(4), byteorder='big')
 
-            # Process settings to a proper Python dictionary
-            settings = ast.literal_eval(settings_str)
-            huffman_tables = parse_huffman_table(huffman_table_str)
-            bit_data = np.array([bool(int(c)) for c in bit_data_str], dtype=np.bool)
-            self.image_dimensions = ast.literal_eval(dims)
+                # Read header JSON
+                header_json = file.read(header_length).decode('utf-8')
+                header = json.loads(header_json)
 
-            print('- Evaluated succesfully')
+                byte_data = file.read()
+                bit_data = bytes_to_bools(byte_data, header['padding_bits'])
 
+                # Get other components from header
+                settings = header['settings']
+                huffman_tables_raw = header['huffman_tables']
+                huffman_tables = parse_huffman_table(huffman_tables_raw)
+                self.image_dimensions = header['image_dimensions']
+
+                # Convert to boolean array
+                #bit_data = np.array([bool(int(c)) for c in bit_data_str], dtype=np.bool)
+        print('- Evaluated succesfully')
         print('File decoding process ended')
         return bit_data, huffman_tables, settings
 
@@ -617,7 +638,8 @@ compression_algorithm_reference = {
 if __name__ == '__main__':
     # Create a FlexibleJpegDecompress instance
     decompressor = FlexibleJpegDecompress()
-    test_image_path = os.path.join(os.getcwd(), "tmp", "flex_jpeg_compverbose.rde")
+    test_image_path = os.path.join(os.getcwd(), "tmp", "flex_jpeg_comp.rde")
+    #test_image_path = os.path.join(os.getcwd(), "tmp", "flex_jpeg_comp.verbose.rde")
 
     # Decompress the image from the fixed path
     decompressed_image, save_path = decompressor(test_image_path)

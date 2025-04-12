@@ -14,7 +14,7 @@ def make_serializable(obj):
         return obj
 
 
-def parse_huffman_table(huffman_table_str):
+def parse_huffman_table(raw_huffman_tables):
     """Parse Huffman table string and ensure proper tuple types"""
     import ast
     from collections.abc import Mapping
@@ -27,15 +27,12 @@ def parse_huffman_table(huffman_table_str):
                 return v
         return v
 
-    # Safely evaluate the main dictionary
-    raw_tables = ast.literal_eval(huffman_table_str)
-
-    if not isinstance(raw_tables, Mapping):
+    if not isinstance(raw_huffman_tables, Mapping):
         raise ValueError("Huffman table must be a dictionary")
 
     # Process each component table
     fixed_tables = {}
-    for table_name, table in raw_tables.items():
+    for table_name, table in raw_huffman_tables.items():
         if not isinstance(table, Mapping):
             raise ValueError(f"Table {table_name} must be a dictionary")
 
@@ -96,6 +93,25 @@ def make_serializable(obj):
         return obj
 '''
 
+
+def bytes_to_bools(byte_data, padding_bits=0):
+    """
+    Directly convert bytes to a numpy bool array without string conversion
+    :param byte_data: bytes object containing packed bits
+    :param padding_bits: number of padding bits to remove from end
+    :return: numpy array of bools (1 bit per element)
+    """
+    # Convert bytes to uint8 array (no copy, just view)
+    byte_array = np.frombuffer(byte_data, dtype=np.uint8)
+
+    # Unpack bits directly to bool array
+    bool_array = np.unpackbits(byte_array)
+
+    # Remove padding if needed
+    if padding_bits > 0:
+        bool_array = bool_array[:-padding_bits]
+
+    return bool_array
 
 def display_greyscale_image(fig, image_array, **kwargs):
     fig.add_trace(go.Heatmap(z=image_array, colorscale='gray'), **kwargs)
