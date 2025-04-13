@@ -50,7 +50,6 @@ def run_length_encoding(zigzag_array):
     """
     encoded = []
     #force a zero here, otherwise a problem with EOB, equivalent of getting rid of that during quantization
-    # TODO move this into process blocks or something, keep this as a fallback though
     zigzag_array[-1] = 0
     zero_count = 0
     for val in zigzag_array:
@@ -91,7 +90,6 @@ def generate_huffman_codes(node, prefix="", code_dict=None):
         generate_huffman_codes(node.right, prefix + "1", code_dict)
     return code_dict
 
-# ToDo are they all just one string? they should be as we have the ends saved with the EOB
 def huffman_encode(rle_data, huffman_codes):
     return "".join(huffman_codes[(val, count)] for val, count in rle_data)
 
