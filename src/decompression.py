@@ -182,6 +182,26 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         self.upsample_factor = settings.get("chrominance_downsample_factor", self.downsample_factor)
         print(self.upsample_factor)
 
+        self.luminance_quantization_table = np.array([
+            [1, 1, 1, 1, 2, 2, 4, 4],
+            [1, 1, 1, 1, 2, 2, 4, 4],
+            [1, 1, 1, 2, 2, 4, 4, 4],
+            [1, 1, 2, 2, 2, 4, 4, 4],
+            [2, 2, 2, 2, 4, 4, 4, 4],
+            [2, 2, 2, 4, 4, 4, 4, 4],
+            [4, 4, 4, 4, 4, 4, 4, 4],
+            [4, 4, 4, 4, 4, 4, 4, 4]
+        ], dtype=np.float32)
+        self.luminance_quantization_table = np.array([
+            [1, 1, 1, 1, 2, 2, 4, 4],
+            [1, 1, 1, 1, 2, 2, 4, 4],
+            [1, 1, 1, 2, 2, 4, 4, 4],
+            [1, 1, 2, 2, 2, 4, 4, 4],
+            [2, 2, 2, 2, 4, 4, 4, 4],
+            [2, 2, 2, 4, 4, 4, 4, 4],
+            [4, 4, 4, 4, 4, 4, 4, 4],
+            [4, 4, 4, 4, 4, 4, 4, 4]
+        ], dtype=np.float32)
 
         # Set zigzag pattern based on block size
         if self.block_size == 8:
@@ -194,7 +214,6 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         quantized_blocks = self.entropy_decode(bit_data, huffman_table)
         unprocessed_blocks = self.process_blocks_inverse(quantized_blocks)
         upsampled_image = self.upsample_chrominance(unprocessed_blocks)
-        #print(upsampled_image)
         rgb_image = self.convert_colorspace_inverse(upsampled_image)
         print(f"Successfully decompressed image")
 
@@ -463,16 +482,16 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
                     end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else None
                     end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else None
                     quantized_block = channel[idx:end_idx, jdx:end_jdx]
-                    if idx == 0 and jdx == 1 and ch_num == 1:
-                        print(quantized_block)
+                    #if idx == 0 and jdx == 8 and ch_num == 1:
+                        #print(quantized_block)
                     dequantized_block = self.dequantize_block(quantized_block, ch_num)
-                    if idx == 0 and jdx == 1 and ch_num == 1:
-                        print(dequantized_block)
+                    #if idx == 0 and jdx == 8 and ch_num == 1:
+                        #print(dequantized_block)
                     spatial_block = self.inverse_block_DCT(dequantized_block)
-                    if idx == 0 and jdx == 1 and ch_num == 1:
-                        print(spatial_block)
+                    #if idx == 0 and jdx == 8 and ch_num == 1:
+                        #print(spatial_block)
                     reconstructed_channels[ch_num][idx:end_idx, jdx:end_jdx] = spatial_block
-        #print(reconstructed_channels[2])
+        #print(reconstructed_channels[1])
         return reconstructed_channels
 
     def dequantize_block(self, quantized_block, ch_num, **kwargs):
@@ -519,8 +538,9 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
 
         # Scale back from -128-127 to 0-255
         #IDCT_block = np.clip(spatial_block + 128, 0, 255).astype(np.uint8)
+        #reconstructed = idctn(frequency_block, norm='ortho') + 128
+        #print("Y channel range:", reconstructed.min(), reconstructed.max())
         inverse_DCT = np.clip(idctn(frequency_block, norm='ortho') + 128, 0, 255).astype(np.uint8)
-
 
         #print(IDCT_block)
         return inverse_DCT
@@ -558,10 +578,17 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :param ycbcr_image: YCbCr image
         :return: RGB image
         """
-        final = color.ycbcr2rgb(ycbcr_image)
-        final_int = (255*final).astype(np.uint8)
-        print(final_int)
-        return final_int
+        print(ycbcr_image[:,:,2])
+        ycbcr_scaled = ycbcr_image.astype(np.float32)
+        ycbcr_scaled[..., 0] = ycbcr_scaled[..., 0] * (235 / 255) + 16  # Y
+        ycbcr_scaled[..., 1:] = ycbcr_scaled[..., 1:] * (240 / 255) + 16  # Cb/Cr
+
+        rgb = color.ycbcr2rgb(ycbcr_scaled)
+        final = (np.clip(rgb, 0, 1) * 255).astype(np.uint8)
+        print(final)
+        return final
+        #print(final_int[:,:,2])
+        #return final_int
 
 
 # Dictionary mapping compression types to their decompressor classes

@@ -171,9 +171,30 @@ class FlexibleJpeg(CompressImage):
         self.YCbCr_conversion_matrix = np.array(settings.get("YCbCr_conversion_matrix"), dtype=np.float32) / 256
         self.YCbCr_conversion_offset = np.array(settings.get("YCbCr_conversion_offset"), dtype=np.uint8)
 
-        self.chrominance_quantization_table = self.chrominance_quantization_table
+        #what is this even supposed to mean
+        #self.chrominance_quantization_table = self.chrominance_quantization_table
+        #self.luminance_quantization_table = self.luminance_quantization_table
 
-        self.luminance_quantization_table = self.luminance_quantization_table
+        self.luminance_quantization_table = np.array([
+            [1, 1, 1, 1, 2, 2, 4, 4],
+            [1, 1, 1, 1, 2, 2, 4, 4],
+            [1, 1, 1, 2, 2, 4, 4, 4],
+            [1, 1, 2, 2, 2, 4, 4, 4],
+            [2, 2, 2, 2, 4, 4, 4, 4],
+            [2, 2, 2, 4, 4, 4, 4, 4],
+            [4, 4, 4, 4, 4, 4, 4, 4],
+            [4, 4, 4, 4, 4, 4, 4, 4]
+        ], dtype=np.float32)
+        self.luminance_quantization_table = np.array([
+            [1, 1, 1, 1, 2, 2, 4, 4],
+            [1, 1, 1, 1, 2, 2, 4, 4],
+            [1, 1, 1, 2, 2, 4, 4, 4],
+            [1, 1, 2, 2, 2, 4, 4, 4],
+            [2, 2, 2, 2, 4, 4, 4, 4],
+            [2, 2, 2, 4, 4, 4, 4, 4],
+            [4, 4, 4, 4, 4, 4, 4, 4],
+            [4, 4, 4, 4, 4, 4, 4, 4]
+        ], dtype=np.float32)
 
         #TODO how are these quantization tables working?
         self.image_dimensions = image_uncompressed.shape[:2]
@@ -260,14 +281,14 @@ class FlexibleJpeg(CompressImage):
                     end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else None
                     end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else None
                     image_block = channel[idx:end_idx, jdx:end_jdx]
-                    if idx == 8 and jdx == 8 and ch_num == 1:
+                    if idx == 0 and jdx == 8 and ch_num == 1:
                         print(image_block)
                     # might be cleaner to have them as submethods
                     frequency_block = self.block_DCT(image_block, **kwargs)
-                    if idx == 8 and jdx == 8 and ch_num == 1:
+                    if idx == 0 and jdx == 8 and ch_num == 1:
                         print(frequency_block)
                     quantized_block = self.quantize_block(frequency_block, ch_num, **kwargs)
-                    if idx == 8 and jdx == 8 and ch_num == 1:
+                    if idx == 0 and jdx == 8 and ch_num == 1:
                         print(quantized_block)
                     block_processed_channels[ch_num][idx:end_idx, jdx:end_jdx] = quantized_block
         return block_processed_channels
@@ -284,7 +305,9 @@ class FlexibleJpeg(CompressImage):
         #DCT_block = np.array(dctn(block_for_transform, norm='ortho'), dtype=np.int16)
         #reverse= (idctn(DCT_block.astype(np.int16), norm='ortho')+128).astype(int)
         # Correct version
-        dct = dctn(image_block.astype(np.float32) - 128, norm='ortho')
+        # Manually process one 8x8 block
+
+        dct = dctn(image_block.astype(np.float32) - 128, norm='ortho') * 2  # Compensate for ortho normalization
 
         return dct
 
@@ -335,11 +358,13 @@ class FlexibleJpeg(CompressImage):
         padded_matrix = pad_matrix(frequency_domain_block, self.block_size, self.block_size)
         #print(padded_matrix)
         if ch_num == 0:
-            #padded_frequency_domain_matrix = np.round(padded_matrix / (self.luminance_quantization_table / 4))
-            padded_frequency_domain_matrix = np.round(padded_matrix)
+            #TODO reset downsample, quantization tables, etc
+            #TODO try to implement the color conversion inverse here, to save some time
+            padded_frequency_domain_matrix = np.round(padded_matrix / (self.luminance_quantization_table / 4))
+            #padded_frequency_domain_matrix = np.round(padded_matrix)
         else:
-            #padded_frequency_domain_matrix = np.round(padded_matrix / (self.chrominance_quantization_table / 4))
-            padded_frequency_domain_matrix = np.round(padded_matrix)
+            padded_frequency_domain_matrix = np.round(padded_matrix / (self.chrominance_quantization_table / 4))
+            #padded_frequency_domain_matrix = np.round(padded_matrix)
         # needs to be zero for RLE to be successful
         padded_frequency_domain_matrix[-1, -1] = 0
         return padded_frequency_domain_matrix[0:frequency_domain_block.shape[0],0:frequency_domain_block.shape[1]].astype(np.int16)
@@ -618,7 +643,7 @@ if __name__ == '__main__':
 
     flexible_jpeg = FlexibleJpeg()
 
-    test_image_path = os.path.join(os.getcwd(), "assets", "unit_test_images", "gradients_16x32.tif")
+    test_image_path = os.path.join(os.getcwd(), "assets", "unit_test_images", "white_16x16.tif")
     #test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "landscape.png")
 
     compression_config = os.path.join(os.getcwd(),
