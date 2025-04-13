@@ -168,6 +168,9 @@ class FlexibleJpeg(CompressImage):
             with open(settings, 'r') as settings_file:
                 settings = yaml.safe_load(settings_file)
 
+        self.YCbCr_conversion_matrix = np.array(settings.get("YCbCr_conversion_matrix"), dtype=np.float32) / 256
+        self.YCbCr_conversion_offset = np.array(settings.get("YCbCr_conversion_offset"), dtype=np.uint8)
+
         self.image_dimensions = image_uncompressed.shape[:2]
         self.channel_amount = image_uncompressed.shape[2]
         #print(self.image_dimensions)
@@ -186,6 +189,8 @@ class FlexibleJpeg(CompressImage):
         if self.chrominance_dimensions[0] % self.block_size != 0 or self.chrominance_dimensions[1] % self.block_size != 0:
             print('Warning! Chromiance dimensions not divisible by', {self.blocksize})
 
+
+
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
         YCbCrImage = self.convert_colorspace(image_uncompressed, **settings)
         downsampled_image = self.downsample_chrominance(YCbCrImage, **settings)
@@ -200,13 +205,13 @@ class FlexibleJpeg(CompressImage):
         :param kwargs:
         :return:
         """
-        self.YCbCr_conversion_matrix = kwargs.get("YCbCr_conversion_matrix", self.default_YCbCr_conversion_matrix)
-        self.YCbCr_conversion_offset = kwargs.get("YCbCr_conversion_offset", self.default_YCbCr_conversion_offset)
-        return np.array(np.tensordot(image_uncompressed,
-                                     self.YCbCr_conversion_matrix,
-                                     axes=([2],[1])) +
-                        self.YCbCr_conversion_offset,
-                        dtype=np.uint8)
+        product = np.tensordot(image_uncompressed, self.YCbCr_conversion_matrix, axes=([2],[1]))
+        with_offset = product + self.YCbCr_conversion_offset
+        converted = np.array(with_offset, dtype=np.uint8)
+        print("Y:", converted[..., 0].min(), converted[..., 0].max())
+        print("Cb:", converted[..., 1].min(), converted[..., 1].max())
+        print("Cr:", converted[..., 2].min(), converted[..., 2].max())
+        return converted
     #TODO perhaps establish vertical and horizontal downsampling instead of all as one
     def downsample_chrominance(self, YCbCr_image, **kwargs):
         """
@@ -215,10 +220,9 @@ class FlexibleJpeg(CompressImage):
         :param YCbCr_image: The image already converted to YCbCr format
         :return: A Tuple, element 0 is the lumiance channel, element 1 is the chrominance channels
         """
+        self.downsample_factor = kwargs.get("chrominance_downsample_factor", 2)
 
-        self.downsample_factor = kwargs.get("chrominance_downsample_factor", 4)
-
-        lumiance = YCbCr_image[:, :, 0]
+        luminance = YCbCr_image[:, :, 0]
         ch_CbCr = YCbCr_image[:,:,1:]
 
         running_average = np.array(ch_CbCr[::self.downsample_factor, ::self.downsample_factor,:]/self.downsample_factor**2,
@@ -231,7 +235,7 @@ class FlexibleJpeg(CompressImage):
                     running_average = (running_average +
                                        ch_CbCr[idx::self.downsample_factor, jdx::self.downsample_factor,:]/self.downsample_factor**2)
 
-        return [lumiance,
+        return [luminance,
                 np.array(running_average[:,:,0],dtype=np.uint8),
                 np.array(running_average[:,:,1],dtype=np.uint8)]
 
@@ -252,16 +256,16 @@ class FlexibleJpeg(CompressImage):
                     end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else None
                     end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else None
                     image_block = channel[idx:end_idx, jdx:end_jdx]
+
+                    # might be cleaner to have them as submethods
                     frequency_block = self.block_DCT(image_block, **kwargs)
-                    if idx == 0 and jdx == 0 and ch_num == 0:
-                        print(block_processed_channels)
+                    #if idx == 0 and jdx == 0 and ch_num == 0:
+                        #print(frequency_block)
                     quantized_block = self.quantize_block(frequency_block, ch_num, **kwargs)
                     block_processed_channels[ch_num][idx:end_idx, jdx:end_jdx] = quantized_block
-                    if idx == 0 and jdx == 0 and ch_num == 0:
-                        print(block_processed_channels)
         return block_processed_channels
 
-    def block_dct(self, image_block, **kwargs):
+    def block_DCT(self, image_block, **kwargs):
         """
         First scale pixels from 0 to 255 to -128 to 128, then perform DCT on the block
         :param image_block: An image block of a flexible size, for the DCT to be performed on.
@@ -269,8 +273,9 @@ class FlexibleJpeg(CompressImage):
         :return: the cosine transformed block
         """
         block_for_transform = (image_block.astype(np.int16) - 128).astype(np.int8)
-
-        return np.array(dct(block_for_transform), dtype=np.int8)
+        #TODO have this one as ortho? what exactly does that do?
+        DCT_block = np.array(dct(block_for_transform), dtype=np.int8)
+        return DCT_block
 
 
     def quantize_block(self, frequency_domain_block, ch_num, **kwargs):
@@ -610,31 +615,3 @@ if __name__ == '__main__':
                                               "homemade_compression_jpeg_like.yaml")
     flexible_jpeg(test_image_path, compression_config)
 
-
-
-
-    #base_compression_config = os.path.join(os.getcwd(), "compression_configurations", "baseline_jpeg_q100.yaml")
-
-    #baseline_jpeg(test_image_path)
-
-    # image_array = imread(os.path.join(os.getcwd(), "assets", "landscape.png"))
-    #
-    # fig = make_subplots(rows=2, cols=3, shared_xaxes=True, shared_yaxes=True)
-    #
-    # converted_colorspace_image = flexible_jpeg.convert_colorspace(image_array)
-    # downsampled_chromiance_image = flexible_jpeg.downsample_chromiance(converted_colorspace_image, chromiance_downsample_factor=2)
-    #
-    # fig.add_trace(go.Image(z=image_array),row=1, col=1)
-    # fig.add_trace(go.Image(z=converted_colorspace_image), row=1,col=2)
-    #
-    # print(downsampled_chromiance_image)
-    #
-    # display_greyscale_image(fig, downsampled_chromiance_image[0],row=2, col=1)
-    # display_greyscale_image(fig, downsampled_chromiance_image[1], row=2, col=2)
-    # display_greyscale_image(fig, downsampled_chromiance_image[2], row=2, col=3)
-    #
-    # fig.update_yaxes(autorange='reversed', scaleanchor='x', constrain='domain')
-    # fig.update_xaxes(constrain='domain')
-    # fig.update_layout(coloraxis_showscale=False)  # Remove color scale
-    #
-    # fig.show()
