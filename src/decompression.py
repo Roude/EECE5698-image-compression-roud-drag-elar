@@ -15,6 +15,7 @@
 # This file contains the decompression functionality for various image compression formats
 import os
 import numpy as np
+from fontTools.cffLib import packEncoding0
 from scipy.fftpack import idct, idctn
 import imageio.v3 as imageio
 from skimage import io, color
@@ -462,14 +463,14 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
                     end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else None
                     end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else None
                     quantized_block = channel[idx:end_idx, jdx:end_jdx]
-                    #if idx == 0 and jdx == 0 and ch_num == 2:
-                        #print(quantized_block)
+                    if idx == 0 and jdx == 1 and ch_num == 1:
+                        print(quantized_block)
                     dequantized_block = self.dequantize_block(quantized_block, ch_num)
-                    #if ch_num == 2:
-                        #print(dequantized_block)
+                    if idx == 0 and jdx == 1 and ch_num == 1:
+                        print(dequantized_block)
                     spatial_block = self.inverse_block_DCT(dequantized_block)
-                    #if ch_num == 2:
-                        #print(spatial_block)
+                    if idx == 0 and jdx == 1 and ch_num == 1:
+                        print(spatial_block)
                     reconstructed_channels[ch_num][idx:end_idx, jdx:end_jdx] = spatial_block
         #print(reconstructed_channels[2])
         return reconstructed_channels
@@ -495,10 +496,13 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             return padded_matrix
 
         padded_block = pad_matrix(quantized_block, self.block_size, self.block_size)
+        #print(padded_block)
         if ch_num == 0:
             #use float here instead?
+            #dequantized_block = padded_block.astype(np.int16)
             dequantized_block = (padded_block * self.luminance_quantization_table).astype(np.int16)
         else:
+            #dequantized_block = padded_block.astype(np.int16)
             dequantized_block = (padded_block * self.chrominance_quantization_table).astype(np.int16)
         # Return to original block size (without padding)
         return dequantized_block[0:quantized_block.shape[0], 0:quantized_block.shape[1]]

@@ -251,25 +251,24 @@ class FlexibleJpeg(CompressImage):
         :return: The uncompressed converted and quantized matricies.
         """
         self.block_size = kwargs.get("block_size", 8)
-
         block_processed_channels = []
         for ch_num, channel in enumerate(downsampled_image):
             block_processed_channels.append(np.zeros(shape=np.shape(channel),dtype=np.int8))
+            #print(range(0, np.shape(channel)[0], self.block_size))
             for idx in range(0,np.shape(channel)[0], self.block_size):
                 for jdx in range(0, np.shape(channel)[1], self.block_size):
                     end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else None
                     end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else None
                     image_block = channel[idx:end_idx, jdx:end_jdx]
-                    #if idx == 0 and jdx == 0 and ch_num == 0:
-                        #print(image_block)
+                    if idx == 8 and jdx == 8 and ch_num == 1:
+                        print(image_block)
                     # might be cleaner to have them as submethods
                     frequency_block = self.block_DCT(image_block, **kwargs)
-                    #if idx == 0 and jdx == 0 and ch_num == 0:
-                        #print(frequency_block)
+                    if idx == 8 and jdx == 8 and ch_num == 1:
+                        print(frequency_block)
                     quantized_block = self.quantize_block(frequency_block, ch_num, **kwargs)
-                    #if idx == 0 and jdx == 0 and ch_num == 2:
-                        #print(idx)
-                        #print(quantized_block)
+                    if idx == 8 and jdx == 8 and ch_num == 1:
+                        print(quantized_block)
                     block_processed_channels[ch_num][idx:end_idx, jdx:end_jdx] = quantized_block
         return block_processed_channels
 
@@ -336,14 +335,14 @@ class FlexibleJpeg(CompressImage):
         padded_matrix = pad_matrix(frequency_domain_block, self.block_size, self.block_size)
         #print(padded_matrix)
         if ch_num == 0:
-            padded_frequency_domain_matrix = (padded_matrix / self.luminance_quantization_table).astype(np.int8)
-            #padded_frequency_domain_matrix = padded_matrix.astype(np.int8)
+            #padded_frequency_domain_matrix = np.round(padded_matrix / (self.luminance_quantization_table / 4))
+            padded_frequency_domain_matrix = np.round(padded_matrix)
         else:
-            padded_frequency_domain_matrix = (padded_matrix / self.chrominance_quantization_table).astype(np.int8)
-            #padded_frequency_domain_matrix = padded_matrix.astype(np.int8)
+            #padded_frequency_domain_matrix = np.round(padded_matrix / (self.chrominance_quantization_table / 4))
+            padded_frequency_domain_matrix = np.round(padded_matrix)
         # needs to be zero for RLE to be successful
-        padded_frequency_domain_matrix[-1] = 0
-        return padded_frequency_domain_matrix[0:frequency_domain_block.shape[0],0:frequency_domain_block.shape[1]]
+        padded_frequency_domain_matrix[-1, -1] = 0
+        return padded_frequency_domain_matrix[0:frequency_domain_block.shape[0],0:frequency_domain_block.shape[1]].astype(np.int16)
 
     def entropy_encode(self, quantized_blocks, **kwargs):
         """
