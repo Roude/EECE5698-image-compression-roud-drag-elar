@@ -243,6 +243,7 @@ class FlexibleJpeg(CompressImage):
         :return: The uncompressed converted and quantized matricies.
         """
         self.block_size = kwargs.get("block_size", 8)
+
         block_processed_channels = []
         for ch_num, channel in enumerate(downsampled_image):
             block_processed_channels.append(np.zeros(shape=np.shape(channel),dtype=np.int8))
@@ -254,15 +255,13 @@ class FlexibleJpeg(CompressImage):
                     frequency_block = self.block_DCT(image_block, **kwargs)
                     if idx == 0 and jdx == 0 and ch_num == 0:
                         print(block_processed_channels)
-                    quantized_block = self.quantize_block(frequency_block,ch_num,**kwargs)
+                    quantized_block = self.quantize_block(frequency_block, ch_num, **kwargs)
                     block_processed_channels[ch_num][idx:end_idx, jdx:end_jdx] = quantized_block
                     if idx == 0 and jdx == 0 and ch_num == 0:
                         print(block_processed_channels)
-        #print(block_processed_channels[0])
-        #exit()
         return block_processed_channels
 
-    def block_DCT(self, image_block, **kwargs):
+    def block_dct(self, image_block, **kwargs):
         """
         First scale pixels from 0 to 255 to -128 to 128, then perform DCT on the block
         :param image_block: An image block of a flexible size, for the DCT to be performed on.
@@ -283,6 +282,7 @@ class FlexibleJpeg(CompressImage):
         :param kwargs:
         :return: the quantized block
         """
+
         def pad_matrix(matrix, target_rows, target_cols):
             """
             Pads a matrix with zeros on the bottom and right side to reach the target dimensions.
@@ -314,15 +314,16 @@ class FlexibleJpeg(CompressImage):
             return matrix
 
         #quality_factor = kwargs.get("quality_factor", 50)
-        #ToDO implement emphasis matrix for chrominance or lumiance, don'T forget to do the same for decomp
+        #ToDO implement emphasis matrix for chrominance or lumiance
         self.lumiance_quantization_table = kwargs.get("lumiance_quantization_table",
                                                       self.default_lumiance_quantization_table)
 
         padded_matrix = pad_matrix(frequency_domain_block, self.block_size, self.block_size)
+        #print(padded_matrix)
         if ch_num == 0:
-            padded_frequency_domain_matrix = (padded_matrix // self.lumiance_quantization_table).astype(np.int8)
+            padded_frequency_domain_matrix = (padded_matrix / self.lumiance_quantization_table).astype(np.int8)
         else:
-            padded_frequency_domain_matrix = (padded_matrix // self.chrominance_quantization_table).astype(np.int8)
+            padded_frequency_domain_matrix = (padded_matrix / self.chrominance_quantization_table).astype(np.int8)
         # needs to be zero for RLE to be successful
         padded_frequency_domain_matrix[-1] = 0
         return padded_frequency_domain_matrix[0:frequency_domain_block.shape[0],0:frequency_domain_block.shape[1]]
@@ -608,3 +609,32 @@ if __name__ == '__main__':
                                               "compression_configurations",
                                               "homemade_compression_jpeg_like.yaml")
     flexible_jpeg(test_image_path, compression_config)
+
+
+
+
+    #base_compression_config = os.path.join(os.getcwd(), "compression_configurations", "baseline_jpeg_q100.yaml")
+
+    #baseline_jpeg(test_image_path)
+
+    # image_array = imread(os.path.join(os.getcwd(), "assets", "landscape.png"))
+    #
+    # fig = make_subplots(rows=2, cols=3, shared_xaxes=True, shared_yaxes=True)
+    #
+    # converted_colorspace_image = flexible_jpeg.convert_colorspace(image_array)
+    # downsampled_chromiance_image = flexible_jpeg.downsample_chromiance(converted_colorspace_image, chromiance_downsample_factor=2)
+    #
+    # fig.add_trace(go.Image(z=image_array),row=1, col=1)
+    # fig.add_trace(go.Image(z=converted_colorspace_image), row=1,col=2)
+    #
+    # print(downsampled_chromiance_image)
+    #
+    # display_greyscale_image(fig, downsampled_chromiance_image[0],row=2, col=1)
+    # display_greyscale_image(fig, downsampled_chromiance_image[1], row=2, col=2)
+    # display_greyscale_image(fig, downsampled_chromiance_image[2], row=2, col=3)
+    #
+    # fig.update_yaxes(autorange='reversed', scaleanchor='x', constrain='domain')
+    # fig.update_xaxes(constrain='domain')
+    # fig.update_layout(coloraxis_showscale=False)  # Remove color scale
+    #
+    # fig.show()

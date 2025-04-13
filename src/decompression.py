@@ -1,361 +1,579 @@
-"""
-decompression.py
+# This file to contain high-level functions consisting of a series of sub-routines
+# defined in utilities.py
 
-This module implements the decompression pipeline for the custom JPEG-like compression system.
-It contains the FlexibleJpegDecompress class, which inherits configuration parameters from FlexibleJpeg.
-The pipeline includes:
-    - Header parsing,
-    - Entropy decoding,
-    - Block reconstruction (dequantization and 2D IDCT),
-    - Upsampling the chrominance channels,
-    - Converting from YCbCr back to RGB.
-"""
+# For example:
+# jpeg_decompression(compressed_file, compression_configuration)
+#   load_jpeg(compressed_file)
+#   perform_jpeg_decompression(compressed_image)
+#   color_space_deconversion(uncompressed_image)
 
+# Functions in this file should be composed of as few sub-routines as possible for
+# readability and modularity.
+
+# This file contains the decompression algorithm for FlexibleJpeg compression
+# It implements the inverse operations of compression.py in reverse order
+# This file contains the decompression functionality for various image compression formats
 import os
-import json
-import ast
 import numpy as np
 from scipy.fftpack import idct
 import imageio.v3 as imageio
+import ast
+from abc import ABC, abstractmethod
+import re
+import json
+import struct
+from collections import Counter
+from src.utilities import parse_huffman_table, make_serializable_table, bytes_to_bools
 
-# Import helper functions and classes from other modules.
-from src.utilities import parse_huffman_table, bytes_to_bools
-from src.compression import FlexibleJpeg
+from src.compression import BaselineJpeg, FlexibleJpeg
 from src.huffman import generate_zigzag_pattern, inverse_zigzag_order
 
-def idct2(block: np.ndarray) -> np.ndarray:
-    """
-    Applies a 2D inverse discrete cosine transform (IDCT) to a block using orthonormal normalization.
-    
-    Parameters:
-        block (np.ndarray): A 2D array of DCT coefficients.
-        
-    Returns:
-        np.ndarray: The spatial domain representation after inverse DCT.
-    """
-    return idct(idct(block, axis=0, norm='ortho'), axis=1, norm='ortho')
 
-class FlexibleJpegDecompress(FlexibleJpeg):
+#makes it so it doesn't print
+np.set_printoptions(formatter={
+    'object': lambda x: str(x) if not isinstance(x, tuple) else f"({x[0]}, {x[1]})"
+})
+
+
+class DecompressImage(ABC):
     """
-    Implements the decompression pipeline for the custom JPEG-like compression format.
-    
-    Inherits settings (like block size, quantization tables, and color conversion matrices) from FlexibleJpeg.
-    This class:
-        - Reads the compressed file header,
-        - Reconstructs the quantized blocks via entropy decoding,
-        - Dequantizes and applies a 2D IDCT,
-        - Reassembles channels and upsamples chrominance,
-        - Converts back to RGB.
+    Abstract base class for all decompression algorithms
+    Provides a common interface and utility methods for all decompressors
     """
 
-    def __init__(self, config: dict = None) -> None:
+    def __init__(self, config=None):
+        """Initialize with optional configuration"""
+        self.config = config
+        self.save_location = None
+
+    @abstractmethod
+    def __call__(self, **kwargs):
         """
-        Initializes the FlexibleJpegDecompress object with an optional configuration.
-        
-        Parameters:
-            config (dict, optional): Compression configuration. Defaults to None.
+        Main method to decompress an image
+        :param kwargs: Additional parameters for decompression
+        :return: Decompressed image and save path
         """
+        pass
+
+    @staticmethod
+    def detect_compression_type(file_path):
+        """
+        Automatically detect compression type from file extension or contents
+        :param file_path: Path to the compressed file
+        :return: String identifier of the compression type
+        """
+        if file_path.endswith('.jpeg') or file_path.endswith('.jpg'):
+            return "jpeg_baseline"
+        elif file_path.endswith('.bin.rde'):
+            return "homemade_jpeg_like"
+        else:
+            # Try to infer from file contents or return default
+            return "unknown"
+
+    @staticmethod
+    def factory(compression_type=None, config=None):
+        """
+        Factory method to create the appropriate decompressor based on compression type
+        :param compression_type: String identifier of the compression algorithm
+        :param config: Configuration for the decompressor
+        :return: Appropriate DecompressImage subclass instance
+        """
+        decompressor_map = {
+            "jpeg_baseline": BaselineJpegDecompress,
+            "homemade_jpeg_like": FlexibleJpegDecompress,
+        }
+
+        if compression_type in decompressor_map:
+            return decompressor_map[compression_type](config)
+        else:
+            raise ValueError(f"Unsupported compression type: {compression_type}")
+
+    def set_save_location(self, file_path, suffix="_decompressed"):
+        """
+        Set a default save location based on the input file
+        :param file_path: Path to the input file
+        :param suffix: Suffix to add to the output filename
+        :return: Full path for saving the decompressed image
+        """
+        input_path, input_ext = os.path.splitext(file_path)
+        if input_ext.lower() == '.rde':
+            input_path = os.path.splitext(input_path)[0]  # Remove .bin part for .bin.rde files
+
+        # Default to PNG for all decompressed outputs
+        save_path = f"{input_path}{suffix}.png"
+        self.save_location = save_path
+        return save_path
+
+
+class BaselineJpegDecompress(DecompressImage):
+    """
+    Decompressor for standard JPEG/JFIF files
+    Uses imageio to handle the decompression as it's a well-established format
+    """
+
+    def __init__(self, config=None):
         super().__init__(config)
-        self.image_dimensions: tuple[int, int] = None
-        self.upsampling_factor: int = self.downsample_factor
-        self.save_location: str = None
 
-    def set_save_location(self, file_path: str) -> None:
+    def __call__(self, compressed_file=None, **kwargs):
         """
-        Sets a default save location based on the input file name.
-        
-        For example, for "foo.rde", it generates "foo_decompressed.png".
-        
-        Parameters:
-            file_path (str): The input compressed file path.
+        Decompress a standard JPEG file
+        :param compressed_file: Path to the JPEG file (optional)
+        :param kwargs: Additional parameters
+        :return: Decompressed image and save path
         """
-        input_path, _ = os.path.splitext(file_path)
-        self.save_location = f"{input_path}_decompressed.png"
+        # Default file path if none provided
+        if not compressed_file:
+            compressed_file = os.path.join(os.getcwd(), "tmp", "decomp_test_base.jpeg")
 
-    def __call__(self, compressed_file: str = None, **kwargs) -> tuple[np.ndarray, str]:
-        """
-        Main decompression method.
-        
-        This method:
-            1. Decodes the compressed file and extracts header metadata, bitstream, and Huffman tables.
-            2. Reverses the entropy encoding to reconstruct quantized DCT blocks.
-            3. Processes each block via dequantization and a 2D IDCT.
-            4. Reassembles the image channels, upsamples chrominance, and converts from YCbCr to RGB.
-            5. Saves and returns the decompressed image along with the save path.
-        
-        Parameters:
-            compressed_file (str): Path to the compressed (.rde) file.
-            **kwargs: Optional keyword arguments; can override the save location.
-            
-        Returns:
-            tuple: (decompressed RGB image as a NumPy array, save path as a string)
-        """
-        # Set default save location.
         self.set_save_location(compressed_file)
-        save_location: str = kwargs.get("save_location", self.save_location)
+        save_location = kwargs.get("save_location", self.save_location)
 
-        # Step 1: Decode the file.
-        bit_data, huffman_tables, settings = self.decode_from_file(compressed_file)
+        decompressed_image = imageio.imread(compressed_file)
+        if save_location:
+            imageio.imwrite(save_location, decompressed_image)
+
+        return decompressed_image, save_location
+
+
+class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
+    """
+    Decompressor for the custom FlexibleJpeg format
+    Inherits from both DecompressImage and FlexibleJpeg to reuse compression parameters
+    """
+    def __init__(self, config=None):
+        # Initialize both parent classes
+        DecompressImage.__init__(self, config)
+        FlexibleJpeg.__init__(self, config)
+
+        # Rename downsampling_factor to upsampling_factor
+        # TODO Needed?
+        self.image_dimensions = None
+        self.upsampling_factor = self.downsample_factor
+
+    def __call__(self, compressed_file=None, **kwargs):
+        """
+        Decompress a FlexibleJpeg file
+        :param compressed_file: Path to the compressed file (.rde)
+        :param kwargs: Additional parameters
+        :return: Decompressed image and save path
+        """
+        self.set_save_location(compressed_file)
+
+        # Override with user-provided save location if available
+        save_location = kwargs.get("save_location", self.save_location)
+
+        # Read and parse the compressed file
+        bit_data, huffman_table, settings = self.decode_from_file(compressed_file)
+
+        # Update settings from the compressed file
         if isinstance(settings, str):
             settings = ast.literal_eval(settings)
+
+        # Update configuration using the parent class's method
         self.update_configuration(settings)
+
+        # Rename downsampling_factor to upsampling_factor for clarity
+        # TODO DOUBLE?
         self.upsampling_factor = settings.get("chrominance_downsample_factor", self.downsample_factor)
+
+        # Set zigzag pattern based on block size
         if self.block_size == 8:
             self.zigzag_pattern = self.default_zigzag_pattern
         else:
+            from src.huffman import generate_zigzag_pattern
             self.zigzag_pattern = generate_zigzag_pattern(self.block_size)
 
-        # Step 2: Perform entropy decoding.
-        quantized_blocks = self.entropy_decode(bit_data, huffman_tables)
+        # Inverse of compression basically
+        quantized_blocks = self.entropy_decode(bit_data, huffman_table)
+        unprocessed_blocks = self.process_blocks_inverse(quantized_blocks)
+        upsampled_image = self.upsample_chrominance(unprocessed_blocks)
+        rgb_image = self.convert_colorspace_inverse(upsampled_image)
+        print(f"Successfully decompressed image")
 
-        # Step 3: Process blocks (dequantize + 2D IDCT) to reconstruct channels.
-        channels = self.process_blocks_inverse(quantized_blocks)
+        # Save the decompressed image
+        if save_location:
+            imageio.imwrite(save_location, rgb_image.astype(np.uint8))
 
-        # Step 4: Upsample chrominance and convert back to RGB.
-        upsampled = self.upsample_chrominance(channels)
-        rgb_image = self.convert_colorspace_inverse(upsampled)
-
-        # Step 5: Save the output image.
-        imageio.imwrite(save_location, rgb_image.astype(np.uint8))
         print(f"Decompressed image saved to: {save_location}")
+
         return rgb_image, save_location
 
-    def decode_from_file(self, file_path: str) -> tuple[np.ndarray, dict, dict]:
+    def decode_from_file(self, file_path):
         """
-        Reads the compressed file (.rde), extracts the header, bitstream, and Huffman tables.
-        
-        Parameters:
-            file_path (str): Path to the compressed file.
-            
-        Returns:
-            tuple: (bitstream (np.ndarray), Huffman tables (dict), settings (dict))
-            
-        Raises:
-            ValueError: If the file format is not supported.
+        Read compressed file and extract the encoded data, huffman table, and settings
+        :param file_path: Path to the compressed file
+        :return: Tuple of (bit_data, huffman_table, settings)
         """
-        if file_path.endswith('.rde'):
+        print('File decoding process started')
+        print('- Begin extraction')
+        if file_path.endswith('.verbose.rde'):
+            with open(file_path, 'r') as file:
+                content = file.read()
+
+                dims_start = content.find("image_dimensions :: ") + len("image_dimensions :: ")
+                dims_end = content.find(" :: settings_start")
+                dims = content[dims_start:dims_end]
+                # Extract settings
+                settings_start = content.find("settings_start :: ") + len("settings_start :: ")
+                settings_end = content.find(" :: settings_end")
+                settings_str = content[settings_start:settings_end]
+
+                # Extract Huffman table
+                huffman_start = content.find("huffman_table :: ") + len("huffman_table :: ")
+                huffman_end = content.find(" :: huffman_table_end")
+                huffman_table_str = content[huffman_start:huffman_end]
+
+                # Extract bit data
+                bit_data_start = content.find("bit_data :: ") + len("bit_data :: ")
+                bit_data_end = content.find(" :: image_end")
+
+                print('- Extracted succesfully')
+
+                if bit_data_end == -1:  # If "image_end" marker not found
+                    bit_data_str = content[bit_data_start:]
+                else:
+                    bit_data_str = content[bit_data_start:bit_data_end]
+
+                # Process settings to a proper Python dictionary
+                settings = ast.literal_eval(settings_str)
+                # Safely evaluate the main dictionary
+                raw_tables = ast.literal_eval(huffman_table_str)
+                huffman_tables = parse_huffman_table(raw_tables)
+                bit_data = np.array([bool(int(c)) for c in bit_data_str], dtype=np.bool)
+                self.image_dimensions = ast.literal_eval(dims)
+        elif file_path.endswith('.rde'):
             with open(file_path, 'rb') as file:
+                # Read header length (first 4 bytes)
                 header_length = int.from_bytes(file.read(4), byteorder='big')
-                header_json: str = file.read(header_length).decode('utf-8')
-                header: dict = json.loads(header_json)
+
+                # Read header JSON
+                header_json = file.read(header_length).decode('utf-8')
+                header = json.loads(header_json)
 
                 byte_data = file.read()
-                bit_data: np.ndarray = bytes_to_bools(byte_data, header.get('padding_bits', 0))
+                bit_data = bytes_to_bools(byte_data, header['padding_bits'])
 
+                # Get other components from header
                 settings = header['settings']
                 huffman_tables_raw = header['huffman_tables']
                 huffman_tables = parse_huffman_table(huffman_tables_raw)
-
                 self.image_dimensions = header['image_dimensions']
-                self.block_size = header.get('block_size', 8)
-                self.downsample_factor = header.get('chrominance_downsample_factor', 2)
-            return bit_data, huffman_tables, settings
-        else:
-            raise ValueError("Unsupported file format; expected a .rde file.")
 
-    def entropy_decode(self, compressed_bits: np.ndarray, huffman_tables: dict) -> list:
+                # Convert to boolean array
+                #bit_data = np.array([bool(int(c)) for c in bit_data_str], dtype=np.bool)
+        print('- Evaluated succesfully')
+        print('File decoding process ended')
+        return bit_data, huffman_tables, settings
+
+    def entropy_decode(self, compressed_bits, huffman_tables):
         """
-        Reconstructs a list of quantized DCT blocks by reversing the entropy encoding.
-        
-        Parameters:
-            compressed_bits (np.ndarray): Boolean array representing the encoded bitstream.
-            huffman_tables (dict): Huffman tables used during compression.
-            
-        Returns:
-            list: List of quantized 2D DCT blocks.
-            
-        Raises:
-            ValueError: If decoding fails at any stage.
+        Decode the Huffman encoded bit stream
+        :param compressed_bits: Compressed bit stream
+        :param huffman_tables: Huffman codes dictionary
+        :return: List of quantized blocks
         """
-        reverse_huffman = {name: {v: k for k, v in table.items()} for name, table in huffman_tables.items()}
+        print('Entropy decoding process started')
+        print('- Begin separating and inverting huffman tables')
 
-        def get_min_max(table: dict) -> tuple[int, int]:
-            lengths = [len(code) for code in table.values()]
-            return min(lengths), max(lengths)
+        reverse_huffman = {
+            table_name: {v: k for k, v in table.items()}  # Invert key-value pairs
+            for table_name, table in huffman_tables.items()
+        }
+        #with open("huffman_tables_decomp_reverse.json", "w") as f:
+            #json.dump(reverse_huffman, f, indent=2)
 
-        dc_lum_min, dc_lum_max = get_min_max(reverse_huffman['dc_lum'])
-        dc_chrom_min, dc_chrom_max = get_min_max(reverse_huffman['dc_chrom'])
-        ac_lum_min, ac_lum_max = get_min_max(reverse_huffman['ac_lum'])
-        ac_chrom_min, ac_chrom_max = get_min_max(reverse_huffman['ac_chrom'])
+        def get_min_max_key_lengths(reverse_huffman):
+            # Get the lengths of all keys (as binary strings)
+            key_lengths = []
+            for key in reverse_huffman.keys():
+                # Case 1: Key is an integer (e.g., 0b101, 5, etc.)
+                if isinstance(key, int):
+                    # If key is 0, binary length is 1 (special case)
+                    if key == 0:
+                        key_lengths.append(1)
+                    else:
+                        key_lengths.append(key.bit_length())
+                # Case 2: Key is a binary string (e.g., "101")
+                elif isinstance(key, str) and all(c in '01' for c in key):
+                    key_lengths.append(len(key))
+                # Case 3: Key is a string but not binary (unlikely in Huffman)
+                elif isinstance(key, str):
+                    print(f"Warning: Key '{key}' is not a binary string. Treating as length 1.")
+                    key_lengths.append(1)
+            return (min(key_lengths), max(key_lengths))
 
-        image_h, image_w = self.image_dimensions
-        num_y_blocks_horizontal = image_w // self.block_size
-        num_y_blocks_vertical = image_h // self.block_size
-        num_y_blocks = num_y_blocks_horizontal * num_y_blocks_vertical
+        dc_lum_min, dc_lum_max = get_min_max_key_lengths(reverse_huffman['dc_lum'])
+        dc_chrom_min, dc_chrom_max = get_min_max_key_lengths(reverse_huffman['dc_chrom'])
+        ac_lum_min, ac_lum_max = get_min_max_key_lengths(reverse_huffman['ac_lum'])
+        ac_chrom_min, ac_chrom_max = get_min_max_key_lengths(reverse_huffman['ac_chrom'])
 
-        chrom_h = image_h // self.downsample_factor
-        chrom_w = image_w // self.downsample_factor
-        num_c_blocks_horizontal = chrom_w // self.block_size
-        num_c_blocks_vertical = chrom_h // self.block_size
-        num_c_blocks = num_c_blocks_horizontal * num_c_blocks_vertical
+        #print(reverse_huffman['ac_chrom'])
 
-        total_blocks = num_y_blocks + 2 * num_c_blocks
+        # with open("huffman_tables_decomp.json", "w") as f:
+        # json.dump(huffman_tables, f, indent=2)
 
-        decoded_blocks = []
-        prev_dc = [0, 0, 0]
-        current_pos = 0
+        chrominance_dimensions = (self.image_dimensions[0] // self.downsample_factor,
+                             self.image_dimensions[1] // self.downsample_factor)
+        num_total_y_blocks = (self.image_dimensions[0] // self.block_size) * (
+                    self.image_dimensions[1] // self.block_size)
+        num_total_c_blocks = (chrominance_dimensions[0] // self.block_size) * (
+                    chrominance_dimensions[1] // self.block_size)
+        num_total_blocks = num_total_y_blocks + 2 * num_total_c_blocks
+
+        decoded_blocks = [np.empty(self.image_dimensions, dtype=np.int16),
+                          np.empty(chrominance_dimensions, dtype=np.int16),
+                          np.empty(chrominance_dimensions, dtype=np.int16)]
+
+        prev_dc_coeff = [0, 0, 0]
+        current_pos = 0  # Current bit position in the array
         bit_length = len(compressed_bits)
 
-        for block_idx in range(total_blocks):
-            if block_idx < num_y_blocks:
-                channel = 0
-                dc_min, dc_max, ac_min, ac_max = dc_lum_min, dc_lum_max, ac_lum_min, ac_lum_max
+        for block_num in range(num_total_blocks):
+            # Determine which channel we're processing
+            if block_num < num_total_y_blocks:
+                channel_idx = 0  # Y
+            elif block_num < num_total_y_blocks + num_total_c_blocks:
+                channel_idx = 1  # Cb
             else:
-                channel = 1 if block_idx < num_y_blocks + num_c_blocks else 2
-                dc_min, dc_max, ac_min, ac_max = dc_chrom_min, dc_chrom_max, ac_chrom_min, ac_chrom_max
+                channel_idx = 2  # Cr
+            # Get the appropriate reverse tables
+            if channel_idx == 0:  # Luminance (Y)
+                dc_table = reverse_huffman['dc_lum']
+                ac_table = reverse_huffman['ac_lum']
+                min_dc_length = dc_lum_min
+                max_dc_length = dc_lum_max
+                min_ac_length = ac_lum_min
+                max_ac_length = ac_lum_max
 
+            else:  # Chrominance (Cb or Cr)
+                dc_table = reverse_huffman['dc_chrom']
+                ac_table = reverse_huffman['ac_chrom']
+                min_dc_length = dc_chrom_min
+                max_dc_length = dc_chrom_max
+                min_ac_length = ac_chrom_min
+                max_ac_length = ac_chrom_max
+
+            # Decode DC coefficient
             delta_dc = None
-            for l in range(dc_min, min(dc_max + 1, bit_length - current_pos + 1)):
-                code = "".join(str(int(b)) for b in compressed_bits[current_pos:current_pos + l])
-                table = reverse_huffman['dc_lum'] if channel == 0 else reverse_huffman['dc_chrom']
-                if code in table:
-                    delta_dc = int(table[code])
+            # Search for matching DC code
+            for l in range(min_dc_length, min(max_dc_length + 1, bit_length - current_pos + 1)):
+                # Build the code by checking bits directly
+                code = ''.join(str(int(bit)) for bit in compressed_bits[current_pos:current_pos + l])
+                if code in dc_table:
+                    delta_dc = int(dc_table[code])
                     current_pos += l
-                    dc_value = prev_dc[channel] + delta_dc
-                    prev_dc[channel] = dc_value
+                    dc_coeff = delta_dc + prev_dc_coeff[channel_idx]
+                    prev_dc_coeff[channel_idx] = dc_coeff
                     break
-            if delta_dc is None:
-                raise ValueError(f"DC decoding failed at bit position {current_pos}")
 
+            #FUCK INDENTATION
+            if delta_dc is None:
+                raise ValueError(f"Invalid bitstream: No matching DC code found at position {current_pos}")
+
+            # Decode AC coefficients
             ac_coeffs = []
-            while len(ac_coeffs) < (self.block_size * self.block_size - 1):
+            eob_found = False
+
+            while not eob_found and len(ac_coeffs) < (self.block_size * self.block_size - 1):
+                # Search for matching AC code
                 ac_symbol = None
-                for l in range(ac_min, min(ac_max + 1, bit_length - current_pos + 1)):
-                    code = "".join(str(int(b)) for b in compressed_bits[current_pos:current_pos + l])
-                    table = reverse_huffman['ac_lum'] if channel == 0 else reverse_huffman['ac_chrom']
-                    if code in table:
-                        ac_symbol = table[code]
+                for l in range(min_ac_length, min(max_ac_length + 1, bit_length - current_pos + 1)):
+                    code = ''.join(str(int(bit)) for bit in compressed_bits[current_pos:current_pos + l])
+                    if code in ac_table:
+                        ac_symbol = ac_table[code]
                         current_pos += l
                         break
+
                 if ac_symbol is None:
-                    raise ValueError(f"AC decoding failed at bit position {current_pos}")
-                if ac_symbol == (0, 0):
-                    break
+                    raise ValueError(f"Invalid bitstream: No matching AC code found at position {current_pos}")
+                if ac_symbol == (0, 0):  # End of block
+                    eob_found = True
                 else:
-                    value, run = ac_symbol
-                    ac_coeffs.extend([0] * run)
-                    ac_coeffs.append(value)
-            if len(ac_coeffs) < (self.block_size * self.block_size - 1):
-                ac_coeffs.extend([0] * (self.block_size * self.block_size - 1 - len(ac_coeffs)))
-            block_coeffs = [dc_value] + ac_coeffs
-            block = inverse_zigzag_order(block_coeffs, self.zigzag_pattern, self.block_size)
-            decoded_blocks.append(block)
+                    # Extract run length and value correctly
+                    # The AC symbols are stored as tuples (value, run_length) - matching the encoding
+                    ac_value, run_length = ac_symbol
+                    # Add zeros for the run length
+                    ac_coeffs.extend([0] * run_length)
+                    ac_coeffs.append(ac_value)
+                    # Pad with zeros if EOB was reached early
+            ac_coeffs.extend([0] * (self.block_size * self.block_size - 1 - len(ac_coeffs)))
+            zigzag_coeffs = [dc_coeff] + ac_coeffs
+            block = inverse_zigzag_order(zigzag_coeffs, self.zigzag_pattern, self.block_size)
+            #if block_num == 10:
+                #print(block)
+                #print(len(block))
+
+            # Get the channel dimensions
+            if channel_idx == 0:
+                rows, cols = self.image_dimensions
+            else:
+                rows, cols = chrominance_dimensions
+
+            # Calculate block position in the channel
+            if channel_idx == 0:
+                block_idx = block_num
+            elif channel_idx == 1:
+                block_idx = block_num - num_total_y_blocks
+                #print(block_idx)
+            else:
+                block_idx = block_num - num_total_y_blocks - num_total_c_blocks
+
+            #ToDo check if they are not exactly divisible, does this get unnecessarily repeated, init before the loop
+            #TODO what happens when image resolution and chromiance resolution are not divisible by block_size
+            blocks_per_row = cols // self.block_size
+            i = (block_idx // blocks_per_row) * self.block_size
+            j = (block_idx % blocks_per_row) * self.block_size
+
+            # Place the block in the appropriate channel
+            end_i = min(i + self.block_size, rows)
+            end_j = min(j + self.block_size, cols)
+            decoded_blocks[channel_idx][i:end_i, j:end_j] = block[:end_i - i, :end_j - j]
+
+        print('Entropy decoding completed')
+        print(decoded_blocks[2])
         return decoded_blocks
 
+
+    #TODO check order, we want the reverse pipeline
     def process_blocks_inverse(self, quantized_blocks: list) -> list:
         """
         Reconstructs full image channels (Y, Cb, Cr) by dequantizing and applying 2D IDCT on blocks,
         then reassembling them using the header's dimensions.
-        
-        Parameters:
-            quantized_blocks (list): List of quantized 2D DCT blocks.
-            
-        Returns:
-            list: [y_channel, cb_channel, cr_channel] as NumPy arrays.
+        Parameters: quantized_blocks (list): List of quantized 2D DCT blocks.
+        Returns: list: [y_channel, cb_channel, cr_channel] as NumPy arrays.
         """
-        image_h, image_w = self.image_dimensions
-        block_size = self.block_size
+        # TODO is this needed? it must be symmetrical with the compression algo
+        # def idct2(block: np.ndarray) -> np.ndarray:
+        # return idct(idct(block, axis=0, norm='ortho'), axis=1, norm='ortho')
 
-        num_y_blocks_horizontal = image_w // block_size
-        num_y_blocks_vertical = image_h // block_size
+        reconstructed_channels = []
+        for ch_num, channel in enumerate(quantized_blocks):
+            reconstructed_channels.append(np.zeros(shape=np.shape(channel), dtype=np.int8))
+            for idx in range(0, np.shape(channel)[0], self.block_size):
+                for jdx in range(0, np.shape(channel)[1], self.block_size):
+                    end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else None
+                    end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else None
+                    block = channel[idx:end_idx, jdx:end_jdx]
+                    dequantized_block = self.dequantize_block(block, ch_num)
+                    reconstructed_channels[ch_num][idx:end_idx, jdx:end_jdx] = self.inverse_block_dct(dequantized_block)
+        print(reconstructed_channels[0])
+        exit()
+        return reconstructed_channels
 
-        chrom_h = image_h // self.downsample_factor
-        chrom_w = image_w // self.downsample_factor
-        num_c_blocks_horizontal = chrom_w // block_size
-        num_c_blocks_vertical = chrom_h // block_size
-
-        y_channel = np.zeros((image_h, image_w), dtype=np.float32)
-        cb_channel = np.zeros((chrom_h, chrom_w), dtype=np.float32)
-        cr_channel = np.zeros((chrom_h, chrom_w), dtype=np.float32)
-
-        index = 0
-        for i in range(num_y_blocks_vertical):
-            for j in range(num_y_blocks_horizontal):
-                block = quantized_blocks[index]
-                deq = self.dequantize_block(block, 0)
-                block_spatial = idct2(deq) + 128
-                r = slice(i * block_size, i * block_size + block_size)
-                c = slice(j * block_size, j * block_size + block_size)
-                y_channel[r, c] = block_spatial[:y_channel[r, c].shape[0], :y_channel[r, c].shape[1]]
-                index += 1
-
-        for i in range(num_c_blocks_vertical):
-            for j in range(num_c_blocks_horizontal):
-                block = quantized_blocks[index]
-                deq = self.dequantize_block(block, 1)
-                block_spatial = idct2(deq) + 128
-                r = slice(i * block_size, i * block_size + block_size)
-                c = slice(j * block_size, j * block_size + block_size)
-                cb_channel[r, c] = block_spatial[:cb_channel[r, c].shape[0], :cb_channel[r, c].shape[1]]
-                index += 1
-
-        for i in range(num_c_blocks_vertical):
-            for j in range(num_c_blocks_horizontal):
-                block = quantized_blocks[index]
-                deq = self.dequantize_block(block, 2)
-                block_spatial = idct2(deq) + 128
-                r = slice(i * block_size, i * block_size + block_size)
-                c = slice(j * block_size, j * block_size + block_size)
-                cr_channel[r, c] = block_spatial[:cr_channel[r, c].shape[0], :cr_channel[r, c].shape[1]]
-                index += 1
-
-        return [y_channel, cb_channel, cr_channel]
-
-    def dequantize_block(self, quantized_block: np.ndarray, channel_num: int) -> np.ndarray:
+    def dequantize_block(self, quantized_block, ch_num, **kwargs):
         """
-        Dequantizes a block by elementwise multiplying it with its corresponding quantization table.
-        
-        Parameters:
-            quantized_block (np.ndarray): The quantized block.
-            channel_num (int): Channel index (0 for luminance, 1 or 2 for chrominance).
-            
-        Returns:
-            np.ndarray: The dequantized block.
+        Multiply each block by the quantization table (reverse of quantize_block).
+        :param quantized_block: The quantized block from the compressed data
+        :param ch_num: Indicates which of the quantization tables to use
+        :param kwargs:
+        :return: The dequantized frequency domain block
         """
-        qtable = self.lumiance_quantization_table if channel_num == 0 else self.chrominance_quantization_table
-        h, w = quantized_block.shape
-        qtable_used = qtable[:h, :w]
-        return quantized_block.astype(np.float32) * qtable_used.astype(np.float32)
 
-    def upsample_chrominance(self, channels: list) -> np.ndarray:
+        def pad_matrix(matrix, target_rows, target_cols):
+            """
+            Same padding function as in compression
+            """
+            matrix = np.array(matrix)
+            original_rows, original_cols = matrix.shape
+            if original_rows > target_rows or original_cols > target_cols:
+                raise ValueError("Target dimensions must be greater than or equal to the original dimensions.")
+            padded_matrix = np.zeros((target_rows, target_cols), dtype=matrix.dtype)
+            padded_matrix[:original_rows, :original_cols] = matrix
+            return padded_matrix
+
+        padded_block = pad_matrix(quantized_block, self.block_size, self.block_size)
+        if ch_num == 0:
+            dequantized_block = (padded_block * self.lumiance_quantization_table).astype(np.int16)
+        else:
+            dequantized_block = (padded_block * self.chrominance_quantization_table).astype(np.int16)
+        # Return to original block size (without padding)
+        return dequantized_block[0:quantized_block.shape[0], 0:quantized_block.shape[1]]
+
+    def inverse_block_dct(self, frequency_block, **kwargs):
         """
-        Upsamples the chrominance channels (Cb and Cr) using nearest-neighbor interpolation,
-        and stacks them with the Y channel to form a full-resolution YCbCr image.
-        
-        Parameters:
-            channels (list): [y_channel, cb_channel, cr_channel]
-            
-        Returns:
-            np.ndarray: The upsampled YCbCr image.
+        Perform inverse DCT on the block and scale pixels back to 0-255 range.
+        :param frequency_block: The frequency domain block to be transformed back
+        :param kwargs:
+        :return: The spatial domain image block
+        """
+        spatial_block = idct(frequency_block)
+
+        # Scale back from -128-127 to 0-255
+        return np.clip(spatial_block + 128, 0, 255).astype(np.uint8)
+
+    def upsample_chrominance(self, channels):
+        """
+        Upsample chrominance channels to match luminance channel dimensions
+        :param channels: List of [Y, Cb, Cr] channels
+        :return: YCbCr image with full resolution chrominance channels
         """
         y_channel, cb_channel, cr_channel = channels
-        image_h, image_w = self.image_dimensions
-        up_cb = np.zeros((image_h, image_w), dtype=np.uint8)
-        up_cr = np.zeros((image_h, image_w), dtype=np.uint8)
-        factor = self.upsampling_factor
+        height, width = y_channel.shape
 
-        for i in range(image_h):
-            for j in range(image_w):
-                up_cb[i, j] = cb_channel[i // factor, j // factor]
-                up_cr[i, j] = cr_channel[i // factor, j // factor]
+        # Create upsampled channels
+        cb_upsampled = np.zeros((height, width), dtype=np.uint8)
+        cr_upsampled = np.zeros((height, width), dtype=np.uint8)
 
-        return np.stack((y_channel.astype(np.uint8), up_cb, up_cr), axis=-1)
+        # Simple nearest neighbor upsampling
+        for i in range(height):
+            for j in range(width):
+                cb_upsampled[i, j] = cb_channel[i // self.upsampling_factor, j // self.upsampling_factor]
+                cr_upsampled[i, j] = cr_channel[i // self.upsampling_factor, j // self.upsampling_factor]
 
-    def convert_colorspace_inverse(self, ycbcr_image: np.ndarray) -> np.ndarray:
+        # Combine channels
+        ycbcr_image = np.stack((y_channel, cb_upsampled, cr_upsampled), axis=-1)
+
+        return ycbcr_image
+
+    def convert_colorspace_inverse(self, ycbcr_image):
         """
-        Converts the image from YCbCr to RGB using the inverse conversion matrix.
-        
-        Parameters:
-            ycbcr_image (np.ndarray): Image in YCbCr.
-            
-        Returns:
-            np.ndarray: Converted image in RGB.
+        Convert from YCbCr to RGB color space
+        This is the inverse of the convert_colorspace method in FlexibleJpeg
+        :param ycbcr_image: YCbCr image
+        :return: RGB image
         """
-        conv_matrix = self.YCbCr_conversion_matrix if self.YCbCr_conversion_matrix is not None else self.default_YCbCr_conversion_matrix
-        offset = self.YCbCr_conversion_offset if self.YCbCr_conversion_offset is not None else self.default_YCbCr_conversion_offset
+        # Define the inverse of the YCbCr conversion matrix
+        if self.YCbCr_conversion_matrix is not None:
+            # Convert from numpy array if it's a string representation
+            if isinstance(self.YCbCr_conversion_matrix, str):
+                self.YCbCr_conversion_matrix = np.array(ast.literal_eval(self.YCbCr_conversion_matrix))
 
-        inv_matrix = np.linalg.inv(conv_matrix)
-        shifted = ycbcr_image.astype(np.float32) - offset
-        rgb = np.tensordot(shifted, inv_matrix, axes=([2], [1]))
-        rgb = np.clip(rgb, 0, 255)
-        return rgb.astype(np.uint8)
+            # Calculate inverse matrix
+            inverse_matrix = np.linalg.inv(self.YCbCr_conversion_matrix)
+        else:
+            # Use default values
+            inverse_matrix = np.linalg.inv(self.default_YCbCr_conversion_matrix)
+
+        # Get offset
+        if self.YCbCr_conversion_offset is not None:
+            if isinstance(self.YCbCr_conversion_offset, str):
+                self.YCbCr_conversion_offset = np.array(ast.literal_eval(self.YCbCr_conversion_offset))
+            offset = self.YCbCr_conversion_offset
+        else:
+            offset = self.default_YCbCr_conversion_offset
+
+        # Subtract offset and apply inverse matrix
+        shifted_ycbcr = ycbcr_image.astype(np.float32) - offset
+        rgb_image = np.tensordot(shifted_ycbcr, inverse_matrix, axes=([2], [1]))
+
+        # Clip values to valid range and convert to uint8
+        rgb_image = np.clip(rgb_image, 0, 255).astype(np.uint8)
+
+        return rgb_image
+
+
+# Dictionary mapping compression types to their decompressor classes
+compression_algorithm_reference = {
+    "jpeg_baseline": BaselineJpegDecompress,
+    "homemade_jpeg_like": FlexibleJpegDecompress
+}
+
+# Example usage - Simple script for decompressing a specific file
+if __name__ == '__main__':
+    # Create a FlexibleJpegDecompress instance
+    decompressor = FlexibleJpegDecompress()
+    test_image_path = os.path.join(os.getcwd(), "tmp", "flex_jpeg_comp.rde")
+    #test_image_path = os.path.join(os.getcwd(), "tmp", "flex_jpeg_comp.verbose.rde")
+
+    # Decompress the image from the fixed path
+    decompressed_image, save_path = decompressor(test_image_path)
