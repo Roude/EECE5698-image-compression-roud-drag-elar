@@ -11,7 +11,7 @@
 from tokenize import String
 import sys
 import yaml
-from skimage import io
+from skimage import io, color
 import imageio.v3 as imageio
 import os
 from datetime import datetime
@@ -21,7 +21,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from skimage.color import convert_colorspace
 from skimage.io import imread
-from scipy.fftpack import dct, idct
+from scipy.fftpack import dct, idct, dctn,idctn
 from torch.nn.functional import channel_shuffle
 
 from src.utilities import display_greyscale_image, make_serializable_table
@@ -105,7 +105,7 @@ class FlexibleJpeg(CompressImage):
         self.block_size = 8
         self.quality_factor = 50
         self.chrominance_aggression_factor = 3
-        self.lumiance_aggression_factor = 1.5
+        self.luminance_aggression_factor = 1.5
         self.downsample_factor = 2
         self.YCbCr_conversion_matrix = None
         self.YCbCr_conversion_offset = None
@@ -126,17 +126,17 @@ class FlexibleJpeg(CompressImage):
                                                               dtype=np.uint8)
         self.chrominance_quantization_table = self.default_chrominance_quantization_table
 
-        self.default_lumiance_quantization_table = np.array([[6, 4, 4, 6, 10, 16, 20, 24],
-                                                             [5, 5, 6, 8, 10, 23, 24, 22],
-                                                             [6, 5, 6, 10, 16, 23, 28, 22],
-                                                             [6, 7, 9, 12, 20, 35, 32, 25],
-                                                             [7, 9, 15, 22, 27, 44, 41, 31],
-                                                             [10, 14, 22, 26, 32, 42, 45, 37],
-                                                             [20, 26, 31, 35, 41, 48, 48, 40],
-                                                             [29, 37, 38, 39, 45, 40, 41, 40]],
-                                                            dtype=np.uint8)
-        self.lumiance_quantization_table = self.default_lumiance_quantization_table
-        self.lumiance_datatype = np.uint8
+        self.default_luminance_quantization_table = np.array([[6, 4, 4, 6, 10, 16, 20, 24],
+                                                              [5, 5, 6, 8, 10, 23, 24, 22],
+                                                              [6, 5, 6, 10, 16, 23, 28, 22],
+                                                              [6, 7, 9, 12, 20, 35, 32, 25],
+                                                              [7, 9, 15, 22, 27, 44, 41, 31],
+                                                              [10, 14, 22, 26, 32, 42, 45, 37],
+                                                              [20, 26, 31, 35, 41, 48, 48, 40],
+                                                              [29, 37, 38, 39, 45, 40, 41, 40]],
+                                                             dtype=np.uint8)
+        self.luminance_quantization_table = self.default_luminance_quantization_table
+        self.luminance_datatype = np.uint8
         self.chrominance_datatype = np.uint8
 
         self.default_zigzag_pattern = np.array([[0, 1, 5, 6, 14, 15, 27, 28],
@@ -171,6 +171,11 @@ class FlexibleJpeg(CompressImage):
         self.YCbCr_conversion_matrix = np.array(settings.get("YCbCr_conversion_matrix"), dtype=np.float32) / 256
         self.YCbCr_conversion_offset = np.array(settings.get("YCbCr_conversion_offset"), dtype=np.uint8)
 
+        self.chrominance_quantization_table = self.chrominance_quantization_table
+
+        self.luminance_quantization_table = self.luminance_quantization_table
+
+        #TODO how are these quantization tables working?
         self.image_dimensions = image_uncompressed.shape[:2]
         self.channel_amount = image_uncompressed.shape[2]
         #print(self.image_dimensions)
@@ -205,13 +210,9 @@ class FlexibleJpeg(CompressImage):
         :param kwargs:
         :return:
         """
-        product = np.tensordot(image_uncompressed, self.YCbCr_conversion_matrix, axes=([2],[1]))
-        with_offset = product + self.YCbCr_conversion_offset
-        converted = np.array(with_offset, dtype=np.uint8)
-        print("Y:", converted[..., 0].min(), converted[..., 0].max())
-        print("Cb:", converted[..., 1].min(), converted[..., 1].max())
-        print("Cr:", converted[..., 2].min(), converted[..., 2].max())
-        return converted
+        converted = color.rgb2ycbcr(image_uncompressed)
+        converted_int = converted.astype(np.uint8)
+        return converted_int
     #TODO perhaps establish vertical and horizontal downsampling instead of all as one
     def downsample_chrominance(self, YCbCr_image, **kwargs):
         """
@@ -222,6 +223,9 @@ class FlexibleJpeg(CompressImage):
         """
         self.downsample_factor = kwargs.get("chrominance_downsample_factor", 2)
 
+        print(self.downsample_factor)
+
+        # TODO understand what exactly is happening here
         luminance = YCbCr_image[:, :, 0]
         ch_CbCr = YCbCr_image[:,:,1:]
 
@@ -256,12 +260,16 @@ class FlexibleJpeg(CompressImage):
                     end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else None
                     end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else None
                     image_block = channel[idx:end_idx, jdx:end_jdx]
-
+                    #if idx == 0 and jdx == 0 and ch_num == 0:
+                        #print(image_block)
                     # might be cleaner to have them as submethods
                     frequency_block = self.block_DCT(image_block, **kwargs)
                     #if idx == 0 and jdx == 0 and ch_num == 0:
                         #print(frequency_block)
                     quantized_block = self.quantize_block(frequency_block, ch_num, **kwargs)
+                    #if idx == 0 and jdx == 0 and ch_num == 2:
+                        #print(idx)
+                        #print(quantized_block)
                     block_processed_channels[ch_num][idx:end_idx, jdx:end_jdx] = quantized_block
         return block_processed_channels
 
@@ -272,10 +280,14 @@ class FlexibleJpeg(CompressImage):
         :param kwargs:
         :return: the cosine transformed block
         """
-        block_for_transform = (image_block.astype(np.int16) - 128).astype(np.int8)
-        #TODO have this one as ortho? what exactly does that do?
-        DCT_block = np.array(dct(block_for_transform), dtype=np.int8)
-        return DCT_block
+        #print(image_block)
+        #block_for_transform = (image_block - 128).astype(np.float32)
+        #DCT_block = np.array(dctn(block_for_transform, norm='ortho'), dtype=np.int16)
+        #reverse= (idctn(DCT_block.astype(np.int16), norm='ortho')+128).astype(int)
+        # Correct version
+        dct = dctn(image_block.astype(np.float32) - 128, norm='ortho')
+
+        return dct
 
 
     def quantize_block(self, frequency_domain_block, ch_num, **kwargs):
@@ -320,15 +332,15 @@ class FlexibleJpeg(CompressImage):
 
         #quality_factor = kwargs.get("quality_factor", 50)
         #ToDO implement emphasis matrix for chrominance or lumiance
-        self.lumiance_quantization_table = kwargs.get("lumiance_quantization_table",
-                                                      self.default_lumiance_quantization_table)
 
         padded_matrix = pad_matrix(frequency_domain_block, self.block_size, self.block_size)
         #print(padded_matrix)
         if ch_num == 0:
-            padded_frequency_domain_matrix = (padded_matrix / self.lumiance_quantization_table).astype(np.int8)
+            padded_frequency_domain_matrix = (padded_matrix / self.luminance_quantization_table).astype(np.int8)
+            #padded_frequency_domain_matrix = padded_matrix.astype(np.int8)
         else:
             padded_frequency_domain_matrix = (padded_matrix / self.chrominance_quantization_table).astype(np.int8)
+            #padded_frequency_domain_matrix = padded_matrix.astype(np.int8)
         # needs to be zero for RLE to be successful
         padded_frequency_domain_matrix[-1] = 0
         return padded_frequency_domain_matrix[0:frequency_domain_block.shape[0],0:frequency_domain_block.shape[1]]

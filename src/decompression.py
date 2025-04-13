@@ -15,8 +15,9 @@
 # This file contains the decompression functionality for various image compression formats
 import os
 import numpy as np
-from scipy.fftpack import idct
+from scipy.fftpack import idct, idctn
 import imageio.v3 as imageio
+from skimage import io, color
 import ast
 from abc import ABC, abstractmethod
 import re
@@ -24,7 +25,7 @@ import json
 import struct
 from collections import Counter
 
-from skimage.color.colorconv import ycbcr_from_rgb
+#from skimage.color.colorconv import ycbcr_from_rgb
 
 from src.utilities import parse_huffman_table, make_serializable_table, bytes_to_bools
 
@@ -178,6 +179,8 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         self.YCbCr_conversion_offset = np.array(settings.get("YCbCr_conversion_offset"), dtype=np.uint8)
 
         self.upsample_factor = settings.get("chrominance_downsample_factor", self.downsample_factor)
+        print(self.upsample_factor)
+
 
         # Set zigzag pattern based on block size
         if self.block_size == 8:
@@ -313,11 +316,12 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
 
         #print(reverse_huffman['ac_chrom'])
 
+
         # with open("huffman_tables_decomp.json", "w") as f:
         # json.dump(huffman_tables, f, indent=2)
 
-        chrominance_dimensions = (self.image_dimensions[0] // self.downsample_factor,
-                             self.image_dimensions[1] // self.downsample_factor)
+        chrominance_dimensions = (self.image_dimensions[0] // self.upsample_factor,
+                             self.image_dimensions[1] // self.upsample_factor)
         num_total_y_blocks = (self.image_dimensions[0] // self.block_size) * (
                     self.image_dimensions[1] // self.block_size)
         num_total_c_blocks = (chrominance_dimensions[0] // self.block_size) * (
@@ -458,6 +462,8 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
                     end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else None
                     end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else None
                     quantized_block = channel[idx:end_idx, jdx:end_jdx]
+                    #if idx == 0 and jdx == 0 and ch_num == 2:
+                        #print(quantized_block)
                     dequantized_block = self.dequantize_block(quantized_block, ch_num)
                     #if ch_num == 2:
                         #print(dequantized_block)
@@ -490,8 +496,8 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
 
         padded_block = pad_matrix(quantized_block, self.block_size, self.block_size)
         if ch_num == 0:
-            #use float here instead
-            dequantized_block = (padded_block * self.lumiance_quantization_table).astype(np.int16)
+            #use float here instead?
+            dequantized_block = (padded_block * self.luminance_quantization_table).astype(np.int16)
         else:
             dequantized_block = (padded_block * self.chrominance_quantization_table).astype(np.int16)
         # Return to original block size (without padding)
@@ -504,14 +510,16 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :param kwargs:
         :return: The spatial domain image block
         """
-        spatial_block = idct(frequency_block, norm='ortho')
+        #spatial_block = idctn(frequency_block, norm='ortho')
         #print(spatial_block)
 
         # Scale back from -128-127 to 0-255
-        IDCT_block = np.clip(spatial_block + 128, 0, 255).astype(np.uint8)
+        #IDCT_block = np.clip(spatial_block + 128, 0, 255).astype(np.uint8)
+        inverse_DCT = np.clip(idctn(frequency_block, norm='ortho') + 128, 0, 255).astype(np.uint8)
+
 
         #print(IDCT_block)
-        return IDCT_block
+        return inverse_DCT
 
 
     def upsample_chrominance(self, channels):
@@ -546,27 +554,10 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :param ycbcr_image: YCbCr image
         :return: RGB image
         """
-
-        print(self.YCbCr_conversion_offset)
-        print(ycbcr_image)
-        shifted = ycbcr_image.astype(np.float32) - self.YCbCr_conversion_offset
-        print(shifted)
-        ycbcr_float = ycbcr_image.astype(np.float32)
-        # Proper scaling for standard YCbCr (ITU-R BT.601)
-        ycbcr_float[..., 0] = (ycbcr_float[..., 0] - 16) * 255 / 219  # Y channel
-        ycbcr_float[..., 1:] = (ycbcr_float[..., 1:] - 128) * 255 / 224
-
-        inv_matrix = np.linalg.inv(self.YCbCr_conversion_matrix)
-
-        rgb_float = np.tensordot(ycbcr_float, inv_matrix, axes=([2], [1]))
-        #print("RGB before clipping:")
-        #print("R:", rgb_float[..., 0].min(), rgb_float[..., 0].max())
-        #print("G:", rgb_float[..., 1].min(), rgb_float[..., 1].max())
-        #print("B:", rgb_float[..., 2].min(), rgb_float[..., 2].max())
-        final = np.clip(rgb_float, 0, 255).astype(np.uint8)
-
-        #print(final)
-        return final
+        final = color.ycbcr2rgb(ycbcr_image)
+        final_int = (255*final).astype(np.uint8)
+        print(final_int)
+        return final_int
 
 
 # Dictionary mapping compression types to their decompressor classes
