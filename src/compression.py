@@ -510,8 +510,8 @@ class FlexibleJpeg(CompressImage):
         :param settings:
         :return:
         """
-        self.save_location = settings.get("save_location", "")
-        if self.save_location == "":
+        # self.save_location = settings.get("save_location", "")
+        if self.save_location is None:
             #self.save_location = os.path.join(os.getcwd(), "tmp", f"flex_jpeg_comp_output_{datetime.now().strftime("%Y%m%d_%H%M%S")}")
             self.save_location = os.path.join(os.getcwd(), "tmp",
                                               f"flex_jpeg_comp")

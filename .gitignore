@@ -176,3 +176,8 @@ cython_debug/
 /tmp/*
 results/
 test/tmp
+
+.idea/
+
+huffman_tables_comp.json
+huffman_tables_comp_reverse.json

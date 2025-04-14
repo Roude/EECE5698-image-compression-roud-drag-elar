@@ -2,6 +2,7 @@ import os
 import unittest
 import torch
 import torchvision.transforms as transforms
+import yaml
 from torchvision import models
 from PIL import Image
 import pillow_avif
@@ -11,7 +12,8 @@ from typing import Callable
 from datetime import datetime as dt
 import warnings
 
-from src.compression import BaselineJpeg
+from src.compression import BaselineJpeg, FlexibleJpeg
+from src.decompression import FlexibleJpegDecompress, DecompressImage
 
 results_name = f"iou_results_{dt.now():%Y-%m-%d_%H-%M-%S}.csv"
 
@@ -70,6 +72,24 @@ class TestImageCompression(unittest.TestCase):
         self.image_file = image_file
         self.settings_file = settings_file
         self.compress_function = compress_function
+
+    def test_sml_images_jpeg_like(self):
+        clean_temp_results()
+        settings_filepath = "../compression_configurations/homemade_compression_jpeg_like.yaml"
+        with open(settings_filepath,'r') as settings_file:
+            settings = yaml.safe_load(settings_file)
+
+        compression_engine = FlexibleJpeg(settings_filepath)
+        decompression_engine = FlexibleJpegDecompress()
+        for root, dirs, imgs in os.walk("../assets/unit_test_images"):
+            for img in imgs:
+                test_image_path = os.path.join(root, img)
+                compressed_img_filepath = f"tmp/{img.split(".")[0]}"
+                compression_engine.save_location = compressed_img_filepath
+                compression_engine(test_image_path, settings)
+                decompression_engine.save_location = f"tmp/{img.split(".")[0]}.png"
+                decompression_engine(compressed_img_filepath)
+
 
     def test_jpeg_baseline_compression(self, settings_filepath=None):
         clean_temp_results()
