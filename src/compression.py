@@ -231,7 +231,7 @@ class FlexibleJpeg(CompressImage):
         :param kwargs:
         :return:
         """
-        converted = color.rgb2ycbcr(image_uncompressed)
+        converted = color.convert_colorspace(image_uncompressed, 'RGB', 'YCbCr')
         converted_int = converted.astype(np.uint8)
         return converted_int
     #TODO perhaps establish vertical and horizontal downsampling instead of all as one

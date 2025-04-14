@@ -88,7 +88,7 @@ class TestImageCompression(unittest.TestCase):
                 compression_engine.save_location = compressed_img_filepath
                 compression_engine(test_image_path, settings)
                 decompression_engine.save_location = f"tmp/{img.split(".")[0]}.png"
-                decompression_engine(compressed_img_filepath)
+                decompression_engine(f"{compressed_img_filepath}.rde")
 
 
     def test_jpeg_baseline_compression(self, settings_filepath=None):

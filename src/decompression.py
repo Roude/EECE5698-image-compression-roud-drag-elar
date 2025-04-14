@@ -578,14 +578,14 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :param ycbcr_image: YCbCr image
         :return: RGB image
         """
-        print(ycbcr_image[:,:,2])
-        ycbcr_scaled = ycbcr_image.astype(np.float32)
-        ycbcr_scaled[..., 0] = ycbcr_scaled[..., 0] * (235 / 255) + 16  # Y
-        ycbcr_scaled[..., 1:] = ycbcr_scaled[..., 1:] * (240 / 255) + 16  # Cb/Cr
-
-        rgb = color.ycbcr2rgb(ycbcr_scaled)
-        final = (np.clip(rgb, 0, 1) * 255).astype(np.uint8)
-        print(final)
+        # print(ycbcr_image[:,:,2])
+        # ycbcr_scaled = ycbcr_image.astype(np.float32)
+        # ycbcr_scaled[..., 0] = ycbcr_scaled[..., 0] * (235 / 255) + 16  # Y
+        # ycbcr_scaled[..., 1:] = ycbcr_scaled[..., 1:] * (240 / 255) + 16  # Cb/Cr
+        #
+        # rgb = color.ycbcr2rgb(ycbcr_scaled)
+        final =(color.convert_colorspace(ycbcr_image,'YCbCr','RGB')*255).astype(np.uint8)
+        # print(final)
         return final
         #print(final_int[:,:,2])
         #return final_int
