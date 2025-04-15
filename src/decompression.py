@@ -181,26 +181,6 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         self.upsample_factor = settings.get("chrominance_downsample_factor", self.downsample_factor)
         print(self.upsample_factor)
 
-        self.luminance_quantization_table = np.array([
-            [1, 1, 1, 1, 2, 2, 4, 4],
-            [1, 1, 1, 1, 2, 2, 4, 4],
-            [1, 1, 1, 2, 2, 4, 4, 4],
-            [1, 1, 2, 2, 2, 4, 4, 4],
-            [2, 2, 2, 2, 4, 4, 4, 4],
-            [2, 2, 2, 4, 4, 4, 4, 4],
-            [4, 4, 4, 4, 4, 4, 4, 4],
-            [4, 4, 4, 4, 4, 4, 4, 4]
-        ], dtype=np.float32)
-        self.luminance_quantization_table = np.array([
-            [1, 1, 1, 1, 2, 2, 4, 4],
-            [1, 1, 1, 1, 2, 2, 4, 4],
-            [1, 1, 1, 2, 2, 4, 4, 4],
-            [1, 1, 2, 2, 2, 4, 4, 4],
-            [2, 2, 2, 2, 4, 4, 4, 4],
-            [2, 2, 2, 4, 4, 4, 4, 4],
-            [4, 4, 4, 4, 4, 4, 4, 4],
-            [4, 4, 4, 4, 4, 4, 4, 4]
-        ], dtype=np.float32)
 
         # Set zigzag pattern based on block size
         if self.block_size == 8:
@@ -515,6 +495,8 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         print('upsample factor:', self.upsample_factor)
 
         Y = channels[0]
+        # TODO something other than nearest neighbor?
+
         # Upsample chrominance channels using nearest-neighbor interpolation
         Cb = np.repeat(np.repeat(channels[1], self.upsample_factor, axis=0),
                        self.upsample_factor, axis=1)
