@@ -2,10 +2,6 @@ import os
 from datetime import datetime
 from src.compression import FlexibleJpeg
 
-import os
-from datetime import datetime
-from src.compression import FlexibleJpeg
-
 
 def compress_all_test_images():
     # Create results directory with timestamp
@@ -23,12 +19,14 @@ def compress_all_test_images():
     if not os.path.exists(compression_config):
         raise FileNotFoundError(f"Config file not found at: {compression_config}")
 
-    # Supported formats (add more as needed)
-    SUPPORTED_FORMATS = ('.png', '.jpg', '.jpeg', '.tif', '.tiff', '.bmp', '.webp')
 
     # Get all files and filter supported ones
     all_files = [f for f in os.listdir(original_images_dir)
                  if os.path.isfile(os.path.join(original_images_dir, f))]
+
+    '''
+        # Supported formats (add more as needed)
+    SUPPORTED_FORMATS = ('.png', '.jpg', '.jpeg', '.tif', '.tiff', '.bmp', '.webp')
 
     image_files = [f for f in all_files
                    if f.lower().endswith(SUPPORTED_FORMATS)]
@@ -44,13 +42,16 @@ def compress_all_test_images():
     if not image_files:
         print("No supported image files found")
         return
+    
+    '''
+
 
 
     # Initialize compressor once
     flexible_jpeg = FlexibleJpeg(compression_config)
 
     # Process each image
-    for image_file in image_files:
+    for image_file in all_files:
         try:
             # Get base filename without extension
             base_name = os.path.splitext(image_file)[0]
