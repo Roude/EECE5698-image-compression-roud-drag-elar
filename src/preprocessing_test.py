@@ -101,6 +101,7 @@ class TestingAlgo(CompressImage):
         :param kwargs:
         :return:
         """
+
         #TODO implement quality factor
         if isinstance(image, str):
             image_uncompressed = io.imread(image)
