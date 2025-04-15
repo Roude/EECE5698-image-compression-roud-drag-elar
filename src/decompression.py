@@ -248,42 +248,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         """
         print('File decoding process started')
         print('- Begin extraction')
-        if file_path.endswith('.verbose.rde'):
-            with open(file_path, 'r') as file:
-                content = file.read()
-
-                dims_start = content.find("image_dimensions :: ") + len("image_dimensions :: ")
-                dims_end = content.find(" :: settings_start")
-                dims = content[dims_start:dims_end]
-                # Extract settings
-                settings_start = content.find("settings_start :: ") + len("settings_start :: ")
-                settings_end = content.find(" :: settings_end")
-                settings_str = content[settings_start:settings_end]
-
-                # Extract Huffman table
-                huffman_start = content.find("huffman_table :: ") + len("huffman_table :: ")
-                huffman_end = content.find(" :: huffman_table_end")
-                huffman_table_str = content[huffman_start:huffman_end]
-
-                # Extract bit data
-                bit_data_start = content.find("bit_data :: ") + len("bit_data :: ")
-                bit_data_end = content.find(" :: image_end")
-
-                print('- Extracted succesfully')
-
-                if bit_data_end == -1:  # If "image_end" marker not found
-                    bit_data_str = content[bit_data_start:]
-                else:
-                    bit_data_str = content[bit_data_start:bit_data_end]
-
-                # Process settings to a proper Python dictionary
-                settings = ast.literal_eval(settings_str)
-                # Safely evaluate the main dictionary
-                raw_tables = ast.literal_eval(huffman_table_str)
-                huffman_tables = parse_huffman_table(raw_tables)
-                bit_data = np.array([bool(int(c)) for c in bit_data_str], dtype=np.bool)
-                self.image_dimensions = ast.literal_eval(dims)
-        elif file_path.endswith('.rde'):
+        if file_path.endswith('.rde'):
             with open(file_path, 'rb') as file:
                 # Read header length (first 4 bytes)
                 header_length = int.from_bytes(file.read(4), byteorder='big')

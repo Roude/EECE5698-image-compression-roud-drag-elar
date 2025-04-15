@@ -46,7 +46,7 @@ class CompressImage:
         if not config:
             self.config = {}
             self.compression_function = None
-            print("No configuration provided")
+            print("No configuration initially provided")
         else:
             with open(config,'r') as config_file:
                 self.config = yaml.load(config_file, yaml.SafeLoader)
@@ -182,6 +182,7 @@ class FlexibleJpeg(CompressImage):
         # Generate/update dependent parameters
         if self.block_size == 8:
             self.zigzag_pattern = self.default_zigzag_pattern
+            #TODO use the generated ones for 8 too as it makes it more comparable
             self.luminance_quantization_table = self.default_luminance_quantization_table
             self.chrominance_quantization_table = self.default_chrominance_quantization_table
         else:
@@ -256,6 +257,7 @@ class FlexibleJpeg(CompressImage):
         block_processed_channels = self.process_blocks(downsampled_image)
         compressed_image_datastream, huffman_tables = self.entropy_encode(block_processed_channels)
         self.encode_to_file(compressed_image_datastream, huffman_tables, settings)
+
     #TODO come up with something better for this is provisional
     def generate_parameter_matrices(self):
         luminance_qtable = np.zeros((self.block_size, self.block_size), dtype=np.uint8)
@@ -500,7 +502,6 @@ class FlexibleJpeg(CompressImage):
         :param settings:
         :return:
         """
-
         if settings is None:
             settings = {}
 
@@ -509,7 +510,6 @@ class FlexibleJpeg(CompressImage):
             "luminance_quantization_table": self.luminance_quantization_table.tolist(),
             "chrominance_quantization_table": self.chrominance_quantization_table.tolist(),
         })
-        #print(settings)
 
         # self.save_location = settings.get("save_location", "")
         if self.save_location is None:
@@ -519,7 +519,6 @@ class FlexibleJpeg(CompressImage):
 
         # Set file paths for both formats
         self.binary_save_location = f"{self.save_location}.rde"
-        self.debugging_save_location = f"{self.save_location}.verbose.rde"
 
         serializable_tables = make_serializable_table(huffman_tables)
         serializable_settings = {}
@@ -531,7 +530,6 @@ class FlexibleJpeg(CompressImage):
 
         # Process all bit strings into a single binary stream
         all_bits = "".join(encoded_data_stream)
-
         # Ensure the length is multiple of 8 for byte conversion
         padding_needed = 8 - (len(all_bits) % 8) if len(all_bits) % 8 != 0 else 0
         all_bits += '0' * padding_needed
@@ -557,67 +555,98 @@ class FlexibleJpeg(CompressImage):
             binary_file.write(header_json)
             binary_file.write(binary_data)
 
-        #does not include some overhead from signifiers
-        compressed_size_theoretical = self.calculate_size(all_bits, serializable_tables, serializable_settings)
-        print('Total theoretical size: ', compressed_size_theoretical, 'kB')
+        # Calculate size breakdowns (rounded to 3 decimal places)
+        encoded_image_size = round(len(all_bits) / 8 / 1024, 3)  # in KB
 
-        compressed_size = os.path.getsize(self.binary_save_location)
-        uncompressed_size = os.path.getsize(self.original_path)
+        huffman_json = json.dumps(serializable_tables).encode('utf-8')
+        huffman_tables_size = round(len(huffman_json) / 1024, 3)
 
-        # For a standard RGB image:
+        settings_json = json.dumps(serializable_settings).encode('utf-8')
+        settings_size = round(len(settings_json) / 1024, 3)
+        header_size = round(len(header_json) / 1024, 3)
+
+        total_theoretical_size = round(encoded_image_size + header_size + 4 / 1024, 3)  # 4 bytes converted to KB
+
+        # Actual file sizes (rounded)
+        compressed_size = round(os.path.getsize(self.binary_save_location) / 1024, 3)
+        uncompressed_size = round(os.path.getsize(self.original_path) / 1024, 3)
+
+        # Image dimensions
         height, width = self.image_dimensions
         channels = self.channel_amount
-        # assuming one byte per channel
-        uncompressed_size_theoretical = height * width * channels
+        uncompressed_size_theoretical = round(height * width * channels / 1024, 3)
+        # Compression metrics
+        compression_ratio = round(compressed_size / uncompressed_size, 3)
+        space_savings = round((1 - compression_ratio) * 100, 1)
+        bits_per_pixel = round((compressed_size * 8192) / (width * height), 3)  # 1024*8=8192 bits per KB
+        bits_per_pixel_uncompressed = round((uncompressed_size * 8192) / (width * height), 3)  # 1024*8=8192 bits per KB
 
-        # Calculate compression ratio
-        # Or other way around?
-        compression_ratio = compressed_size / uncompressed_size
+        # Create comprehensive metrics dictionary
+        metrics = {
+            # Size breakdown components
+            'compressed_size_components': {
+                'encoded_image_data_kb': encoded_image_size,
+                'huffman_tables_kb': huffman_tables_size,
+                'compression_settings_kb': settings_size,
+                'header_overhead_kb': header_size,
+                'total_theoretical_kb': total_theoretical_size,
+                'actual_compressed_kb': compressed_size,
+            },
+            # Actual file sizes
+            'uncompressed_sizes': {
+                'actual_uncompressed_kb': uncompressed_size,
+                'theoretical_uncompressed_kb': uncompressed_size_theoretical,
+            },
+            # Compression metrics
+            'compression_metrics': {
+                'compression_ratio': compression_ratio,
+                'space_savings_percent': space_savings,
+                'bits_per_pixel': bits_per_pixel,
+                'bits_per_pixel_uncompressed': bits_per_pixel_uncompressed,
+            },
+            # Image information
+            'image_info': {
+                'original_path': self.original_path,
+                'compressed_path': self.binary_save_location,
+            },
+            'quality_settings': serializable_settings,
+        }
 
-        # Print results
-        print('Theoretical compressed size: ', compressed_size_theoretical, 'kB')
-        print(f'Actual compressed size: {compressed_size / 1024:.2f} kB')
-        print(f'Theoretical uncompressed  size: {uncompressed_size_theoretical / 1024:.2f} kB')
-        print(f'Actual uncompressed size: {uncompressed_size / 1024:.2f} kB')
-        print(f'Compression ratio: {compression_ratio:.2f}:1')
-        print(f'Space savings: {(1 - compression_ratio) * 100:.2f}%')
+        # Print results in a clean, aligned format
+        print("\n=== Compression Metrics ===")
+        print(f"{'Metric':<35} {'Value':>15}")
+        print("-" * 50)
+        print(f"{'Original image path:':<35} {self.original_path:>15}")
+        print(f"{'Compressed file path:':<35} {self.binary_save_location:>15}")
+        print(f"{'Image dimensions:':<35} {f'{width}x{height}':>15}")
+        print(f"{'Color channels:':<35} {channels:>15}")
+        print("-" * 50)
+        print(f"{'Encoded image data:':<35} {encoded_image_size:>15,.3f} KB")
+        print(f"{'Huffman tables size:':<35} {huffman_tables_size:>15,.3f} KB")
+        print(f"{'Compression settings:':<35} {settings_size:>15,.3f} KB")
+        print(f"{'Header overhead:':<35} {header_size:>15,.3f} KB")
+        print(f"{'Total theoretical size:':<35} {total_theoretical_size:>15,.3f} KB")
+        print(f"{'Actual compressed size:':<35} {compressed_size:>15,.3f} KB")
+        print("-" * 50)
+        print(f"{'Actual uncompressed size:':<35} {uncompressed_size:>15,.3f} KB")
+        print(f"{'Theoretical uncompressed:':<35} {uncompressed_size_theoretical:>15,.3f} KB")
+        print("-" * 50)
+        print(f"{'Compression ratio:':<35} {compression_ratio:>15,.3f}")
+        print(f"{'Space savings:':<35} {space_savings:>15,.1f}%")
+        print(f"{'Bits per pixel:':<35} {bits_per_pixel:>15,.3f}")
+        print(f"{'Bits per pixel (uncompressed):':<35} {bits_per_pixel_uncompressed:>15,.3f}")
+        print("=" * 50)
 
-        #with open(self.debugging_save_location, 'w') as text_file:
-        """
-            text_file.write("image_dimensions :: ")
-            text_file.write(str(self.image_dimensions))
-            text_file.write(" :: settings_start :: ")
-            text_file.write(str(serializable_settings))
-            text_file.write(" :: settings_end :: ")
-            text_file.write("huffman_table :: ")
-            text_file.write(str(serializable_tables))
-            text_file.write(" :: huffman_table_end :: ")
-            text_file.write("bit_data :: ")
-            text_file.write(str(all_bits))
-            text_file.write(" :: image_end")
-        """
-    def calculate_size(self, all_bits, serialized_huffman_tables, serialized_settings):
-        # doesn't include miniscule header information
-        # Calculate encoded image size
-        encoded_image_size = len(all_bits) / 8 / 1024  # Convert bits to KB
+        metrics_paths = f"{self.save_location}.metrics.json"
+        try:
+            with open(metrics_paths, 'w') as f:  # Fixed - use metrics_paths directly
+                json.dump(metrics, f, indent=2)
+        except Exception as e:
+            print(f"Warning: Could not save metrics files: {str(e)}")
+            metrics['metrics_files'] = {'error': str(e)}
 
-        # Calculate huffman tables size
-        huffman_json = json.dumps(serialized_huffman_tables).encode('utf-8')
-        huffman_tables_size = len(huffman_json) / 1024
-
-        # Calculate settings size
-        settings_json = json.dumps(serialized_settings).encode('utf-8')
-        settings_size = len(settings_json) / 1024
-
-        total_size = encoded_image_size + huffman_tables_size + settings_size
-
-        print(f"Encoded data: {encoded_image_size:.2f} kB")
-        print(f"Huffman table: {huffman_tables_size:.2f} kB")
-        print(f"Settings: {settings_size:.2f} kB")
-
-        return round(total_size, 2)
-
-
+        # Print save locations
+        print("\nSaved metrics files: in", metrics_paths)
 
 """ 
 Use this function block to test things out.
