@@ -32,7 +32,6 @@ from src.utilities import parse_huffman_table, make_serializable_table, bytes_to
 from src.compression import BaselineJpeg, FlexibleJpeg
 from src.huffman import generate_zigzag_pattern, inverse_zigzag_order
 
-
 #makes it so it doesn't print
 np.set_printoptions(formatter={
     'object': lambda x: str(x) if not isinstance(x, tuple) else f"({x[0]}, {x[1]})"

@@ -31,8 +31,9 @@ from collections import Counter
 import pkgutil
 import json
 import cv2
+import rawpy
 
-import time #for debugging purposes
+import time
 #makes it so it doesn't print the np.int16 shit
 np.set_printoptions(formatter={
     'object': lambda x: str(x) if not isinstance(x, tuple) else f"({x[0]}, {x[1]})"
@@ -151,6 +152,14 @@ class FlexibleJpeg(CompressImage):
         if config:
             self._load_config(config)
 
+    #put into superclass?
+    @staticmethod
+    def read_raw_image(filepath):
+        """Helper method to read RAW image files"""
+        with rawpy.imread(filepath) as raw:
+            rgb = raw.postprocess()
+        return rgb
+
     def _load_config(self, config):
         """Load and validate configuration parameters"""
         try:
@@ -196,11 +205,29 @@ class FlexibleJpeg(CompressImage):
         :param kwargs:
         :return:
         """
+        self.timings = {}
+        self.last_time = time.time()
+
+        self.save_location = kwargs.get("save_location", os.path.join(os.getcwd(), "tmp", f"flex_jpeg_comp")) # define save_location here to avoid AttributeError in encode_to_file(). this ensures we can either pass a custom save path or fall back to the default inside that method
+
         #TODO implement quality factor
-        self.save_location = kwargs.get("save_location", None) # define save_location here to avoid AttributeError in encode_to_file(). this ensures we can either pass a custom save path or fall back to the default inside that method
         if isinstance(image, str):
-            image_uncompressed = io.imread(image)
+            if image.lower().endswith(('.cr2', '.nef', '.arw')):
+                import rawpy
+                with rawpy.imread(image) as raw:
+                    image_uncompressed = raw.postprocess()
+            else:
+                image_uncompressed = io.imread(image)
+        else:
+            image_uncompressed = image
+
+
+        if isinstance(image, str):
             self.original_path = image
+            if image.lower().endswith(('.cr2', '.nef', '.arw', '.dng')):
+                image_uncompressed = self.read_raw_image(image)
+            else:
+                image_uncompressed = io.imread(image)
         else:
             image_uncompressed = image
 
@@ -250,12 +277,27 @@ class FlexibleJpeg(CompressImage):
         # if self.chrominance_dimensions[0] % self.block_size != 0 or self.chrominance_dimensions[1] % self.block_size != 0:
         #     print('Warning! Chromiance dimensions not divisible by', {self.blocksize})
 
+
+        #I know that this makes it unreadable but bear with me for the time being
+        self.timings['preliminaries_ms'] = ((time.time() - self.last_time) * 1000).astype(np.uint32)
+        self.last_time = time.time()  # Reset the stopwatch
+
         #### THE PIPELINE ####
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
+        self.timings['set_datatype_and_channels_ms'] = ((time.time() - self.last_time) * 1000).astype(np.uint32)
+        self.last_time = time.time()
         YCbCrImage = self.convert_colorspace(image_uncompressed)
+        self.timings['convert_colorspace_ms'] = ((time.time() - self.last_time) * 1000).astype(np.uint32)
+        self.last_time = time.time()
         downsampled_image = self.downsample_chrominance(YCbCrImage)
+        self.timings['downsample_chrominance_ms'] = ((time.time() - self.last_time) * 1000).astype(np.uint32)
+        self.last_time = time.time()
         block_processed_channels = self.process_blocks(downsampled_image)
+        self.timings['process_blocks_ms'] = ((time.time() - self.last_time) * 1000).astype(np.uint32)
+        self.last_time = time.time()
         compressed_image_datastream, huffman_tables = self.entropy_encode(block_processed_channels)
+        self.timings['entropy_encode_ms'] = ((time.time() - self.last_time) * 1000).astype(np.uint32)
+        self.last_time = time.time()
         self.encode_to_file(compressed_image_datastream, huffman_tables, settings)
 
     #TODO come up with something better for this is provisional
@@ -511,12 +553,6 @@ class FlexibleJpeg(CompressImage):
             "chrominance_quantization_table": self.chrominance_quantization_table.tolist(),
         })
 
-        # self.save_location = settings.get("save_location", "")
-        if self.save_location is None:
-            #self.save_location = os.path.join(os.getcwd(), "tmp", f"flex_jpeg_comp_output_{datetime.now().strftime("%Y%m%d_%H%M%S")}")
-            self.save_location = os.path.join(os.getcwd(), "tmp",
-                                              f"flex_jpeg_comp")
-
         # Set file paths for both formats
         self.binary_save_location = f"{self.save_location}.rde"
 
@@ -554,6 +590,9 @@ class FlexibleJpeg(CompressImage):
             binary_file.write(len(header_json).to_bytes(4, byteorder='big'))
             binary_file.write(header_json)
             binary_file.write(binary_data)
+
+        self.timings['encode_to_file_ms'] = ((time.time() - self.last_time) * 1000).astype(np.uint32)
+        self.timings['total_compression_time_ms'] = sum(self.timings.values())
 
         # Calculate size breakdowns (rounded to 3 decimal places)
         encoded_image_size = round(len(all_bits) / 8 / 1024, 3)  # in KB
@@ -597,9 +636,12 @@ class FlexibleJpeg(CompressImage):
                 'actual_uncompressed_kb': uncompressed_size,
                 'theoretical_uncompressed_kb': uncompressed_size_theoretical,
             },
+            'algorithm_metrics': {
+                'algorithm': algorithm,  # e.g., "JPEGCompressor"
+            },
+            'time_metrics': self.timings,
             # Compression metrics
             'compression_metrics': {
-                'algorithm': algorithm,  # e.g., "JPEGCompressor"
                 'compression_ratio': compression_ratio,
                 'space_savings_percent': space_savings,
                 'bits_per_pixel': bits_per_pixel,
@@ -623,6 +665,7 @@ class FlexibleJpeg(CompressImage):
         print(f"{'Color channels:':<35} {channels:>15}")
         print("-" * 50)
         print(f"{'Compression algorithm':<35} {algorithm:>15}")
+        print(f"{'Compression Time (ms)':<35} {self.timings['total_compression_time_ms']:>15}")
         print("-" * 50)
         print(f"{'Encoded image data:':<35} {encoded_image_size:>15,.3f} KB")
         print(f"{'Huffman tables size:':<35} {huffman_tables_size:>15,.3f} KB")
@@ -655,7 +698,6 @@ class FlexibleJpeg(CompressImage):
 if __name__ == '__main__':
 
     #baseline_jpeg = BaselineJpeg(os.path.join(os.getcwd(),"compression_configurations", "baseline_jpeg_q100.yaml"))
-    #start_time = time.time()
 
     flexible_jpeg = FlexibleJpeg()
 
