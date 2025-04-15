@@ -319,8 +319,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             table_name: {v: k for k, v in table.items()}  # Invert key-value pairs
             for table_name, table in huffman_tables.items()
         }
-        #with open("huffman_tables_decomp_reverse.json", "w") as f:
-            #json.dump(reverse_huffman, f, indent=2)
+
 
         def get_min_max_key_lengths(reverse_huffman):
             # Get the lengths of all keys (as binary strings)
@@ -346,12 +345,6 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         dc_chrom_min, dc_chrom_max = get_min_max_key_lengths(reverse_huffman['dc_chrom'])
         ac_lum_min, ac_lum_max = get_min_max_key_lengths(reverse_huffman['ac_lum'])
         ac_chrom_min, ac_chrom_max = get_min_max_key_lengths(reverse_huffman['ac_chrom'])
-
-        #print(reverse_huffman['ac_chrom'])
-
-
-        # with open("huffman_tables_decomp.json", "w") as f:
-        # json.dump(huffman_tables, f, indent=2)
 
         chrominance_dimensions = (self.image_dimensions[0] // self.upsample_factor,
                              self.image_dimensions[1] // self.upsample_factor)

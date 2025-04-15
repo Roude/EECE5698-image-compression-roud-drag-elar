@@ -202,25 +202,18 @@ class FlexibleJpeg(CompressImage):
             self.original_path = image
         else:
             image_uncompressed = image
+
         if settings is not None:
             self._load_config(settings)
         else:
             settings = self.config
-        #if isinstance(settings, str):
-            #with open(settings, 'r') as settings_file:
-                #settings = yaml.safe_load(settings_file)
-
-        #print("Loaded config:", self.config)
 
         #TODO was there a reason we didn't use it for homemade JPEG
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
 
-        #self.YCbCr_conversion_matrix = np.array(settings.get("YCbCr_conversion_matrix"), dtype=np.float32) / 256
-        #self.YCbCr_conversion_offset = np.array(settings.get("YCbCr_conversion_offset"), dtype=np.uint8)
-        #matrix generation
-
         #TODO are we going to change the quantization table with different quality factors? if so just multiply by a scalar or this?
         # how about making a plot or something regarding the distribution of values in the frequency space
+        # please find generator function below
         '''
          def create_emphasis_matrix(self, emphasis_factor):
             matrix = np.zeros((self.block_size, self.block_size), dtype=np.float32)
