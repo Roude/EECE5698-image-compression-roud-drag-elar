@@ -571,6 +571,7 @@ class FlexibleJpeg(CompressImage):
         compressed_size = round(os.path.getsize(self.binary_save_location) / 1024, 3)
         uncompressed_size = round(os.path.getsize(self.original_path) / 1024, 3)
 
+        algorithm = self.__class__.__name__
         # Image dimensions
         height, width = self.image_dimensions
         channels = self.channel_amount
@@ -580,7 +581,6 @@ class FlexibleJpeg(CompressImage):
         space_savings = round((1 - compression_ratio) * 100, 1)
         bits_per_pixel = round((compressed_size * 8192) / (width * height), 3)  # 1024*8=8192 bits per KB
         bits_per_pixel_uncompressed = round((uncompressed_size * 8192) / (width * height), 3)  # 1024*8=8192 bits per KB
-
         # Create comprehensive metrics dictionary
         metrics = {
             # Size breakdown components
@@ -599,6 +599,7 @@ class FlexibleJpeg(CompressImage):
             },
             # Compression metrics
             'compression_metrics': {
+                'algorithm': algorithm,  # e.g., "JPEGCompressor"
                 'compression_ratio': compression_ratio,
                 'space_savings_percent': space_savings,
                 'bits_per_pixel': bits_per_pixel,
@@ -620,6 +621,8 @@ class FlexibleJpeg(CompressImage):
         print(f"{'Compressed file path:':<35} {self.binary_save_location:>15}")
         print(f"{'Image dimensions:':<35} {f'{width}x{height}':>15}")
         print(f"{'Color channels:':<35} {channels:>15}")
+        print("-" * 50)
+        print(f"{'Compression algorithm':<35} {algorithm:>15}")
         print("-" * 50)
         print(f"{'Encoded image data:':<35} {encoded_image_size:>15,.3f} KB")
         print(f"{'Huffman tables size:':<35} {huffman_tables_size:>15,.3f} KB")
@@ -647,15 +650,6 @@ class FlexibleJpeg(CompressImage):
 
         # Print save locations
         print("\nSaved metrics files: in", metrics_paths)
-
-""" 
-Use this function block to test things out.
-"""
-
-compression_algorithm_reference = {
-    "jpeg_baseline": BaselineJpeg,
-    "homemade_jpeg_like": FlexibleJpeg
-}
 
 
 if __name__ == '__main__':
