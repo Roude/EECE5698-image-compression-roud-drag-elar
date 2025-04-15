@@ -3,9 +3,8 @@
 compression_algorithm: "homemade_jpeg_like"
 # This provides arguments to the image compression algorithm. These will be passed in as keyword arguments
 # to the compression algorithm
-save_location: ""
+#save_location: ""
 chrominance_downsample_factor: 1
-# don't change this one
 block_size: 8
 #Todo MAKE THESE WORK
 #quality_factor: 50
@@ -27,7 +26,7 @@ chrominance_quantization_table:
   - [25, 25, 25, 25, 25, 25, 25, 25]
   - [25, 25, 25, 25, 25, 25, 25, 25]
   - [25, 25, 25, 25, 25, 25, 25, 25]
-lumiance_quantization_table:
+luminance_quantization_table:
   - [6, 4, 4, 6, 10, 16, 20, 24]
   - [ 5, 5, 6, 8, 10, 23, 24, 22 ]
   - [ 6, 5, 6, 10, 16, 23, 28, 22 ]

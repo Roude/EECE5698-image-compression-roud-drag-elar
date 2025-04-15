@@ -11,6 +11,7 @@
 from tokenize import String
 import sys
 import yaml
+from yaml import safe_load
 from skimage import io, color
 import imageio.v3 as imageio
 import os
@@ -42,7 +43,6 @@ class CompressImage:
         """
         Here is where we define what configured string maps to what compression function:
         """
-
         if not config:
             self.config = {}
             self.compression_function = None
@@ -51,7 +51,6 @@ class CompressImage:
             with open(config,'r') as config_file:
                 self.config = yaml.load(config_file, yaml.SafeLoader)
             self.update_configuration(self.config)
-            # print(self.config)
 
     def update_configuration(self, config):
         if isinstance(config, str):
@@ -59,6 +58,7 @@ class CompressImage:
                 self.config = yaml.load(config_file, yaml.SafeLoader)
         else:
             self.config = config
+        #print(self.config)
 
     def set_datatype_and_channels(self, image_uncompressed):
         if image_uncompressed.dtype != np.uint8:
@@ -101,7 +101,6 @@ class BaselineJpeg(CompressImage):
 class FlexibleJpeg(CompressImage):
     def __init__(self, config=None):
         super().__init__(config)
-        self.zigzag_pattern = None
         self.block_size = 8
         #self.quality_factor = 50
         #self.chrominance_aggression_factor = 3
@@ -109,6 +108,7 @@ class FlexibleJpeg(CompressImage):
         self.downsample_factor = 2
         self.YCbCr_conversion_matrix = None
         self.YCbCr_conversion_offset = None
+        self.zigzag_pattern = None
         self.default_YCbCr_conversion_matrix = np.array([[65.738, 129.057, 25.064],
                                                  [-37.945, -74.494, 112.439],
                                                  [112.439, -94.154, -18.285]], dtype=np.float32) / 256
@@ -147,9 +147,48 @@ class FlexibleJpeg(CompressImage):
                                                 [20, 22, 33, 38, 46, 51, 55, 60],
                                                 [21, 34, 37, 47, 50, 56, 59, 61],
                                                 [35, 36, 48, 49, 57, 58, 62, 63]])
+        # If config was provided, load it immediately
+        if config:
+            self._load_config(config)
 
+    def _load_config(self, config):
+        """Load and validate configuration parameters"""
+        try:
+            if isinstance(config, str):
+                print(f"Loading config from: {config}")
+                if not os.path.exists(config):
+                    raise FileNotFoundError(f"Config file not found at {config}")
 
-    def __call__(self, image, settings, **kwargs):
+                with open(config, 'r') as f:
+                    config = yaml.safe_load(f)
+                    print("Successfully loaded config!")
+                    #print(json.dumps(config, indent=2))  # Pretty print
+
+                if not config:  # Empty dict
+                    raise ValueError("Loaded config is empty!")
+
+        except Exception as e:
+            print(f"Error loading config: {e}")
+            raise
+
+        # Update core parameters
+        self.block_size = config.get("block_size", self.block_size)
+        self.downsample_factor = config.get("chrominance_downsample_factor", self.downsample_factor)
+
+        # Keep as such for now
+        self.YCbCr_conversion_matrix = self.default_YCbCr_conversion_matrix
+        self.YCbCr_conversion_offset = self.default_YCbCr_conversion_offset
+
+        # Generate/update dependent parameters
+        if self.block_size == 8:
+            self.zigzag_pattern = self.default_zigzag_pattern
+            self.luminance_quantization_table = self.default_luminance_quantization_table
+            self.chrominance_quantization_table = self.default_chrominance_quantization_table
+        else:
+            self.zigzag_pattern = generate_zigzag_pattern(self.block_size)
+            self.luminance_quantization_table, self.chrominance_quantization_table = (self.generate_parameter_matrices())
+
+    def __call__(self, image, settings=None, **kwargs):
         """
         Implementation of JPEG-like compression with individual functions broken out.
         :param image_uncompressed:
@@ -163,19 +202,27 @@ class FlexibleJpeg(CompressImage):
             self.original_path = image
         else:
             image_uncompressed = image
-        if isinstance(settings, str):
-            with open(settings, 'r') as settings_file:
-                settings = yaml.safe_load(settings_file)
+        if settings is not None:
+            self._load_config(settings)
+        else:
+            settings = self.config
+        #if isinstance(settings, str):
+            #with open(settings, 'r') as settings_file:
+                #settings = yaml.safe_load(settings_file)
+
+        #print("Loaded config:", self.config)
 
         #TODO was there a reason we didn't use it for homemade JPEG
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
 
-        self.YCbCr_conversion_matrix = np.array(settings.get("YCbCr_conversion_matrix"), dtype=np.float32) / 256
-        self.YCbCr_conversion_offset = np.array(settings.get("YCbCr_conversion_offset"), dtype=np.uint8)
+        #self.YCbCr_conversion_matrix = np.array(settings.get("YCbCr_conversion_matrix"), dtype=np.float32) / 256
+        #self.YCbCr_conversion_offset = np.array(settings.get("YCbCr_conversion_offset"), dtype=np.uint8)
+        #matrix generation
 
         #TODO are we going to change the quantization table with different quality factors? if so just multiply by a scalar or this?
         # how about making a plot or something regarding the distribution of values in the frequency space
-        def create_emphasis_matrix(self, emphasis_factor):
+        '''
+         def create_emphasis_matrix(self, emphasis_factor):
             matrix = np.zeros((self.block_size, self.block_size), dtype=np.float32)
             for i in range(self.block_size):
                 for j in range(self.block_size):
@@ -184,12 +231,10 @@ class FlexibleJpeg(CompressImage):
                     # Base value that increases with distance
                     matrix[i, j] = max(1, np.floor(1/(self.block_size * self.block_size) * emphasis_factor * distance))
             return matrix
+        '''
 
         self.image_dimensions = image_uncompressed.shape[:2]
         self.channel_amount = image_uncompressed.shape[2]
-
-        self.downsample_factor = settings.get("chrominance_downsample_factor", 2)
-
 
         self.chrominance_dimensions = (self.image_dimensions[0] // self.downsample_factor,
                                   self.image_dimensions[1] // self.downsample_factor)
@@ -197,6 +242,8 @@ class FlexibleJpeg(CompressImage):
         self.num_y_blocks = (self.image_dimensions[0] // self.block_size) * (self.image_dimensions[1] // self.block_size)
         self.num_c_blocks = (self.chrominance_dimensions[0] // self.block_size) * (self.chrominance_dimensions[1] // self.block_size)
         #num_total_blocks = num_y_blocks + 2 * num_c_blocks
+
+        #print(self.luminance_quantization_table)
 
 
         #TODO pad at the beginning? good idea? gotta make sure it fits with both chrominance image dimensions and block size
@@ -209,14 +256,28 @@ class FlexibleJpeg(CompressImage):
         # if self.chrominance_dimensions[0] % self.block_size != 0 or self.chrominance_dimensions[1] % self.block_size != 0:
         #     print('Warning! Chromiance dimensions not divisible by', {self.blocksize})
 
+        #### THE PIPELINE ####
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
-        YCbCrImage = self.convert_colorspace(image_uncompressed, **settings)
-        downsampled_image = self.downsample_chrominance(YCbCrImage, **settings)
-        block_processed_channels = self.process_blocks(downsampled_image, **settings)
+        YCbCrImage = self.convert_colorspace(image_uncompressed)
+        downsampled_image = self.downsample_chrominance(YCbCrImage)
+        block_processed_channels = self.process_blocks(downsampled_image)
         compressed_image_datastream, huffman_tables = self.entropy_encode(block_processed_channels)
         self.encode_to_file(compressed_image_datastream, huffman_tables, settings)
+    #TODO come up with something better for this is provisional
+    def generate_parameter_matrices(self):
+        luminance_qtable = np.zeros((self.block_size, self.block_size), dtype=np.uint8)
+        chrominance_qtable = np.zeros((self.block_size, self.block_size), dtype=np.uint8)
+        #factor = 4
+        factor = np.sqrt(self.block_size)
+        for i in range(self.block_size):
+            for j in range(self.block_size):
+                distance = np.sqrt(i * i + j * j)
+                if distance == 0: distance = 1
+                luminance_qtable[i, j] = max(1, np.floor(1 * factor * distance))
+                chrominance_qtable[i, j] = max(1, np.floor(1.5 * factor * distance))
+        return luminance_qtable, chrominance_qtable
 
-    def convert_colorspace(self, image_uncompressed, **kwargs):
+    def convert_colorspace(self, image_uncompressed):
         """
         Apply YCbCr color conversion to image
         :param image_uncompressed:
@@ -226,7 +287,7 @@ class FlexibleJpeg(CompressImage):
         ycbcr_image = cv2.cvtColor(image_uncompressed, cv2.COLOR_RGB2YCrCb)
         return ycbcr_image
     #TODO perhaps establish vertical and horizontal downsampling instead of all as one
-    def downsample_chrominance(self, YCbCr_image, **kwargs):
+    def downsample_chrominance(self, YCbCr_image):
         """
         Apply downsampling factor to YCbCr formatted image and save the image as a tuple of 3 matricies with the
         luminance and two chrominance channels.
@@ -235,7 +296,7 @@ class FlexibleJpeg(CompressImage):
         """
         #self.downsample_factor = kwargs.get("chrominance_downsample_factor", 2)
 
-        print(self.downsample_factor)
+        print('Downsample factor:', self.downsample_factor)
 
         # This essentially downsamples the image by averaging the n surrounding pixels where N is the downsampling factor.
         luminance = YCbCr_image[:, :, 0]
@@ -255,14 +316,14 @@ class FlexibleJpeg(CompressImage):
                 np.array(running_average[:,:,0],dtype=np.uint8),
                 np.array(running_average[:,:,1],dtype=np.uint8)]
 
-    def process_blocks(self, downsampled_image, **kwargs):
+    def process_blocks(self, downsampled_image):
         """
         Perform compression steps that are executed on individual blocks of a user defined size.
         :param downsampled_image: The output of the function downsample_chrominance
         :param kwargs:
         :return: The uncompressed converted and quantized matricies.
         """
-        self.block_size = kwargs.get("block_size", 8)
+        #self.block_size = kwargs.get("block_size", 8)
         block_processed_channels = []
         for ch_num, channel in enumerate(downsampled_image):
             block_processed_channels.append(np.zeros(shape=np.shape(channel),dtype=np.int16))
@@ -271,13 +332,15 @@ class FlexibleJpeg(CompressImage):
                     end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else None
                     end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else None
                     image_block = channel[idx:end_idx, jdx:end_jdx]
-                    frequency_block = self.block_DCT(image_block, **kwargs)
-                    quantized_block = self.quantize_block(frequency_block, ch_num, **kwargs)
+                    frequency_block = self.block_DCT(image_block)
+                    quantized_block = self.quantize_block(frequency_block, ch_num)
                     block_processed_channels[ch_num][idx:end_idx, jdx:end_jdx] = quantized_block
+                    #if idx == 0 and jdx == 0 and ch_num == 0:
+                        #print(frequency_block)
         return block_processed_channels
 
     # might be cleaner to have them as submethods
-    def block_DCT(self, image_block, **kwargs):
+    def block_DCT(self, image_block):
         """
         First scale pixels from 0 to 255 to -128 to 128, then perform DCT on the block
         :param image_block: An image block of a flexible size, for the DCT to be performed on.
@@ -288,7 +351,7 @@ class FlexibleJpeg(CompressImage):
         return dct
 
 
-    def quantize_block(self, frequency_domain_block, ch_num, **kwargs):
+    def quantize_block(self, frequency_domain_block, ch_num):
         """
         Divide each block by the quantization table (passed as a keyword argument or the default).
         Round to the nearest integer
@@ -314,10 +377,7 @@ class FlexibleJpeg(CompressImage):
         """
         print('Entropy encoding started')
         print(' - Begin preliminary encoding')
-        if self.block_size == 8:
-            self.zigzag_pattern = self.default_zigzag_pattern
-        else:
-            self.zigzag_pattern = generate_zigzag_pattern(self.block_size)
+
 
         # Create separate DC and AC symbols for each channel type
         #Human vision is less sensitive to color variations than to brightness variations
@@ -447,6 +507,17 @@ class FlexibleJpeg(CompressImage):
         :param settings:
         :return:
         """
+
+        if settings is None:
+            settings = {}
+
+        # Update settings with current quantization tables
+        settings.update({
+            "luminance_quantization_table": self.luminance_quantization_table.tolist(),
+            "chrominance_quantization_table": self.chrominance_quantization_table.tolist(),
+        })
+        #print(settings)
+
         # self.save_location = settings.get("save_location", "")
         if self.save_location is None:
             #self.save_location = os.path.join(os.getcwd(), "tmp", f"flex_jpeg_comp_output_{datetime.now().strftime("%Y%m%d_%H%M%S")}")
@@ -532,9 +603,6 @@ class FlexibleJpeg(CompressImage):
             text_file.write(str(all_bits))
             text_file.write(" :: image_end")
         """
-
-
-
     def calculate_size(self, all_bits, serialized_huffman_tables, serialized_settings):
         # doesn't include miniscule header information
         # Calculate encoded image size
@@ -581,5 +649,6 @@ if __name__ == '__main__':
     compression_config = os.path.join(os.getcwd(),
                                               "compression_configurations",
                                               "homemade_compression_jpeg_like.yaml")
-    flexible_jpeg(test_image_path, compression_config)
+    flexible_jpeg = FlexibleJpeg(compression_config)
+    flexible_jpeg(test_image_path)
 

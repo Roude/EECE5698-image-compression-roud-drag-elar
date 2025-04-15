@@ -149,10 +149,10 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         DecompressImage.__init__(self, config)
         FlexibleJpeg.__init__(self, config)
 
-        # Rename downsampling_factor to upsampling_factor
+        # Initialize decompression-specific attributes
         self.image_dimensions = None
-        #needed?
-        #self.upsampling_factor = self.downsample_factor
+        self.upsample_factor = None
+        self.quantization_tables_initialized = False
 
     def __call__(self, compressed_file=None, **kwargs):
         """
@@ -162,32 +162,16 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :return: Decompressed image and save path
         """
         self.set_save_location(compressed_file)
-
         # Override with user-provided save location if available
         save_location = kwargs.get("save_location", self.save_location)
 
         # Read and parse the compressed file
         bit_data, huffman_table, settings = self.decode_from_file(compressed_file)
 
-        # Update settings from the compressed file
-        if isinstance(settings, str):
-            settings = ast.literal_eval(settings)
-        # Update configuration using the parent class's method
-        self.update_configuration(settings)
+        self._load_decompression_settings(settings)
 
-        self.YCbCr_conversion_matrix = np.array(settings.get("YCbCr_conversion_matrix"), dtype=np.float32) / 256
-        self.YCbCr_conversion_offset = np.array(settings.get("YCbCr_conversion_offset"), dtype=np.uint8)
-
-        self.upsample_factor = settings.get("chrominance_downsample_factor", self.downsample_factor)
-        print(self.upsample_factor)
-
-
-        # Set zigzag pattern based on block size
-        if self.block_size == 8:
-            self.zigzag_pattern = self.default_zigzag_pattern
-        else:
-            from src.huffman import generate_zigzag_pattern
-            self.zigzag_pattern = generate_zigzag_pattern(self.block_size)
+        print(self.block_size)
+        #exit()
 
         # Inverse of compression basically
         quantized_blocks = self.entropy_decode(bit_data, huffman_table)
@@ -203,6 +187,58 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         print(f"Decompressed image saved to: {save_location}")
 
         return rgb_image, save_location
+
+    def _load_decompression_settings(self, settings):
+        """
+        Load and validate settings from the compressed file header
+        :param settings: Dictionary of settings from the file header
+        """
+        # Convert string values if needed
+        if isinstance(settings, str):
+            settings = ast.literal_eval(settings)
+
+        # Update core parameters
+        self.block_size = settings.get("block_size", 8)
+        self.downsample_factor = settings.get("chrominance_downsample_factor", 2)
+        self.upsample_factor = self.downsample_factor  # For decompression
+
+        # Load quantization tables
+        if "luminance_quantization_table" in settings:
+            self.luminance_quantization_table = np.array(
+                settings["luminance_quantization_table"],
+                dtype=np.uint8
+            )
+        else:
+            #print("not in settings")
+            self.luminance_quantization_table = self.default_luminance_quantization_table
+
+        if "chrominance_quantization_table" in settings:
+            self.chrominance_quantization_table = np.array(
+                settings["chrominance_quantization_table"],
+                dtype=np.uint8
+            )
+        else:
+            #print("not in settings")
+            self.chrominance_quantization_table = self.default_chrominance_quantization_table
+
+        # Set zigzag pattern based on block size
+        if self.block_size == 8:
+            self.zigzag_pattern = self.default_zigzag_pattern
+        else:
+            self.zigzag_pattern = generate_zigzag_pattern(self.block_size)
+
+        # Color conversion matrices
+        self.YCbCr_conversion_matrix = np.array(
+            settings.get("YCbCr_conversion_matrix", self.default_YCbCr_conversion_matrix),
+            dtype=np.float32
+        ) / 256
+
+        self.YCbCr_conversion_offset = np.array(
+            settings.get("YCbCr_conversion_offset", self.default_YCbCr_conversion_offset),
+            dtype=np.uint8
+        )
+
+        self.quantization_tables_initialized = True
 
     def decode_from_file(self, file_path):
         """
@@ -265,8 +301,6 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
                 huffman_tables = parse_huffman_table(huffman_tables_raw)
                 self.image_dimensions = header['image_dimensions']
 
-                # Convert to boolean array
-                #bit_data = np.array([bool(int(c)) for c in bit_data_str], dtype=np.bool)
         print('- Evaluated succesfully')
         print('File decoding process ended')
         return bit_data, huffman_tables, settings
@@ -334,6 +368,9 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         prev_dc_coeff = [0, 0, 0]
         current_pos = 0  # Current bit position in the array
         bit_length = len(compressed_bits)
+
+        print('- Begin decoding the blocks')
+
 
         for block_num in range(num_total_blocks):
             # Determine which channel we're processing
@@ -538,9 +575,9 @@ compression_algorithm_reference = {
 # Example usage - Simple script for decompressing a specific file
 if __name__ == '__main__':
     # Create a FlexibleJpegDecompress instance
-    decompressor = FlexibleJpegDecompress()
     test_image_path = os.path.join(os.getcwd(), "tmp", "flex_jpeg_comp.rde")
     #test_image_path = os.path.join(os.getcwd(), "tmp", "flex_jpeg_comp.verbose.rde")
 
     # Decompress the image from the fixed path
+    decompressor = FlexibleJpegDecompress()
     decompressed_image, save_path = decompressor(test_image_path)
