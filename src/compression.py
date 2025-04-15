@@ -157,7 +157,6 @@ class FlexibleJpeg(CompressImage):
         :return:
         """
         #TODO implement quality factor
-        #TODO look into how imread works
         self.save_location = kwargs.get("save_location", None) # define save_location here to avoid AttributeError in encode_to_file(). this ensures we can either pass a custom save path or fall back to the default inside that method
         if isinstance(image, str):
             image_uncompressed = io.imread(image)
@@ -200,7 +199,7 @@ class FlexibleJpeg(CompressImage):
         #num_total_blocks = num_y_blocks + 2 * num_c_blocks
 
 
-        #TODO pad at the beginning? good idea?
+        #TODO pad at the beginning? good idea? gotta make sure it fits with both chrominance image dimensions and block size
 
         #TODO try to make it compatible - might not even be an issue?
         # This is delt with later. The block processing algorithm will add padding to the outside of the image if needed.
@@ -238,7 +237,6 @@ class FlexibleJpeg(CompressImage):
 
         print(self.downsample_factor)
 
-        # TODO understand what exactly is happening here
         # This essentially downsamples the image by averaging the n surrounding pixels where N is the downsampling factor.
         luminance = YCbCr_image[:, :, 0]
         ch_CbCr = YCbCr_image[:,:,1:]
@@ -374,7 +372,6 @@ class FlexibleJpeg(CompressImage):
             return codes
 
         # Build Huffman tables for each coefficient type
-        # TODO make the values of the dicts not strings - probably not necessary as long as they also get printed
         dc_lum_codes = build_huffman_table(dc_lum_symbols)
         dc_chrom_codes = build_huffman_table(dc_chrom_symbols)
         ac_lum_codes = build_huffman_table(ac_lum_symbols)
@@ -545,9 +542,6 @@ class FlexibleJpeg(CompressImage):
 
         # Calculate huffman tables size
         huffman_json = json.dumps(serialized_huffman_tables).encode('utf-8')
-        # TODO use this at some point
-        #huffman_compressed = gzip.compress(huffman_json)
-        #huffman_tables_size = len(huffman_compressed) / 1024
         huffman_tables_size = len(huffman_json) / 1024
 
         # Calculate settings size

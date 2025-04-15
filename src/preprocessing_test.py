@@ -103,7 +103,6 @@ class TestingAlgo(CompressImage):
         :return:
         """
 
-        #TODO implement quality factor
         if isinstance(image, str):
             image_uncompressed = io.imread(image)
             self.original_path = image
@@ -118,7 +117,6 @@ class TestingAlgo(CompressImage):
         self.YCbCr_conversion_matrix = np.array(settings.get("YCbCr_conversion_matrix"), dtype=np.float32) / 256
         self.YCbCr_conversion_offset = np.array(settings.get("YCbCr_conversion_offset"), dtype=np.uint8)
 
-        #TODO are we going to change the quantization table with different quality factors? if so just multiply by a scalar or this?
         def create_emphasis_matrix(self, emphasis_factor):
             matrix = np.zeros((self.block_size, self.block_size), dtype=np.float32)
             for i in range(self.block_size):
@@ -181,7 +179,6 @@ class TestingAlgo(CompressImage):
         ycbcr_image = cv2.cvtColor(image_uncompressed, cv2.COLOR_RGB2YCrCb)  # Note: OpenCV uses YCrCb order
         return ycbcr_image
 
-    #TODO perhaps establish vertical and horizontal downsampling instead of all as one
     def downsample_chrominance(self, YCbCr_image, **kwargs):
         """
         Apply downsampling factor to YCbCr formatted image and save the image as a tuple of 3 matricies with the
@@ -192,7 +189,6 @@ class TestingAlgo(CompressImage):
 
         print(self.downsample_factor)
 
-        # TODO understand what exactly is happening here
         luminance = YCbCr_image[:, :, 0]
         ch_CbCr = YCbCr_image[:,:,1:]
 
@@ -255,7 +251,6 @@ class TestingAlgo(CompressImage):
         :return: the quantized block
         """
         if ch_num == 0:
-            #TODO reset downsample, quantization tables, etc, put it into the comp and decomp algos
             quantized_block = np.round(frequency_domain_block / self.luminance_quantization_table)
         else:
             quantized_block = np.round(frequency_domain_block / self.chrominance_quantization_table)

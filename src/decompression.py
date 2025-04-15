@@ -426,7 +426,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
                 block_idx = block_num - num_total_y_blocks - num_total_c_blocks
 
             #ToDo check if they are not exactly divisible, does this get unnecessarily repeated, init before the loop
-            #TODO what happens when image resolution and chromiance resolution are not divisible by block_size
+            #TODO what happens when image resolution and chrominance resolution are not divisible by block_size
             blocks_per_row = cols // self.block_size
             i = (block_idx // blocks_per_row) * self.block_size
             j = (block_idx % blocks_per_row) * self.block_size
@@ -495,8 +495,8 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         print('upsample factor:', self.upsample_factor)
 
         Y = channels[0]
-        # TODO something other than nearest neighbor?
 
+        # TODO something other than nearest neighbor?
         # Upsample chrominance channels using nearest-neighbor interpolation
         Cb = np.repeat(np.repeat(channels[1], self.upsample_factor, axis=0),
                        self.upsample_factor, axis=1)
