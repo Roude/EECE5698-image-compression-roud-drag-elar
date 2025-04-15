@@ -149,7 +149,7 @@ class FlexibleJpeg(CompressImage):
                                                 [35, 36, 48, 49, 57, 58, 62, 63]])
 
 
-    def __call__(self, image, settings):
+    def __call__(self, image, settings, **kwargs):
         """
         Implementation of JPEG-like compression with individual functions broken out.
         :param image_uncompressed:
@@ -158,7 +158,7 @@ class FlexibleJpeg(CompressImage):
         """
         #TODO implement quality factor
         #TODO look into how imread works
-
+        self.save_location = kwargs.get("save_location", None) # define save_location here to avoid AttributeError in encode_to_file(). this ensures we can either pass a custom save path or fall back to the default inside that method
         if isinstance(image, str):
             image_uncompressed = io.imread(image)
             self.original_path = image
@@ -209,11 +209,12 @@ class FlexibleJpeg(CompressImage):
         #num_total_blocks = num_y_blocks + 2 * num_c_blocks
 
         #TODO try to make it compatible - might not even be an issue?
-        if self.image_dimensions[0] % self.block_size != 0 or self.image_dimensions[1] % self.block_size != 0:
-            print('Warning! Image Dimensions not divisible by', {self.blocksize})
-
-        if self.chrominance_dimensions[0] % self.block_size != 0 or self.chrominance_dimensions[1] % self.block_size != 0:
-            print('Warning! Chromiance dimensions not divisible by', {self.blocksize})
+        # This is delt with later. The block processing algorithm will add padding to the outside of the image if needed.
+        # if self.image_dimensions[0] % self.block_size != 0 or self.image_dimensions[1] % self.block_size != 0:
+        #     print('Warning! Image Dimensions not divisible by', {self.blocksize})
+        #
+        # if self.chrominance_dimensions[0] % self.block_size != 0 or self.chrominance_dimensions[1] % self.block_size != 0:
+        #     print('Warning! Chromiance dimensions not divisible by', {self.blocksize})
 
 
 
@@ -247,6 +248,7 @@ class FlexibleJpeg(CompressImage):
         print(self.downsample_factor)
 
         # TODO understand what exactly is happening here
+        # This essentially downsamples the image by averaging the n surrounding pixels where N is the downsampling factor.
         luminance = YCbCr_image[:, :, 0]
         ch_CbCr = YCbCr_image[:,:,1:]
 
@@ -281,15 +283,16 @@ class FlexibleJpeg(CompressImage):
                     end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else None
                     end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else None
                     image_block = channel[idx:end_idx, jdx:end_jdx]
-                    if idx == 0 and jdx == 8 and ch_num == 1:
-                        print(image_block)
+                    # if idx == 0 and jdx == 8 and ch_num == 1:
+                    print(image_block)
                     # might be cleaner to have them as submethods
                     frequency_block = self.block_DCT(image_block, **kwargs)
-                    if idx == 0 and jdx == 8 and ch_num == 1:
-                        print(frequency_block)
+                    # print(frequency_block)
+                    # if idx == 0 and jdx == 8 and ch_num == 1:
+                    #     print(frequency_block)
                     quantized_block = self.quantize_block(frequency_block, ch_num, **kwargs)
-                    if idx == 0 and jdx == 8 and ch_num == 1:
-                        print(quantized_block)
+                    # if idx == 0 and jdx == 8 and ch_num == 1:
+                    #     print(quantized_block)
                     block_processed_channels[ch_num][idx:end_idx, jdx:end_jdx] = quantized_block
         return block_processed_channels
 
@@ -308,8 +311,8 @@ class FlexibleJpeg(CompressImage):
         # Manually process one 8x8 block
 
         dct = dctn(image_block.astype(np.float32) - 128, norm='ortho') * 2  # Compensate for ortho normalization
-
-        return dct
+        print(dct)
+        return dct.astype(np.int8)
 
 
     def quantize_block(self, frequency_domain_block, ch_num, **kwargs):
