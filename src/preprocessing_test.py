@@ -37,8 +37,9 @@ class CompressImage:
             self.config = config
 
     def set_datatype_and_channels(self, image_uncompressed):
+
         if image_uncompressed.dtype != np.uint8:
-            image_uncompressed = (255 * (image_uncompressed / np.max(image_uncompressed))).astype(np.uint8)
+            image_uncompressed = (255 * (image_uncompressed / np.max(image_uncompressed.dtype))).astype(np.uint8)
         # Remove alpha channel if present (JPEG does not support transparency)
         if image_uncompressed.shape[-1] == 4:
             image_uncompressed = image_uncompressed[:, :, :3]
@@ -248,7 +249,7 @@ class TestingAlgo(CompressImage):
         self.block_size = kwargs.get("block_size", 8)
         block_processed_channels = []
         for ch_num, channel in enumerate(downsampled_image):
-            block_processed_channels.append(np.zeros(shape=np.shape(channel),dtype=np.int8))
+            block_processed_channels.append(np.zeros(shape=np.shape(channel),dtype=np.int16))
             #print(range(0, np.shape(channel)[0], self.block_size))
             for idx in range(0,np.shape(channel)[0], self.block_size):
                 for jdx in range(0, np.shape(channel)[1], self.block_size):
