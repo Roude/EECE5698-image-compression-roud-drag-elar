@@ -4,13 +4,13 @@ compression_algorithm: "homemade_jpeg_like"
 # This provides arguments to the image compression algorithm. These will be passed in as keyword arguments
 # to the compression algorithm
 save_location: ""
-chrominance_downsample_factor: 2
+chrominance_downsample_factor: 1
 # don't change this one
 block_size: 8
 #Todo MAKE THESE WORK
-quality_factor: 50
-chrominance_aggression_factor: 5
-lumiance_aggression_factor: 2
+#quality_factor: 50
+#chrominance_aggression_factor: 5
+#luminance_aggression_factor: 2
 
 YCbCr_conversion_matrix:
   - [65.738, 129.057, 25.064]
