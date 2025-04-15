@@ -128,34 +128,7 @@ class TestingAlgo(CompressImage):
                     matrix[i, j] = max(1, np.floor(1/(self.block_size * self.block_size) * emphasis_factor * distance))
             return matrix
 
-        #what is this even supposed to mean
-        #self.chrominance_quantization_table = self.chrominance_quantization_table
-        #self.luminance_quantization_table = self.luminance_quantization_table
-        '''
-                self.luminance_quantization_table = np.array([
-            [1, 1, 1, 1, 2, 2, 4, 4],
-            [1, 1, 1, 1, 2, 2, 4, 4],
-            [1, 1, 1, 2, 2, 4, 4, 4],
-            [1, 1, 2, 2, 2, 4, 4, 4],
-            [2, 2, 2, 2, 4, 4, 4, 4],
-            [2, 2, 2, 4, 4, 4, 4, 4],
-            [4, 4, 4, 4, 4, 4, 4, 4],
-            [4, 4, 4, 4, 4, 4, 4, 4]
-        ], dtype=np.float32)
-        self.luminance_quantization_table = np.array([
-            [1, 1, 1, 1, 2, 2, 4, 4],
-            [1, 1, 1, 1, 2, 2, 4, 4],
-            [1, 1, 1, 2, 2, 4, 4, 4],
-            [1, 1, 2, 2, 2, 4, 4, 4],
-            [2, 2, 2, 2, 4, 4, 4, 4],
-            [2, 2, 2, 4, 4, 4, 4, 4],
-            [4, 4, 4, 4, 4, 4, 4, 4],
-            [4, 4, 4, 4, 4, 4, 4, 4]
-        ], dtype=np.float32)
         
-        '''
-        #print(self.luminance_quantization_table)
-
         #TODO how are these quantization tables working?
         self.image_dimensions = image_uncompressed.shape[:2]
         self.channel_amount = image_uncompressed.shape[2]
@@ -173,10 +146,10 @@ class TestingAlgo(CompressImage):
 
         #TODO try to make it compatible - might not even be an issue?
         if self.image_dimensions[0] % self.block_size != 0 or self.image_dimensions[1] % self.block_size != 0:
-            print('Warning! Image Dimensions not divisible by', {self.blocksize})
+            print('Warning! Image Dimensions not divisible by', {self.block_size})
 
         if self.chrominance_dimensions[0] % self.block_size != 0 or self.chrominance_dimensions[1] % self.block_size != 0:
-            print('Warning! Chromiance dimensions not divisible by', {self.blocksize})
+            print('Warning! Chromiance dimensions not divisible by', {self.block_size})
 
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
         YCbCrImage = self.convert_colorspace(image_uncompressed, **settings)
@@ -209,6 +182,7 @@ class TestingAlgo(CompressImage):
         """
         ycbcr_image = cv2.cvtColor(image_uncompressed, cv2.COLOR_RGB2YCrCb)  # Note: OpenCV uses YCrCb order
         return ycbcr_image
+
     #TODO perhaps establish vertical and horizontal downsampling instead of all as one
     def downsample_chrominance(self, YCbCr_image, **kwargs):
         """
