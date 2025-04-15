@@ -24,10 +24,9 @@ from abc import ABC, abstractmethod
 import re
 import json
 import struct
+import cv2
 from collections import Counter
-
 #from skimage.color.colorconv import ycbcr_from_rgb
-
 from src.utilities import parse_huffman_table, make_serializable_table, bytes_to_bools
 
 from src.compression import BaselineJpeg, FlexibleJpeg
@@ -461,19 +460,13 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         #print(decoded_blocks[2])
         return decoded_blocks
 
-
-    #TODO check order, we want the reverse pipeline
-    def process_blocks_inverse(self, quantized_blocks: list) -> list:
+    def process_blocks_inverse(self, quantized_blocks):
         """
         Reconstructs full image channels (Y, Cb, Cr) by dequantizing and applying 2D IDCT on blocks,
         then reassembling them using the header's dimensions.
         Parameters: quantized_blocks (list): List of quantized 2D DCT blocks.
         Returns: list: [y_channel, cb_channel, cr_channel] as NumPy arrays.
         """
-        # TODO is this needed? it must be symmetrical with the compression algo
-        # def idct2(block: np.ndarray) -> np.ndarray:
-        # return idct(idct(block, axis=0, norm='ortho'), axis=1, norm='ortho')
-
         reconstructed_channels = []
         for ch_num, channel in enumerate(quantized_blocks):
             reconstructed_channels.append(np.zeros(shape=np.shape(channel), dtype=np.uint8))
@@ -482,16 +475,9 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
                     end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else None
                     end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else None
                     quantized_block = channel[idx:end_idx, jdx:end_jdx]
-                    #if idx == 0 and jdx == 8 and ch_num == 1:
-                        #print(quantized_block)
                     dequantized_block = self.dequantize_block(quantized_block, ch_num)
-                    #if idx == 0 and jdx == 8 and ch_num == 1:
-                        #print(dequantized_block)
                     spatial_block = self.inverse_block_DCT(dequantized_block)
-                    #if idx == 0 and jdx == 8 and ch_num == 1:
-                        #print(spatial_block)
                     reconstructed_channels[ch_num][idx:end_idx, jdx:end_jdx] = spatial_block
-        #print(reconstructed_channels[1])
         return reconstructed_channels
 
     def dequantize_block(self, quantized_block, ch_num, **kwargs):
@@ -502,29 +488,11 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :param kwargs:
         :return: The dequantized frequency domain block
         """
-        def pad_matrix(matrix, target_rows, target_cols):
-            """
-            Same padding function as in compression
-            """
-            matrix = np.array(matrix)
-            original_rows, original_cols = matrix.shape
-            if original_rows > target_rows or original_cols > target_cols:
-                raise ValueError("Target dimensions must be greater than or equal to the original dimensions.")
-            padded_matrix = np.zeros((target_rows, target_cols), dtype=matrix.dtype)
-            padded_matrix[:original_rows, :original_cols] = matrix
-            return padded_matrix
-
-        padded_block = pad_matrix(quantized_block, self.block_size, self.block_size)
-        #print(padded_block)
         if ch_num == 0:
-            #use float here instead?
-            #dequantized_block = padded_block.astype(np.int16)
-            dequantized_block = (padded_block * self.luminance_quantization_table).astype(np.int16)
+            dequantized_block = quantized_block * self.luminance_quantization_table
         else:
-            #dequantized_block = padded_block.astype(np.int16)
-            dequantized_block = (padded_block * self.chrominance_quantization_table).astype(np.int16)
-        # Return to original block size (without padding)
-        return dequantized_block[0:quantized_block.shape[0], 0:quantized_block.shape[1]]
+            dequantized_block = quantized_block * self.chrominance_quantization_table
+        return dequantized_block.astype(np.float32)
 
     def inverse_block_DCT(self, frequency_block, **kwargs):
         """
@@ -533,17 +501,9 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :param kwargs:
         :return: The spatial domain image block
         """
-        #spatial_block = idctn(frequency_block, norm='ortho')
-        #print(spatial_block)
-
-        # Scale back from -128-127 to 0-255
-        #IDCT_block = np.clip(spatial_block + 128, 0, 255).astype(np.uint8)
-        #reconstructed = idctn(frequency_block, norm='ortho') + 128
-        #print("Y channel range:", reconstructed.min(), reconstructed.max())
         inverse_DCT = np.clip(idctn(frequency_block, norm='ortho') + 128, 0, 255).astype(np.uint8)
-
-        #print(IDCT_block)
         return inverse_DCT
+
 
 
     def upsample_chrominance(self, channels):
@@ -552,8 +512,9 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :param channels: List of [Y, Cb, Cr] channels
         :return: YCbCr image with full resolution chrominance channels
         """
+        print('upsample factor:', self.upsample_factor)
+
         Y = channels[0]
-        #print(Y)
         # Upsample chrominance channels using nearest-neighbor interpolation
         Cb = np.repeat(np.repeat(channels[1], self.upsample_factor, axis=0),
                        self.upsample_factor, axis=1)
@@ -578,17 +539,12 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :param ycbcr_image: YCbCr image
         :return: RGB image
         """
-        # print(ycbcr_image[:,:,2])
-        # ycbcr_scaled = ycbcr_image.astype(np.float32)
-        # ycbcr_scaled[..., 0] = ycbcr_scaled[..., 0] * (235 / 255) + 16  # Y
-        # ycbcr_scaled[..., 1:] = ycbcr_scaled[..., 1:] * (240 / 255) + 16  # Cb/Cr
-        #
-        # rgb = color.ycbcr2rgb(ycbcr_scaled)
-        final =(color.convert_colorspace(ycbcr_image,'YCbCr','RGB')*255).astype(np.uint8)
-        # print(final)
+        #print(ycbcr_image[:,:,2])
+        print(ycbcr_image[:,:,0])
+        rgb_restored = cv2.cvtColor(ycbcr_image, cv2.COLOR_YCrCb2RGB)
+        print(rgb_restored[:,:,0])
+        final = np.clip(rgb_restored, 0, 255)
         return final
-        #print(final_int[:,:,2])
-        #return final_int
 
 
 # Dictionary mapping compression types to their decompressor classes

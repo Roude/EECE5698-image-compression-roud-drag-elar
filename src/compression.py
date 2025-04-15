@@ -29,6 +29,7 @@ from src.huffman import generate_zigzag_pattern, zigzag_order, run_length_encodi
 from collections import Counter
 import pkgutil
 import json
+import cv2
 
 import time #for debugging purposes
 #makes it so it doesn't print the np.int16 shit
@@ -86,7 +87,6 @@ class BaselineJpeg(CompressImage):
             image_uncompressed = io.imread(image)
         else:
             image_uncompressed = image
-
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
 
         if not save_location:
@@ -103,9 +103,9 @@ class FlexibleJpeg(CompressImage):
         super().__init__(config)
         self.zigzag_pattern = None
         self.block_size = 8
-        self.quality_factor = 50
-        self.chrominance_aggression_factor = 3
-        self.luminance_aggression_factor = 1.5
+        #self.quality_factor = 50
+        #self.chrominance_aggression_factor = 3
+        #self.luminance_aggression_factor = 1.5
         self.downsample_factor = 2
         self.YCbCr_conversion_matrix = None
         self.YCbCr_conversion_offset = None
@@ -168,45 +168,39 @@ class FlexibleJpeg(CompressImage):
             with open(settings, 'r') as settings_file:
                 settings = yaml.safe_load(settings_file)
 
+        #TODO was there a reason we didn't use it for homemade JPEG
+        image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
+
         self.YCbCr_conversion_matrix = np.array(settings.get("YCbCr_conversion_matrix"), dtype=np.float32) / 256
         self.YCbCr_conversion_offset = np.array(settings.get("YCbCr_conversion_offset"), dtype=np.uint8)
 
-        #what is this even supposed to mean
-        #self.chrominance_quantization_table = self.chrominance_quantization_table
-        #self.luminance_quantization_table = self.luminance_quantization_table
+        #TODO are we going to change the quantization table with different quality factors? if so just multiply by a scalar or this?
+        # how about making a plot or something regarding the distribution of values in the frequency space
+        def create_emphasis_matrix(self, emphasis_factor):
+            matrix = np.zeros((self.block_size, self.block_size), dtype=np.float32)
+            for i in range(self.block_size):
+                for j in range(self.block_size):
+                    # Calculate distance from top-left corner (0,0)
+                    distance = np.sqrt(i * i + j * j)
+                    # Base value that increases with distance
+                    matrix[i, j] = max(1, np.floor(1/(self.block_size * self.block_size) * emphasis_factor * distance))
+            return matrix
 
-        self.luminance_quantization_table = np.array([
-            [1, 1, 1, 1, 2, 2, 4, 4],
-            [1, 1, 1, 1, 2, 2, 4, 4],
-            [1, 1, 1, 2, 2, 4, 4, 4],
-            [1, 1, 2, 2, 2, 4, 4, 4],
-            [2, 2, 2, 2, 4, 4, 4, 4],
-            [2, 2, 2, 4, 4, 4, 4, 4],
-            [4, 4, 4, 4, 4, 4, 4, 4],
-            [4, 4, 4, 4, 4, 4, 4, 4]
-        ], dtype=np.float32)
-        self.luminance_quantization_table = np.array([
-            [1, 1, 1, 1, 2, 2, 4, 4],
-            [1, 1, 1, 1, 2, 2, 4, 4],
-            [1, 1, 1, 2, 2, 4, 4, 4],
-            [1, 1, 2, 2, 2, 4, 4, 4],
-            [2, 2, 2, 2, 4, 4, 4, 4],
-            [2, 2, 2, 4, 4, 4, 4, 4],
-            [4, 4, 4, 4, 4, 4, 4, 4],
-            [4, 4, 4, 4, 4, 4, 4, 4]
-        ], dtype=np.float32)
-
-        #TODO how are these quantization tables working?
         self.image_dimensions = image_uncompressed.shape[:2]
         self.channel_amount = image_uncompressed.shape[2]
-        #print(self.image_dimensions)
-        # Calculate total blocks per channel (must match decompression logic)
+
+        self.downsample_factor = settings.get("chrominance_downsample_factor", 2)
+
+
         self.chrominance_dimensions = (self.image_dimensions[0] // self.downsample_factor,
                                   self.image_dimensions[1] // self.downsample_factor)
 
         self.num_y_blocks = (self.image_dimensions[0] // self.block_size) * (self.image_dimensions[1] // self.block_size)
         self.num_c_blocks = (self.chrominance_dimensions[0] // self.block_size) * (self.chrominance_dimensions[1] // self.block_size)
         #num_total_blocks = num_y_blocks + 2 * num_c_blocks
+
+
+        #TODO pad at the beginning? good idea?
 
         #TODO try to make it compatible - might not even be an issue?
         # This is delt with later. The block processing algorithm will add padding to the outside of the image if needed.
@@ -215,8 +209,6 @@ class FlexibleJpeg(CompressImage):
         #
         # if self.chrominance_dimensions[0] % self.block_size != 0 or self.chrominance_dimensions[1] % self.block_size != 0:
         #     print('Warning! Chromiance dimensions not divisible by', {self.blocksize})
-
-
 
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
         YCbCrImage = self.convert_colorspace(image_uncompressed, **settings)
@@ -232,9 +224,8 @@ class FlexibleJpeg(CompressImage):
         :param kwargs:
         :return:
         """
-        converted = color.convert_colorspace(image_uncompressed, 'RGB', 'YCbCr')
-        converted_int = converted.astype(np.uint8)
-        return converted_int
+        ycbcr_image = cv2.cvtColor(image_uncompressed, cv2.COLOR_RGB2YCrCb)
+        return ycbcr_image
     #TODO perhaps establish vertical and horizontal downsampling instead of all as one
     def downsample_chrominance(self, YCbCr_image, **kwargs):
         """
@@ -243,7 +234,7 @@ class FlexibleJpeg(CompressImage):
         :param YCbCr_image: The image already converted to YCbCr format
         :return: A Tuple, element 0 is the lumiance channel, element 1 is the chrominance channels
         """
-        self.downsample_factor = kwargs.get("chrominance_downsample_factor", 2)
+        #self.downsample_factor = kwargs.get("chrominance_downsample_factor", 2)
 
         print(self.downsample_factor)
 
@@ -277,25 +268,17 @@ class FlexibleJpeg(CompressImage):
         block_processed_channels = []
         for ch_num, channel in enumerate(downsampled_image):
             block_processed_channels.append(np.zeros(shape=np.shape(channel),dtype=np.int8))
-            #print(range(0, np.shape(channel)[0], self.block_size))
             for idx in range(0,np.shape(channel)[0], self.block_size):
                 for jdx in range(0, np.shape(channel)[1], self.block_size):
                     end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else None
                     end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else None
                     image_block = channel[idx:end_idx, jdx:end_jdx]
-                    # if idx == 0 and jdx == 8 and ch_num == 1:
-                    print(image_block)
-                    # might be cleaner to have them as submethods
                     frequency_block = self.block_DCT(image_block, **kwargs)
-                    # print(frequency_block)
-                    # if idx == 0 and jdx == 8 and ch_num == 1:
-                    #     print(frequency_block)
                     quantized_block = self.quantize_block(frequency_block, ch_num, **kwargs)
-                    # if idx == 0 and jdx == 8 and ch_num == 1:
-                    #     print(quantized_block)
                     block_processed_channels[ch_num][idx:end_idx, jdx:end_jdx] = quantized_block
         return block_processed_channels
 
+    # might be cleaner to have them as submethods
     def block_DCT(self, image_block, **kwargs):
         """
         First scale pixels from 0 to 255 to -128 to 128, then perform DCT on the block
@@ -303,16 +286,8 @@ class FlexibleJpeg(CompressImage):
         :param kwargs:
         :return: the cosine transformed block
         """
-        #print(image_block)
-        #block_for_transform = (image_block - 128).astype(np.float32)
-        #DCT_block = np.array(dctn(block_for_transform, norm='ortho'), dtype=np.int16)
-        #reverse= (idctn(DCT_block.astype(np.int16), norm='ortho')+128).astype(int)
-        # Correct version
-        # Manually process one 8x8 block
-
-        dct = dctn(image_block.astype(np.float32) - 128, norm='ortho') * 2  # Compensate for ortho normalization
-        print(dct)
-        return dct.astype(np.int8)
+        dct = dctn(image_block.astype(np.float32) - 128, norm='ortho')
+        return dct
 
 
     def quantize_block(self, frequency_domain_block, ch_num, **kwargs):
@@ -324,53 +299,14 @@ class FlexibleJpeg(CompressImage):
         :param kwargs:
         :return: the quantized block
         """
-
-        def pad_matrix(matrix, target_rows, target_cols):
-            """
-            Pads a matrix with zeros on the bottom and right side to reach the target dimensions.
-
-            :param matrix: 2D list or NumPy array
-            :param target_rows: Desired number of rows
-            :param target_cols: Desired number of columns
-            :return: Padded NumPy array
-            """
-            matrix = np.array(matrix)
-            original_rows, original_cols = matrix.shape
-
-            if original_rows > target_rows or original_cols > target_cols:
-                raise ValueError("Target dimensions must be greater than or equal to the original dimensions.")
-
-            padded_matrix = np.zeros((target_rows, target_cols), dtype=matrix.dtype)
-            padded_matrix[:original_rows, :original_cols] = matrix
-
-            return padded_matrix
-
-        def create_emphasis_matrix(self, emphasis_factor):
-            matrix = np.zeros((self.block_size, self.block_size), dtype=np.float32)
-            for i in range(self.block_size):
-                for j in range(self.block_size):
-                    # Calculate distance from top-left corner (0,0)
-                    distance = np.sqrt(i * i + j * j)
-                    # Base value that increases with distance
-                    matrix[i, j] = max(1, np.floor(1/(self.block_size * self.block_size) * emphasis_factor * distance))
-            return matrix
-
-        #quality_factor = kwargs.get("quality_factor", 50)
-        #ToDO implement emphasis matrix for chrominance or lumiance
-
-        padded_matrix = pad_matrix(frequency_domain_block, self.block_size, self.block_size)
-        #print(padded_matrix)
         if ch_num == 0:
-            #TODO reset downsample, quantization tables, etc
-            #TODO try to implement the color conversion inverse here, to save some time
-            padded_frequency_domain_matrix = np.round(padded_matrix / (self.luminance_quantization_table / 4))
-            #padded_frequency_domain_matrix = np.round(padded_matrix)
+            #TODO reset downsample, quantization tables, etc, put it into the comp and decomp algos
+            quantized_block = np.round(frequency_domain_block / self.luminance_quantization_table)
         else:
-            padded_frequency_domain_matrix = np.round(padded_matrix / (self.chrominance_quantization_table / 4))
-            #padded_frequency_domain_matrix = np.round(padded_matrix)
+            quantized_block = np.round(frequency_domain_block / self.chrominance_quantization_table)
         # needs to be zero for RLE to be successful
-        padded_frequency_domain_matrix[-1, -1] = 0
-        return padded_frequency_domain_matrix[0:frequency_domain_block.shape[0],0:frequency_domain_block.shape[1]].astype(np.int16)
+        quantized_block[-1, -1] = 0
+        return quantized_block.astype(np.int16)
 
     def entropy_encode(self, quantized_blocks, **kwargs):
         """
@@ -406,6 +342,7 @@ class FlexibleJpeg(CompressImage):
             channel = quantized_blocks[channel_idx].astype(np.int16)
             for i in range(0, channel.shape[0], self.block_size):
                 for j in range(0, channel.shape[1], self.block_size):
+                    #TODO check what this does
                     block = self._get_padded_block(channel, i, j)
                     zigzagged = zigzag_order(block, self.zigzag_pattern)
                     #if block_index == 0:
@@ -556,9 +493,7 @@ class FlexibleJpeg(CompressImage):
         with open(self.binary_save_location, 'wb') as binary_file:
             # Write header length as 4-byte integer (big-endian)
             binary_file.write(len(header_json).to_bytes(4, byteorder='big'))
-            # Write header JSON
             binary_file.write(header_json)
-            # Write binary data
             binary_file.write(binary_data)
 
         #does not include some overhead from signifiers
@@ -646,8 +581,8 @@ if __name__ == '__main__':
 
     flexible_jpeg = FlexibleJpeg()
 
-    test_image_path = os.path.join(os.getcwd(), "assets", "unit_test_images", "white_16x16.tif")
-    #test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "landscape.png")
+    #test_image_path = os.path.join(os.getcwd(), "assets", "unit_test_images", "white_16x16.tif")
+    test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "landscape.png")
 
     compression_config = os.path.join(os.getcwd(),
                                               "compression_configurations",

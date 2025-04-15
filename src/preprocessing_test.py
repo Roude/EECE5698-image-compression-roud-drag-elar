@@ -129,8 +129,6 @@ class TestingAlgo(CompressImage):
                     matrix[i, j] = max(1, np.floor(1/(self.block_size * self.block_size) * emphasis_factor * distance))
             return matrix
 
-        
-        #TODO how are these quantization tables working?
         self.image_dimensions = image_uncompressed.shape[:2]
         self.channel_amount = image_uncompressed.shape[2]
 
@@ -145,7 +143,6 @@ class TestingAlgo(CompressImage):
         self.num_c_blocks = (self.chrominance_dimensions[0] // self.block_size) * (self.chrominance_dimensions[1] // self.block_size)
         #num_total_blocks = num_y_blocks + 2 * num_c_blocks
 
-        #TODO try to make it compatible - might not even be an issue?
         if self.image_dimensions[0] % self.block_size != 0 or self.image_dimensions[1] % self.block_size != 0:
             print('Warning! Image Dimensions not divisible by', {self.block_size})
 
@@ -224,7 +221,6 @@ class TestingAlgo(CompressImage):
         block_processed_channels = []
         for ch_num, channel in enumerate(downsampled_image):
             block_processed_channels.append(np.zeros(shape=np.shape(channel),dtype=np.int16))
-            #print(range(0, np.shape(channel)[0], self.block_size))
             for idx in range(0,np.shape(channel)[0], self.block_size):
                 for jdx in range(0, np.shape(channel)[1], self.block_size):
                     end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else None
@@ -327,7 +323,7 @@ class TestingAlgo(CompressImage):
         Cr = np.repeat(np.repeat(channels[2], self.upsample_factor, axis=0),
                        self.upsample_factor, axis=1)
 
-        print(self.upsample_factor)
+        print('upsample factor:', self.upsample_factor)
         print(self.downsample_factor)
 
         # Ensure upsampled chrominance matches luminance dimensions
@@ -339,6 +335,7 @@ class TestingAlgo(CompressImage):
 
         YCbCr_image = np.dstack((Y, Cb, Cr)).astype(np.uint8)
         return YCbCr_image
+
     def convert_colorspace_inverse(self, ycbcr_image, **kwargs):
         """
         Convert from YCbCr to RGB color space
