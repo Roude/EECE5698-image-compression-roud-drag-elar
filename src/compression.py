@@ -149,7 +149,7 @@ class FlexibleJpeg(CompressImage):
                                                 [35, 36, 48, 49, 57, 58, 62, 63]])
 
 
-    def __call__(self, image, settings):
+    def __call__(self, image, settings, **kwargs):
         """
         Implementation of JPEG-like compression with individual functions broken out.
         :param image_uncompressed:
@@ -158,7 +158,7 @@ class FlexibleJpeg(CompressImage):
         """
         #TODO implement quality factor
         #TODO look into how imread works
-
+        self.save_location = kwargs.get("save_location", None) # define save_location here to avoid AttributeError in encode_to_file(). this ensures we can either pass a custom save path or fall back to the default inside that method
         if isinstance(image, str):
             image_uncompressed = io.imread(image)
             self.original_path = image
