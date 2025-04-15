@@ -279,24 +279,24 @@ class FlexibleJpeg(CompressImage):
 
 
         #I know that this makes it unreadable but bear with me for the time being
-        self.timings['preliminaries_ms'] = ((time.time() - self.last_time) * 1000).astype(np.uint32)
+        self.timings['preliminaries_ms'] = int((time.time() - self.last_time) * 1000)
         self.last_time = time.time()  # Reset the stopwatch
 
         #### THE PIPELINE ####
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
-        self.timings['set_datatype_and_channels_ms'] = ((time.time() - self.last_time) * 1000).astype(np.uint32)
+        self.timings['set_datatype_and_channels_ms'] = int((time.time() - self.last_time) * 1000)
         self.last_time = time.time()
         YCbCrImage = self.convert_colorspace(image_uncompressed)
-        self.timings['convert_colorspace_ms'] = ((time.time() - self.last_time) * 1000).astype(np.uint32)
+        self.timings['convert_colorspace_ms'] = int((time.time() - self.last_time) * 1000)
         self.last_time = time.time()
         downsampled_image = self.downsample_chrominance(YCbCrImage)
-        self.timings['downsample_chrominance_ms'] = ((time.time() - self.last_time) * 1000).astype(np.uint32)
+        self.timings['downsample_chrominance_ms'] = int((time.time() - self.last_time) * 1000)
         self.last_time = time.time()
         block_processed_channels = self.process_blocks(downsampled_image)
-        self.timings['process_blocks_ms'] = ((time.time() - self.last_time) * 1000).astype(np.uint32)
+        self.timings['process_blocks_ms'] = int((time.time() - self.last_time) * 1000)
         self.last_time = time.time()
         compressed_image_datastream, huffman_tables = self.entropy_encode(block_processed_channels)
-        self.timings['entropy_encode_ms'] = ((time.time() - self.last_time) * 1000).astype(np.uint32)
+        self.timings['entropy_encode_ms'] = int((time.time() - self.last_time) * 1000)
         self.last_time = time.time()
         self.encode_to_file(compressed_image_datastream, huffman_tables, settings)
 
@@ -591,7 +591,7 @@ class FlexibleJpeg(CompressImage):
             binary_file.write(header_json)
             binary_file.write(binary_data)
 
-        self.timings['encode_to_file_ms'] = ((time.time() - self.last_time) * 1000).astype(np.uint32)
+        self.timings['encode_to_file_ms'] = int((time.time() - self.last_time) * 1000)
         self.timings['total_compression_time_ms'] = sum(self.timings.values())
 
         # Calculate size breakdowns (rounded to 3 decimal places)
@@ -703,6 +703,8 @@ if __name__ == '__main__':
 
     #test_image_path = os.path.join(os.getcwd(), "assets", "unit_test_images", "white_16x16.tif")
     test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "landscape.png")
+    #test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "20241017-elarbi-bladeeNYC-4B5A2603.cr2")
+
 
     compression_config = os.path.join(os.getcwd(),
                                               "compression_configurations",
