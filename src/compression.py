@@ -292,6 +292,10 @@ class FlexibleJpeg(CompressImage):
         downsampled_image = self.downsample_chrominance(YCbCrImage)
         self.timings['downsample_chrominance_ms'] = int((time.time() - self.last_time) * 1000)
         self.last_time = time.time()
+        # pad all channels to dimensions divisible by block_size
+        downsampled_image = [
+            self.pad_image_to_block_size(channel) for channel in downsampled_image # ensure all channels are padded so their dimensions are divisible by block_size (delete comment if redundant with above)
+            ]
         block_processed_channels = self.process_blocks(downsampled_image)
         self.timings['process_blocks_ms'] = int((time.time() - self.last_time) * 1000)
         self.last_time = time.time()
@@ -313,6 +317,22 @@ class FlexibleJpeg(CompressImage):
                 luminance_qtable[i, j] = max(1, np.floor(1 * factor * distance))
                 chrominance_qtable[i, j] = max(1, np.floor(1.5 * factor * distance))
         return luminance_qtable, chrominance_qtable
+    
+    def pad_image_to_block_size(self, image_channel):
+        """
+        pad a single 2D image channel with zeros on the bottom and right edges
+        so its height and width are divisible by the block size
+
+        Parameters:
+            image_channel (np.ndarray): a 2D NumPy array representing one image channel
+
+        Returns:
+            np.ndarray: the padded channel with dimensions divisible by block_size
+        """
+        height, width = image_channel.shape
+        pad_h = (self.block_size - (height % self.block_size)) % self.block_size
+        pad_w = (self.block_size - (width % self.block_size)) % self.block_size
+        return np.pad(image_channel, ((0, pad_h), (0, pad_w)), mode='constant')
 
     def convert_colorspace(self, image_uncompressed):
         """
@@ -702,7 +722,7 @@ if __name__ == '__main__':
     flexible_jpeg = FlexibleJpeg()
 
     #test_image_path = os.path.join(os.getcwd(), "assets", "unit_test_images", "white_16x16.tif")
-    test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "landscape.png")
+    test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "Polar_bear_over_water.webp") # replace this with whatever image you intend to test
     #test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "20241017-elarbi-bladeeNYC-4B5A2603.cr2")
 
 

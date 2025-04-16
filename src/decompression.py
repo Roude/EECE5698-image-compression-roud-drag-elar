@@ -268,6 +268,16 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         print('- Evaluated succesfully')
         print('File decoding process ended')
         return bit_data, huffman_tables, settings
+    
+    def _pad_block_to_block_size(self, block):
+        """
+        Pads a 2D block to match self.block_size x self.block_size.
+        Used during decompression to ensure consistency before dequantization.
+        """
+        padded_block = np.zeros((self.block_size, self.block_size), dtype=block.dtype)
+        h, w = block.shape
+        padded_block[:h, :w] = block
+        return padded_block
 
     def entropy_decode(self, compressed_bits, huffman_tables):
         """
@@ -433,7 +443,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         print('Entropy decoding completed')
         #print(decoded_blocks[2])
         return decoded_blocks
-
+    
     def process_blocks_inverse(self, quantized_blocks):
         """
         Reconstructs full image channels (Y, Cb, Cr) by dequantizing and applying 2D IDCT on blocks,
@@ -446,14 +456,16 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             reconstructed_channels.append(np.zeros(shape=np.shape(channel), dtype=np.uint8))
             for idx in range(0, np.shape(channel)[0], self.block_size):
                 for jdx in range(0, np.shape(channel)[1], self.block_size):
-                    end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else None
-                    end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else None
+                    end_idx = min(idx + self.block_size, np.shape(channel)[0])
+                    end_jdx = min(jdx + self.block_size, np.shape(channel)[1])
                     quantized_block = channel[idx:end_idx, jdx:end_jdx]
-                    dequantized_block = self.dequantize_block(quantized_block, ch_num)
+                    padded_block = self._pad_block_to_block_size(quantized_block)
+                    dequantized_block = self.dequantize_block(padded_block, ch_num)
                     spatial_block = self.inverse_block_DCT(dequantized_block)
-                    reconstructed_channels[ch_num][idx:end_idx, jdx:end_jdx] = spatial_block
+                    height = self.block_size if end_idx is None else end_idx - idx
+                    width = self.block_size if end_jdx is None else end_jdx - jdx
+                    reconstructed_channels[ch_num][idx:end_idx, jdx:end_jdx] = spatial_block[:height, :width]
         return reconstructed_channels
-
     def dequantize_block(self, quantized_block, ch_num, **kwargs):
         """
         Multiply each block by the quantization table (reverse of quantize_block).
