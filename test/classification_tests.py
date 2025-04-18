@@ -15,6 +15,8 @@ import warnings
 from src.compression import BaselineJpeg, FlexibleJpeg
 from src.decompression import FlexibleJpegDecompress, DecompressImage
 
+
+
 results_name = f"iou_results_{dt.now():%Y-%m-%d_%H-%M-%S}.csv"
 
 def preprocess_image(image_path: str):
@@ -26,19 +28,63 @@ def preprocess_image(image_path: str):
     image = Image.open(image_path).convert("RGB")
     return transform(image).unsqueeze(0)
 
-def classify_image(model, image_tensor):
+def classify_image(model, image_tensor, k=5):
     with torch.no_grad():
         outputs = model(image_tensor)
-    probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
-    top_classes = torch.topk(probabilities, k=5).indices.tolist()
-    return set(top_classes)
+    probs = torch.nn.functional.softmax(outputs, dim=1)
+    return probs.squeeze()
 
 def intersection_over_union(set1, set2):
     intersection = len(set1 & set2)
     union = len(set1 | set2)
     return intersection / union if union > 0 else 0.0
 
-def compressed_iou(image_file, compress_function):
+
+def compare_topk_to_uncompressed_reference(uncompressed_img,
+                                           compression_engine,
+                                           topk: int = 5):
+    """
+    Args:
+        uncompressed_img: PIL Image (original)
+        compressed_img: PIL Image (compressed version)
+        topk: Top-k value for comparison
+
+    Returns:
+        Dictionary with match result and predictions
+    """
+
+    warnings.simplefilter('ignore')
+
+    def get_probs(img):
+        model = models.resnet50(pretrained=True)
+        tensor = preprocess_image(img)
+        return classify_image(model, tensor)
+
+        input_tensor = transform(img).unsqueeze(0)
+        with torch.no_grad():
+            output = model(input_tensor)
+        probs = torch.nn.functional.softmax(output, dim=1)
+        return probs.squeeze()
+
+    # Get probabilities for both images
+    uncompressed_probs = get_probs(uncompressed_img)
+    compressed_probs = get_probs(compression_engine(uncompressed_img))
+
+    # Get Top-1 prediction from uncompressed image
+    top1_idx = torch.argmax(uncompressed_probs).item()
+    uncompressed_prob = uncompressed_probs[top1_idx].item()
+    compressed_prob = compressed_probs[top1_idx].item()
+    delta = compressed_prob/uncompressed_prob
+
+    return {
+        "top1_class_index": top1_idx,
+        "uncompressed_prob": uncompressed_prob,
+        "compressed_prob": compressed_prob,
+        "confidence_delta": delta
+    }
+
+
+def compressed_classification_accuracy(image_file, compress_function):
     warnings.simplefilter('ignore')
     model = models.resnet50(pretrained=True)
     model.eval()
@@ -53,8 +99,8 @@ def compressed_iou(image_file, compress_function):
     compressed_classes = classify_image(model, compressed_tensor)
 
     # Compute Intersection over Union
-    iou = intersection_over_union(original_classes, compressed_classes)
-    return iou
+    # iou = intersection_over_union(original_classes, compressed_classes)
+    return original_classes, compressed_classes
 
 def df_add_row(df, row):
     df = pd.concat([df, pd.DataFrame([row], columns=df.columns)], ignore_index=True)
@@ -85,8 +131,8 @@ class TestImageCompression(unittest.TestCase):
             for img in imgs:
                 test_image_path = os.path.join(root, img)
                 compressed_img_filepath = f"tmp/{img.split(".")[0]}"
-                compression_engine.save_location = compressed_img_filepath
-                compression_engine(test_image_path, settings)
+                # compression_engine.save_location = compressed_img_filepath
+                compression_engine(test_image_path, settings, save_location=compressed_img_filepath)
                 decompression_engine.save_location = f"tmp/{img.split(".")[0]}.png"
                 decompression_engine(f"{compressed_img_filepath}.rde")
 
@@ -97,21 +143,33 @@ class TestImageCompression(unittest.TestCase):
             settings_filepath = "../compression_configurations/baseline_jpeg_q100.yaml"
         results_name = f"iou_results_{os.path.basename(settings_filepath)}_{dt.now():%Y-%m-%d_%H-%M-%S}.csv"
         baseline_jpeg_compression_engine = BaselineJpeg(settings_filepath)
-        results_df = pd.DataFrame(columns=["Image Name", "Compression Name", "Intersection over Union"])
+        results_df = pd.DataFrame(columns=["Image Name", "Compression Name", "Uncompressed Reference Label", "Reference Probability", "Compressed Probabilty of Reference Label", "Confidence Drift"])
 
         for root, dirs, files in os.walk("../assets/test_images"):
             for file in files:
                 test_image_path = os.path.join(root, file)
-                iou = compressed_iou(test_image_path, baseline_jpeg_compression_engine)
-                results_df = df_add_row(results_df, [file, os.path.basename(settings_filepath), iou])
+                topk_result = compare_topk_to_uncompressed_reference(test_image_path,
+                                                                     baseline_jpeg_compression_engine)
+
+                results_df = df_add_row(results_df, [file,
+                                                     os.path.basename(settings_filepath),
+                                                     topk_result["top1_class_index"],
+                                                     topk_result["uncompressed_prob"],
+                                                     topk_result["compressed_prob"],
+                                                     topk_result["confidence_delta"]])
+
         results_df.to_csv(os.path.join(os.getcwd(),"results",results_name))
 
     def test_quality_factor_sweep_jpeg_compression(self):
         settings_path_list = ["../compression_configurations/baseline_jpeg_q100.yaml",
-                              "../compression_configurations/baseline_jpeg_q80.yaml",
                               "../compression_configurations/baseline_jpeg_q60.yaml",
-                              "../compression_configurations/baseline_jpeg_q40.yaml",
-                              "../compression_configurations/baseline_jpeg_q20.yaml"]
+                              "../compression_configurations/baseline_jpeg_q20.yaml",
+                              "../compression_configurations/baseline_jpeg_q10.yaml",
+                              "../compression_configurations/baseline_jpeg_q5.yaml",
+                              "../compression_configurations/baseline_jpeg_q4.yaml",
+                              "../compression_configurations/baseline_jpeg_q3.yaml",
+                              "../compression_configurations/baseline_jpeg_q2.yaml",
+                              "../compression_configurations/baseline_jpeg_q1.yaml"]
         for settings_filepath in settings_path_list:
             self.test_jpeg_baseline_compression(settings_filepath=settings_filepath)
 
