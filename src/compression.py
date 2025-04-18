@@ -260,17 +260,12 @@ class FlexibleJpeg(CompressImage):
         self.chrominance_dimensions = (self.image_dimensions[0] // self.downsample_factor,
                                   self.image_dimensions[1] // self.downsample_factor)
 
-        self.num_y_blocks = (self.image_dimensions[0] // self.block_size) * (self.image_dimensions[1] // self.block_size)
-        self.num_c_blocks = (self.chrominance_dimensions[0] // self.block_size) * (self.chrominance_dimensions[1] // self.block_size)
-        #num_total_blocks = num_y_blocks + 2 * num_c_blocks
+        self.num_y_blocks = (np.ceil(self.image_dimensions[0] / self.block_size) * np.ceil(
+                    self.image_dimensions[1] / self.block_size)).astype(np.int16)
+        self.num_c_blocks = (np.ceil(self.chrominance_dimensions[0] / self.block_size) * np.ceil(
+                    self.chrominance_dimensions[1] / self.block_size)).astype(np.int16)
+        self.num_total_blocks = self.num_y_blocks + 2 * self.num_c_blocks
 
-        #print(self.luminance_quantization_table)
-
-
-        #TODO pad at the beginning? good idea? gotta make sure it fits with both chrominance image dimensions and block size
-
-        #TODO try to make it compatible - might not even be an issue?
-        # This is delt with later. The block processing algorithm will add padding to the outside of the image if needed.
         # if self.image_dimensions[0] % self.block_size != 0 or self.image_dimensions[1] % self.block_size != 0:
         #     print('Warning! Image Dimensions not divisible by', {self.blocksize})
         #
@@ -335,23 +330,33 @@ class FlexibleJpeg(CompressImage):
 
         print('Downsample factor:', self.downsample_factor)
 
-        # This essentially downsamples the image by averaging the n surrounding pixels where N is the downsampling factor.
-        luminance = YCbCr_image[:, :, 0]
-        ch_CbCr = YCbCr_image[:,:,1:]
+        luminance = YCbCr_image[:, :, 0]  # No need to convert dtype if input is already uint8
+        Cb = YCbCr_image[:, :, 1]
+        Cr = YCbCr_image[:, :, 2]
 
-        running_average = np.array(ch_CbCr[::self.downsample_factor, ::self.downsample_factor,:]/self.downsample_factor**2,
-                                   dtype=np.uint8)
+        if self.downsample_factor == 1:
+            return [luminance, Cb, Cr]
+
+        #TODO MAKE IT SO THAT the chrominance_dimensions are correct depending on factor
+
+        # Downsample if factor > 1
+        running_average = np.array(
+            YCbCr_image[::self.downsample_factor, ::self.downsample_factor, 1:] / self.downsample_factor ** 2,
+            dtype=np.uint8)
         for idx in range(self.downsample_factor):
             for jdx in range(self.downsample_factor):
                 if idx == 0 and jdx == 0:
                     continue
-                else:
-                    running_average = (running_average +
-                                       ch_CbCr[idx::self.downsample_factor, jdx::self.downsample_factor,:]/self.downsample_factor**2)
+                running_average += (
+                        YCbCr_image[idx::self.downsample_factor, jdx::self.downsample_factor,
+                        1:] / self.downsample_factor ** 2
+                ).astype(np.uint8)  # Ensure intermediate additions stay in uint8
 
-        return [luminance,
-                np.array(running_average[:,:,0],dtype=np.uint8),
-                np.array(running_average[:,:,1],dtype=np.uint8)]
+        return [
+            luminance,  # Already uint8
+            np.array(running_average[:, :, 0], dtype=np.uint8),  # Explicit cast for consistency
+            np.array(running_average[:, :, 1], dtype=np.uint8)
+        ]
 
     def process_blocks(self, downsampled_image):
         """
@@ -366,8 +371,9 @@ class FlexibleJpeg(CompressImage):
             block_processed_channels.append(np.zeros(shape=np.shape(channel),dtype=np.int16))
             for idx in range(0,np.shape(channel)[0], self.block_size):
                 for jdx in range(0, np.shape(channel)[1], self.block_size):
-                    end_idx = idx + self.block_size if np.shape(channel)[0] - idx > self.block_size else None
-                    end_jdx = jdx + self.block_size if np.shape(channel)[1] - jdx > self.block_size else None
+                    end_idx = min(idx + self.block_size, channel.shape[0])
+                    end_jdx = min(jdx + self.block_size, channel.shape[1])
+
                     image_block = channel[idx:end_idx, jdx:end_jdx]
                     frequency_block = self.block_DCT(image_block)
                     quantized_block = self.quantize_block(frequency_block, ch_num)
@@ -397,13 +403,23 @@ class FlexibleJpeg(CompressImage):
         :param kwargs:
         :return: the quantized block
         """
+        original_shape = frequency_domain_block.shape
+        # Pad to block_size if needed
+        if original_shape != (self.block_size, self.block_size):
+            padded_block = np.zeros((self.block_size, self.block_size), dtype=frequency_domain_block.dtype)
+            padded_block[:original_shape[0], :original_shape[1]] = frequency_domain_block
+            frequency_domain_block = padded_block
+
         if ch_num == 0:
-            #TODO reset downsample, quantization tables, etc, put it into the comp and decomp algos
             quantized_block = np.round(frequency_domain_block / self.luminance_quantization_table)
         else:
             quantized_block = np.round(frequency_domain_block / self.chrominance_quantization_table)
         # needs to be zero for RLE to be successful
         quantized_block[-1, -1] = 0
+
+        if original_shape != (self.block_size, self.block_size):
+            quantized_block = quantized_block[:original_shape[0], :original_shape[1]]
+
         return quantized_block.astype(np.int16)
 
     def entropy_encode(self, quantized_blocks, **kwargs):
@@ -428,17 +444,34 @@ class FlexibleJpeg(CompressImage):
 
         # Track previous DC values separately for each channel
         prev_dc = [0, 0, 0]  # [Y, Cb, Cr]
-
+        #print(len(quantized_blocks))
         # Process blocks in decompression order: ALL Y -> ALL Cb -> ALL Cr
         all_blocks = []
         block_index = 0
         for channel_idx, channel in enumerate(quantized_blocks):
             # easiest fix to stop integer overflow later during the calculations
             channel = quantized_blocks[channel_idx].astype(np.int16)
+            # we go left to right downwards
             for i in range(0, channel.shape[0], self.block_size):
                 for j in range(0, channel.shape[1], self.block_size):
-                    #TODO check what this does
-                    block = self._get_padded_block(channel, i, j)
+                    end_i = min(i + self.block_size, channel.shape[0])
+                    end_j = min(j + self.block_size, channel.shape[1])
+                    block = channel[i:end_i, j:end_j]
+
+                    #print(block.shape)
+
+
+                    #if block.shape[0] != self.block_size and channel_idx == 0:
+                        #print(block_index - 58*(87+1))
+                    #if block.shape[1] != self.block_size and channel_idx == 0:
+                        #print((block_index + 1) % 88)
+
+                    if block.shape != (self.block_size, self.block_size):
+                        padded_block = np.zeros((self.block_size, self.block_size), dtype=block.dtype)
+                        padded_block[:block.shape[0], :block.shape[1]] = block
+                        block = padded_block
+
+                    #block = self._get_padded_block(channel, i, j)
                     zigzagged = zigzag_order(block, self.zigzag_pattern)
                     #if block_index == 0:
                         #print(zigzagged)
@@ -449,6 +482,8 @@ class FlexibleJpeg(CompressImage):
 
                     # AC encoding
                     rle_block = run_length_encoding(zigzagged[1:])
+                    if len(rle_block) > 64:
+                        raise ValueError
                     #adding both to symbols
                     if channel_idx == 0:
                         dc_lum_symbols.append(delta_dc)
@@ -459,7 +494,8 @@ class FlexibleJpeg(CompressImage):
                     combined = np.array([delta_dc] + rle_block, dtype=object)
                     all_blocks.append(combined)
                     block_index += 1
-
+        #print(block_index)
+        #print(self.num_total_blocks)
         print(' - Begin Huffman table building')
 
         def build_huffman_table(symbols):
@@ -522,18 +558,6 @@ class FlexibleJpeg(CompressImage):
         print('Entropy encoding ended')
         return compressed_bits, huffman_tables
 
-
-    def _get_padded_block(self, channel, i, j):
-        """Helper to handle edge blocks with padding"""
-        end_i = min(i + self.block_size, channel.shape[0])
-        end_j = min(j + self.block_size, channel.shape[1])
-        block = channel[i:end_i, j:end_j]
-
-        if block.shape != (self.block_size, self.block_size):
-            padded_block = np.zeros((self.block_size, self.block_size), dtype=block.dtype)
-            padded_block[:block.shape[0], :block.shape[1]] = block
-            return padded_block
-        return block
     def encode_to_file(self, encoded_data_stream, huffman_tables, settings):
         """
         Turn the image matrices into a data stream. Pre-append the configurations necessary
@@ -637,10 +661,11 @@ class FlexibleJpeg(CompressImage):
                 'theoretical_uncompressed_kb': uncompressed_size_theoretical,
             },
             'algorithm_metrics': {
-                'algorithm': algorithm,  # e.g., "JPEGCompressor"
+                'algorithm': algorithm,
+                'channels': channels,
+                'image_dimension': self.image_dimensions,
             },
             'time_metrics': self.timings,
-            # Compression metrics
             'compression_metrics': {
                 'compression_ratio': compression_ratio,
                 'space_savings_percent': space_savings,
@@ -702,7 +727,8 @@ if __name__ == '__main__':
     flexible_jpeg = FlexibleJpeg()
 
     #test_image_path = os.path.join(os.getcwd(), "assets", "unit_test_images", "white_16x16.tif")
-    test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "landscape.png")
+    #test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "landscape.png")
+    test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "Polar_bear_over_water.webp")
     #test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "20241017-elarbi-bladeeNYC-4B5A2603.cr2")
 
 

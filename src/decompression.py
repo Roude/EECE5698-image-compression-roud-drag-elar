@@ -172,6 +172,9 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         print(self.block_size)
         #exit()
 
+        self.chrominance_dimensions = (np.floor(self.image_dimensions[0] / self.upsample_factor).astype(np.int16),
+                                  np.floor(self.image_dimensions[1] / self.upsample_factor).astype(np.int16))
+
         # Inverse of compression basically
         quantized_blocks = self.entropy_decode(bit_data, huffman_table)
         unprocessed_blocks = self.process_blocks_inverse(quantized_blocks)
@@ -310,17 +313,41 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         ac_lum_min, ac_lum_max = get_min_max_key_lengths(reverse_huffman['ac_lum'])
         ac_chrom_min, ac_chrom_max = get_min_max_key_lengths(reverse_huffman['ac_chrom'])
 
-        chrominance_dimensions = (self.image_dimensions[0] // self.upsample_factor,
-                             self.image_dimensions[1] // self.upsample_factor)
-        num_total_y_blocks = (self.image_dimensions[0] // self.block_size) * (
-                    self.image_dimensions[1] // self.block_size)
-        num_total_c_blocks = (chrominance_dimensions[0] // self.block_size) * (
-                    chrominance_dimensions[1] // self.block_size)
-        num_total_blocks = num_total_y_blocks + 2 * num_total_c_blocks
+
+        #TODO fix it for times when image dimension mod upsample factor != 0, maybe in that case put it back to divisible number and account for that when upsampling again, check upsampling/downsampling funciton
+        # check for that in comp too
+        # skip the bs if it's all divisible
+
+        #chrominance muss später korrekt upsampled werden
+        # this includes non full blocks
+        #TODO make sure your ceil function does not fuck up over floating point errors
+        num_total_y_blocks = (np.ceil(self.image_dimensions[0] / self.block_size) * np.ceil(self.image_dimensions[1] / self.block_size)).astype(np.int16)
+        num_total_c_blocks = (np.ceil(self.chrominance_dimensions[0] / self.block_size) * np.ceil(self.chrominance_dimensions[1] / self.block_size)).astype(np.int16)
+        num_total_full_blocks = num_total_y_blocks + 2 * num_total_c_blocks
+
+        #num_total_full_y_rows = np.floor(self.image_dimensions[0] / self.block_size).astype(np.int16)
+        #num_total_full_y_cols = np.floor(self.image_dimensions[1] / self.block_size).astype(np.int16)
+        #num_remaining_y_rows = self.image_dimensions[0] % self.block_size
+        #num_remaining_y_cols = self.image_dimensions[1] % self.block_size
+
+        #num_total_full_c_rows = np.floor(self.chrominance_dimensions[0] / self.block_size).astype(np.int16)
+        #num_total_full_c_cols = np.floor(self.chrominance_dimensions[1] / self.block_size).astype(np.int16)
+        #num_remaining_c_rows = self.chrominance_dimensions[0] % self.block_size
+        #num_remaining_c_cols = self.chrominance_dimensions[1] % self.block_size
+
+        # what does it mean full? like the block has all rows
+        #print(num_total_full_y_rows)
+        #print(num_total_full_y_cols)
+        #print(num_remaining_y_rows)
+        #print(num_remaining_y_cols)
+        #print(num_total_full_c_rows)
+        #print(num_total_full_c_cols)
+        #print(num_remaining_c_rows)
+        #print(num_remaining_c_cols)
 
         decoded_blocks = [np.empty(self.image_dimensions, dtype=np.int16),
-                          np.empty(chrominance_dimensions, dtype=np.int16),
-                          np.empty(chrominance_dimensions, dtype=np.int16)]
+                          np.empty(self.chrominance_dimensions, dtype=np.int16),
+                          np.empty(self.chrominance_dimensions, dtype=np.int16)]
 
         prev_dc_coeff = [0, 0, 0]
         current_pos = 0  # Current bit position in the array
@@ -329,7 +356,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         print('- Begin decoding the blocks')
 
 
-        for block_num in range(num_total_blocks):
+        for block_num in range(num_total_full_blocks):
             # Determine which channel we're processing
             if block_num < num_total_y_blocks:
                 channel_idx = 0  # Y
@@ -406,28 +433,27 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
 
             # Get the channel dimensions
             if channel_idx == 0:
-                rows, cols = self.image_dimensions
+                num_rows, num_cols = self.image_dimensions
             else:
-                rows, cols = chrominance_dimensions
+                num_rows, num_cols = self.chrominance_dimensions
 
             # Calculate block position in the channel
             if channel_idx == 0:
                 block_idx = block_num
             elif channel_idx == 1:
                 block_idx = block_num - num_total_y_blocks
-                #print(block_idx)
             else:
                 block_idx = block_num - num_total_y_blocks - num_total_c_blocks
 
-            #ToDo check if they are not exactly divisible, does this get unnecessarily repeated, init before the loop
-            #TODO what happens when image resolution and chrominance resolution are not divisible by block_size
-            blocks_per_row = cols // self.block_size
-            i = (block_idx // blocks_per_row) * self.block_size
-            j = (block_idx % blocks_per_row) * self.block_size
+            blocks_per_row = np.ceil(num_cols / self.block_size).astype(np.int16)
+            block_row = (block_idx // blocks_per_row)
+            block_col = (block_idx % blocks_per_row)
+            i =  block_row * self.block_size
+            j = block_col * self.block_size
 
             # Place the block in the appropriate channel
-            end_i = min(i + self.block_size, rows)
-            end_j = min(j + self.block_size, cols)
+            end_i = min(i + self.block_size, num_rows)
+            end_j = min(j + self.block_size, num_cols)
             decoded_blocks[channel_idx][i:end_i, j:end_j] = block[:end_i - i, :end_j - j]
 
         print('Entropy decoding completed')
@@ -462,10 +488,21 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :param kwargs:
         :return: The dequantized frequency domain block
         """
+        original_shape = quantized_block.shape
+        # Pad to block_size if needed
+        if original_shape != (self.block_size, self.block_size):
+            padded_block = np.zeros((self.block_size, self.block_size), dtype=quantized_block.dtype)
+            padded_block[:original_shape[0], :original_shape[1]] = quantized_block
+            quantized_block = padded_block
+
         if ch_num == 0:
             dequantized_block = quantized_block * self.luminance_quantization_table
         else:
             dequantized_block = quantized_block * self.chrominance_quantization_table
+
+        if original_shape != (self.block_size, self.block_size):
+            dequantized_block = dequantized_block[:original_shape[0], :original_shape[1]]
+
         return dequantized_block.astype(np.float32)
 
     def inverse_block_DCT(self, frequency_block, **kwargs):
@@ -492,10 +529,14 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
 
         # TODO something other than nearest neighbor?
         # Upsample chrominance channels using nearest-neighbor interpolation
-        Cb = np.repeat(np.repeat(channels[1], self.upsample_factor, axis=0),
+        if self.upsample_factor != 0:
+            Cb = np.repeat(np.repeat(channels[1], self.upsample_factor, axis=0),
                        self.upsample_factor, axis=1)
-        Cr = np.repeat(np.repeat(channels[2], self.upsample_factor, axis=0),
+            Cr = np.repeat(np.repeat(channels[2], self.upsample_factor, axis=0),
                        self.upsample_factor, axis=1)
+        else:
+            Cb = channels[1]
+            Cr = channels[2]
 
         # Ensure upsampled chrominance matches luminance dimensions
         #h, w = Y.shape
@@ -516,9 +557,9 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :return: RGB image
         """
         #print(ycbcr_image[:,:,2])
-        print(ycbcr_image[:,:,0])
+        #print(ycbcr_image[:,:,0])
         rgb_restored = cv2.cvtColor(ycbcr_image, cv2.COLOR_YCrCb2RGB)
-        print(rgb_restored[:,:,0])
+        #print(rgb_restored[:,:,0])
         final = np.clip(rgb_restored, 0, 255)
         return final
 
