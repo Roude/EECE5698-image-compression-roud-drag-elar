@@ -172,8 +172,8 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         print(self.block_size)
         #exit()
 
-        self.chrominance_dimensions = (np.floor(self.image_dimensions[0] / self.upsample_factor).astype(np.int16),
-                                  np.floor(self.image_dimensions[1] / self.upsample_factor).astype(np.int16))
+        self.chrominance_dimensions = (np.floor(self.image_dimensions[0] / self.upsample_factor).astype(np.uint16),
+                                  np.floor(self.image_dimensions[1] / self.upsample_factor).astype(np.uint16))
 
         # Inverse of compression basically
         quantized_blocks = self.entropy_decode(bit_data, huffman_table)
@@ -321,8 +321,10 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         #chrominance muss später korrekt upsampled werden
         # this includes non full blocks
         #TODO make sure your ceil function does not fuck up over floating point errors
-        num_total_y_blocks = (np.ceil(self.image_dimensions[0] / self.block_size) * np.ceil(self.image_dimensions[1] / self.block_size)).astype(np.int16)
-        num_total_c_blocks = (np.ceil(self.chrominance_dimensions[0] / self.block_size) * np.ceil(self.chrominance_dimensions[1] / self.block_size)).astype(np.int16)
+        num_total_y_blocks = (np.ceil(self.image_dimensions[0] / self.block_size)).astype(np.uint32) * (np.ceil(
+                    self.image_dimensions[1] / self.block_size)).astype(np.uint32)
+        num_total_c_blocks = (np.ceil(self.chrominance_dimensions[0] / self.block_size)).astype(np.uint32) * (np.ceil(
+                    self.chrominance_dimensions[1] / self.block_size)).astype(np.uint32)
         num_total_full_blocks = num_total_y_blocks + 2 * num_total_c_blocks
 
         #num_total_full_y_rows = np.floor(self.image_dimensions[0] / self.block_size).astype(np.int16)
@@ -445,7 +447,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             else:
                 block_idx = block_num - num_total_y_blocks - num_total_c_blocks
 
-            blocks_per_row = np.ceil(num_cols / self.block_size).astype(np.int16)
+            blocks_per_row = (np.ceil(num_cols / self.block_size)).astype(np.uint32)
             block_row = (block_idx // blocks_per_row)
             block_col = (block_idx % blocks_per_row)
             i =  block_row * self.block_size

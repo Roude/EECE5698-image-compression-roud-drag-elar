@@ -257,13 +257,17 @@ class FlexibleJpeg(CompressImage):
         self.image_dimensions = image_uncompressed.shape[:2]
         self.channel_amount = image_uncompressed.shape[2]
 
-        self.chrominance_dimensions = (self.image_dimensions[0] // self.downsample_factor,
-                                  self.image_dimensions[1] // self.downsample_factor)
+        #self.chrominance_dimensions = (self.image_dimensions[0] // self.downsample_factor, self.image_dimensions[1] // self.downsample_factor)
 
-        self.num_y_blocks = (np.ceil(self.image_dimensions[0] / self.block_size) * np.ceil(
-                    self.image_dimensions[1] / self.block_size)).astype(np.int16)
-        self.num_c_blocks = (np.ceil(self.chrominance_dimensions[0] / self.block_size) * np.ceil(
-                    self.chrominance_dimensions[1] / self.block_size)).astype(np.int16)
+        self.chrominance_dimensions = (np.floor(self.image_dimensions[0] / self.downsample_factor).astype(np.uint16),
+                                  np.floor(self.image_dimensions[1] / self.downsample_factor).astype(np.uint16))
+
+
+        self.num_y_blocks = (np.ceil(self.image_dimensions[0] / self.block_size)).astype(np.uint32) * (np.ceil(
+                    self.image_dimensions[1] / self.block_size)).astype(np.uint32)
+        self.num_c_blocks = (np.ceil(self.chrominance_dimensions[0] / self.block_size)).astype(np.uint32) * (np.ceil(
+                    self.chrominance_dimensions[1] / self.block_size)).astype(np.uint32)
+
         self.num_total_blocks = self.num_y_blocks + 2 * self.num_c_blocks
 
         # if self.image_dimensions[0] % self.block_size != 0 or self.image_dimensions[1] % self.block_size != 0:
@@ -494,8 +498,8 @@ class FlexibleJpeg(CompressImage):
                     combined = np.array([delta_dc] + rle_block, dtype=object)
                     all_blocks.append(combined)
                     block_index += 1
-        #print(block_index)
-        #print(self.num_total_blocks)
+        print(block_index)
+        print(self.num_total_blocks)
         print(' - Begin Huffman table building')
 
         def build_huffman_table(symbols):
@@ -727,8 +731,8 @@ if __name__ == '__main__':
     flexible_jpeg = FlexibleJpeg()
 
     #test_image_path = os.path.join(os.getcwd(), "assets", "unit_test_images", "white_16x16.tif")
-    #test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "landscape.png")
-    test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "Polar_bear_over_water.webp")
+    test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "landscape.png")
+    #test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "Polar_bear_over_water.webp")
     #test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "20241017-elarbi-bladeeNYC-4B5A2603.cr2")
 
 
