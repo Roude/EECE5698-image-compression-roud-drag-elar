@@ -174,8 +174,8 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
 
         print(self.block_size)
 
-        self.chrominance_dimensions = (np.floor(self.image_dimensions[0] / self.upsample_factor).astype(np.uint16),
-                                  np.floor(self.image_dimensions[1] / self.upsample_factor).astype(np.uint16))
+        self.chrominance_dimensions = (np.ceil(self.image_dimensions[0] / self.upsample_factor).astype(np.uint16),
+                                  np.ceil(self.image_dimensions[1] / self.upsample_factor).astype(np.uint16))
 
         self.timings['preliminaries_ms'] = int((time.time() - self.last_time) * 1000)
         self.last_time = time.time()
@@ -339,9 +339,6 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         ac_lum_min, ac_lum_max = get_min_max_key_lengths(reverse_huffman['ac_lum'])
         ac_chrom_min, ac_chrom_max = get_min_max_key_lengths(reverse_huffman['ac_chrom'])
 
-
-        #TODO fix it for times when image dimension mod upsample factor != 0, maybe in that case put it back to divisible number and account for that when upsampling again, check upsampling/downsampling funciton
-        # check for that in comp too
         # skip the bs if it's all divisible
 
         #chrominance muss später korrekt upsampled werden
@@ -543,12 +540,12 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             Cb = channels[1]
             Cr = channels[2]
 
+        print(Cb.shape)
+
         # Ensure upsampled chrominance matches luminance dimensions
-        #h, w = Y.shape
-        #Cb = Cb[:h, :w]  # Trim if necessary
-        #Cr = Cr[:h, :w]
-        if Y.shape != Cb.shape != Cr.shape:
-            raise ValueError(f"Upsampled Chromiance doesn't have the right dimensions")
+        h, w = Y.shape
+        Cb = Cb[:h, :w]  # Trim if necessary
+        Cr = Cr[:h, :w]
 
         YCbCr_image = np.dstack((Y, Cb, Cr)).astype(np.uint8)
         return YCbCr_image

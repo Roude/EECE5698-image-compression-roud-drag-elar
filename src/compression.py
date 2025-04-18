@@ -257,8 +257,11 @@ class FlexibleJpeg(CompressImage):
 
         #self.chrominance_dimensions = (self.image_dimensions[0] // self.downsample_factor, self.image_dimensions[1] // self.downsample_factor)
 
-        self.chrominance_dimensions = (np.floor(self.image_dimensions[0] / self.downsample_factor).astype(np.uint16),
-                                  np.floor(self.image_dimensions[1] / self.downsample_factor).astype(np.uint16))
+        if self.downsample_factor == 1:
+            self.chrominance_dimensions = self.image_dimensions
+        else:
+            self.chrominance_dimensions = (np.ceil(self.image_dimensions[0] / self.downsample_factor).astype(np.uint16),
+                                  np.ceil(self.image_dimensions[1] / self.downsample_factor).astype(np.uint16))
 
 
         self.num_y_blocks = (np.ceil(self.image_dimensions[0] / self.block_size)).astype(np.uint32) * (np.ceil(
@@ -267,13 +270,6 @@ class FlexibleJpeg(CompressImage):
                     self.chrominance_dimensions[1] / self.block_size)).astype(np.uint32)
 
         self.num_total_blocks = self.num_y_blocks + 2 * self.num_c_blocks
-
-        # if self.image_dimensions[0] % self.block_size != 0 or self.image_dimensions[1] % self.block_size != 0:
-        #     print('Warning! Image Dimensions not divisible by', {self.blocksize})
-        #
-        # if self.chrominance_dimensions[0] % self.block_size != 0 or self.chrominance_dimensions[1] % self.block_size != 0:
-        #     print('Warning! Chromiance dimensions not divisible by', {self.blocksize})
-
 
         #I know that this makes it unreadable but bear with me for the time being
         self.timings['preliminaries_ms'] = int((time.time() - self.last_time) * 1000)
@@ -328,8 +324,6 @@ class FlexibleJpeg(CompressImage):
         :param YCbCr_image: The image already converted to YCbCr format
         :return: A Tuple, element 0 is the lumiance channel, element 1 is the chrominance channels
         """
-        #self.downsample_factor = kwargs.get("chrominance_downsample_factor", 2)
-
         print('Downsample factor:', self.downsample_factor)
 
         luminance = YCbCr_image[:, :, 0]  # No need to convert dtype if input is already uint8
@@ -339,22 +333,31 @@ class FlexibleJpeg(CompressImage):
         if self.downsample_factor == 1:
             return [luminance, Cb, Cr]
 
-        # Downsample if factor > 1
-        running_average = np.array(
-            YCbCr_image[::self.downsample_factor, ::self.downsample_factor, 1:] / self.downsample_factor ** 2,
-            dtype=np.uint8)
+        running_average = np.zeros((self.chrominance_dimensions[0], self.chrominance_dimensions[1], 2), dtype=np.float32)
+
+        # Count how many samples contribute to each output pixel (for correct averaging)
+        count = np.zeros((self.chrominance_dimensions[0], self.chrominance_dimensions[1]), dtype=np.float32)
+
         for idx in range(self.downsample_factor):
             for jdx in range(self.downsample_factor):
-                if idx == 0 and jdx == 0:
-                    continue
-                running_average += (
-                        YCbCr_image[idx::self.downsample_factor, jdx::self.downsample_factor,
-                        1:] / self.downsample_factor ** 2
-                ).astype(np.uint8)  # Ensure intermediate additions stay in uint8
+                slice_h = slice(idx, None, self.downsample_factor)
+                slice_w = slice(jdx, None, self.downsample_factor)
+
+                # Extract the current block of chroma values
+                chroma_block = YCbCr_image[slice_h, slice_w, 1:]  # Shape: (H_block, W_block, 2)
+
+                # Accumulate contributions
+                h, w = chroma_block.shape[:2]
+                running_average[:h, :w, :] += chroma_block.astype(np.float32)
+                count[:h, :w] += 1
+
+        # Compute the average (avoid division by zero)
+        running_average[:, :, 0] = np.divide(running_average[:, :, 0], count, where=count != 0)
+        running_average[:, :, 1] = np.divide(running_average[:, :, 1], count, where=count != 0)
 
         return [
-            luminance,  # Already uint8
-            np.array(running_average[:, :, 0], dtype=np.uint8),  # Explicit cast for consistency
+            luminance,
+            np.array(running_average[:, :, 0], dtype=np.uint8),
             np.array(running_average[:, :, 1], dtype=np.uint8)
         ]
 
@@ -494,8 +497,8 @@ class FlexibleJpeg(CompressImage):
                     combined = np.array([delta_dc] + rle_block, dtype=object)
                     all_blocks.append(combined)
                     block_index += 1
-        print(block_index)
-        print(self.num_total_blocks)
+        #print(block_index)
+        #print(self.num_total_blocks)
         print(' - Begin Huffman table building')
 
         def build_huffman_table(symbols):
