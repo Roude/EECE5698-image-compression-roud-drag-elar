@@ -24,7 +24,6 @@ def compress_all_test_images():
     all_files = [f for f in os.listdir(original_images_dir)
                  if os.path.isfile(os.path.join(original_images_dir, f))]
 
-    '''
         # Supported formats (add more as needed)
     SUPPORTED_FORMATS = ('.png', '.jpg', '.jpeg', '.tif', '.tiff', '.bmp', '.webp')
 
@@ -42,16 +41,12 @@ def compress_all_test_images():
     if not image_files:
         print("No supported image files found")
         return
-    
-    '''
-
-
 
     # Initialize compressor once
     flexible_jpeg = FlexibleJpeg(compression_config)
 
     # Process each image
-    for image_file in all_files:
+    for image_file in image_files:
         try:
             # Get base filename without extension
             base_name = os.path.splitext(image_file)[0]

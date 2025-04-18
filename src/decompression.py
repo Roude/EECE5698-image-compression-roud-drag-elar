@@ -205,7 +205,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         self.timings['total_compression_time_ms'] = sum(self.timings.values())
 
         base_path = os.path.splitext(self.save_location)[0]
-        timings_paths = f"{base_path}.metrics.json"
+        timings_paths = f"{base_path}.timings.json"
         try:
             with open(timings_paths, 'w') as f:
                 json.dump(self.timings, f, indent=2)
