@@ -191,12 +191,10 @@ class FlexibleJpeg(CompressImage):
         # Generate/update dependent parameters
         if self.block_size == 8:
             self.zigzag_pattern = self.default_zigzag_pattern
-            #TODO use the generated ones for 8 too as it makes it more comparable
-            self.luminance_quantization_table = self.default_luminance_quantization_table
-            self.chrominance_quantization_table = self.default_chrominance_quantization_table
-        else:
-            self.zigzag_pattern = generate_zigzag_pattern(self.block_size)
-            self.luminance_quantization_table, self.chrominance_quantization_table = (self.generate_parameter_matrices())
+        # We use the generated ones for 8 too as it makes it more comparable
+        self.zigzag_pattern = generate_zigzag_pattern(self.block_size)
+        self.luminance_quantization_table, self.chrominance_quantization_table = (self.generate_parameter_matrices())
+
 
     def __call__(self, image, settings=None, **kwargs):
         """
@@ -341,8 +339,6 @@ class FlexibleJpeg(CompressImage):
         if self.downsample_factor == 1:
             return [luminance, Cb, Cr]
 
-        #TODO MAKE IT SO THAT the chrominance_dimensions are correct depending on factor
-
         # Downsample if factor > 1
         running_average = np.array(
             YCbCr_image[::self.downsample_factor, ::self.downsample_factor, 1:] / self.downsample_factor ** 2,
@@ -486,7 +482,7 @@ class FlexibleJpeg(CompressImage):
 
                     # AC encoding
                     rle_block = run_length_encoding(zigzagged[1:])
-                    if len(rle_block) > 64:
+                    if len(rle_block) > self.block_size **2:
                         raise ValueError
                     #adding both to symbols
                     if channel_idx == 0:
@@ -731,8 +727,8 @@ if __name__ == '__main__':
     flexible_jpeg = FlexibleJpeg()
 
     #test_image_path = os.path.join(os.getcwd(), "assets", "unit_test_images", "white_16x16.tif")
-    test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "landscape.png")
-    #test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "Polar_bear_over_water.webp")
+    #test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "landscape.png")
+    test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "Polar_bear_over_water.webp")
     #test_image_path = os.path.join(os.getcwd(), "assets", "test_images", "20241017-elarbi-bladeeNYC-4B5A2603.cr2")
 
 

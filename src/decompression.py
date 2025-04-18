@@ -31,6 +31,7 @@ from src.utilities import parse_huffman_table, make_serializable_table, bytes_to
 
 from src.compression import BaselineJpeg, FlexibleJpeg
 from src.huffman import generate_zigzag_pattern, inverse_zigzag_order
+import time
 
 #makes it so it doesn't print
 np.set_printoptions(formatter={
@@ -160,6 +161,8 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :param kwargs: Additional parameters
         :return: Decompressed image and save path
         """
+        self.timings = {}
+        self.last_time = time.time()
         self.set_save_location(compressed_file)
         # Override with user-provided save location if available
         save_location = kwargs.get("save_location", self.save_location)
@@ -170,16 +173,26 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         self._load_decompression_settings(settings)
 
         print(self.block_size)
-        #exit()
 
         self.chrominance_dimensions = (np.floor(self.image_dimensions[0] / self.upsample_factor).astype(np.uint16),
                                   np.floor(self.image_dimensions[1] / self.upsample_factor).astype(np.uint16))
 
+        self.timings['preliminaries_ms'] = int((time.time() - self.last_time) * 1000)
+        self.last_time = time.time()
+
         # Inverse of compression basically
         quantized_blocks = self.entropy_decode(bit_data, huffman_table)
+        self.timings['entropy_decoding_ms'] = int((time.time() - self.last_time) * 1000)
+        self.last_time = time.time()
         unprocessed_blocks = self.process_blocks_inverse(quantized_blocks)
+        self.timings['process_blocks_ms'] = int((time.time() - self.last_time) * 1000)
+        self.last_time = time.time()
         upsampled_image = self.upsample_chrominance(unprocessed_blocks)
+        self.timings['upsample_chrominance_ms'] = int((time.time() - self.last_time) * 1000)
+        self.last_time = time.time()
         rgb_image = self.convert_colorspace_inverse(upsampled_image)
+        self.timings['convert_colorspaces_ms'] = int((time.time() - self.last_time) * 1000)
+        self.last_time = time.time()
         print(f"Successfully decompressed image")
 
         # Save the decompressed image
@@ -187,6 +200,19 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             imageio.imwrite(save_location, rgb_image.astype(np.uint8))
 
         print(f"Decompressed image saved to: {save_location}")
+
+        self.timings['saving_ms'] = int((time.time() - self.last_time) * 1000)
+        self.timings['total_compression_time_ms'] = sum(self.timings.values())
+
+        base_path = os.path.splitext(self.save_location)[0]
+        timings_paths = f"{base_path}.metrics.json"
+        try:
+            with open(timings_paths, 'w') as f:
+                json.dump(self.timings, f, indent=2)
+        except Exception as e:
+            print(f"Warning: Could not save metrics files: {str(e)}")
+            self.timings['metrics_files'] = {'error': str(e)}
+        print("Saved metrics files: in", timings_paths)
 
         return rgb_image, save_location
 
@@ -320,32 +346,12 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
 
         #chrominance muss später korrekt upsampled werden
         # this includes non full blocks
-        #TODO make sure your ceil function does not fuck up over floating point errors
+        #TODO make sure your ceil function does not fuck up over floating points
         num_total_y_blocks = (np.ceil(self.image_dimensions[0] / self.block_size)).astype(np.uint32) * (np.ceil(
                     self.image_dimensions[1] / self.block_size)).astype(np.uint32)
         num_total_c_blocks = (np.ceil(self.chrominance_dimensions[0] / self.block_size)).astype(np.uint32) * (np.ceil(
                     self.chrominance_dimensions[1] / self.block_size)).astype(np.uint32)
         num_total_full_blocks = num_total_y_blocks + 2 * num_total_c_blocks
-
-        #num_total_full_y_rows = np.floor(self.image_dimensions[0] / self.block_size).astype(np.int16)
-        #num_total_full_y_cols = np.floor(self.image_dimensions[1] / self.block_size).astype(np.int16)
-        #num_remaining_y_rows = self.image_dimensions[0] % self.block_size
-        #num_remaining_y_cols = self.image_dimensions[1] % self.block_size
-
-        #num_total_full_c_rows = np.floor(self.chrominance_dimensions[0] / self.block_size).astype(np.int16)
-        #num_total_full_c_cols = np.floor(self.chrominance_dimensions[1] / self.block_size).astype(np.int16)
-        #num_remaining_c_rows = self.chrominance_dimensions[0] % self.block_size
-        #num_remaining_c_cols = self.chrominance_dimensions[1] % self.block_size
-
-        # what does it mean full? like the block has all rows
-        #print(num_total_full_y_rows)
-        #print(num_total_full_y_cols)
-        #print(num_remaining_y_rows)
-        #print(num_remaining_y_cols)
-        #print(num_total_full_c_rows)
-        #print(num_total_full_c_cols)
-        #print(num_remaining_c_rows)
-        #print(num_remaining_c_cols)
 
         decoded_blocks = [np.empty(self.image_dimensions, dtype=np.int16),
                           np.empty(self.chrominance_dimensions, dtype=np.int16),
@@ -429,9 +435,6 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             ac_coeffs.extend([0] * (self.block_size * self.block_size - 1 - len(ac_coeffs)))
             zigzag_coeffs = [dc_coeff] + ac_coeffs
             block = inverse_zigzag_order(zigzag_coeffs, self.zigzag_pattern, self.block_size)
-            #if block_num == 10:
-                #print(block)
-                #print(len(block))
 
             # Get the channel dimensions
             if channel_idx == 0:
