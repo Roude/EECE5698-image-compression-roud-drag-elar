@@ -93,19 +93,3 @@ def generate_huffman_codes(node, prefix="", code_dict=None):
 
 def huffman_encode(rle_data, huffman_codes):
     return "".join(huffman_codes[(val, count)] for val, count in rle_data)
-
-if __name__ == '__main__':
-    testmatrix = generate_zigzag_pattern(16)
-    print(testmatrix)
-    #how to use huffman encoding
-    #runlength encoding data
-    rle_data = [(16, 0), (11, 0), (16, 0), (11, 5), (16, 0), (3, 2), (0, 0)]
-    #create a dictionary by counting the frequencies of values
-    freq_dict = Counter([val for val, _ in rle_data])
-    print(freq_dict)
-    huffman_tree = build_huffman_tree(freq_dict)
-    print(huffman_tree)
-    huffman_codes = generate_huffman_codes(huffman_tree)
-    print(huffman_codes)
-    encoded_bits = huffman_encode(rle_data, huffman_codes)
-    print(encoded_bits)
