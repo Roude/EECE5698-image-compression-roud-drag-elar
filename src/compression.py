@@ -25,7 +25,7 @@ from skimage.io import imread
 from scipy.fftpack import dct, idct, dctn,idctn
 from torch.nn.functional import channel_shuffle
 
-from src.utilities import display_greyscale_image, make_serializable_table
+from src.utilities import display_greyscale_image, make_serializable_table, gaussian_matrix, ln_norm
 from src.huffman import generate_zigzag_pattern, zigzag_order, run_length_encoding, build_huffman_tree, generate_huffman_codes, huffman_encode
 from collections import Counter
 import pkgutil
@@ -206,7 +206,9 @@ class FlexibleJpeg(CompressImage):
         self.timings = {}
         self.last_time = time.time()
 
-        self.save_location = kwargs.get("save_location", os.path.join(os.getcwd(), "tmp", f"flex_jpeg_comp")) # define save_location here to avoid AttributeError in encode_to_file(). this ensures we can either pass a custom save path or fall back to the default inside that method
+        self.save_location = kwargs.get("save_location",
+                                        os.path.join(os.getcwd(),
+                                                     "tmp", f"flex_jpeg_comp")) # define save_location here to avoid AttributeError in encode_to_file(). this ensures we can either pass a custom save path or fall back to the default inside that method
 
         #TODO implement quality factor
         if isinstance(image, str):
@@ -292,6 +294,7 @@ class FlexibleJpeg(CompressImage):
         self.timings['entropy_encode_ms'] = int((time.time() - self.last_time) * 1000)
         self.last_time = time.time()
         self.encode_to_file(compressed_image_datastream, huffman_tables, settings)
+        return self.binary_save_location
 
     #TODO come up with something better for this is provisional
     def generate_parameter_matrices(self):
@@ -316,6 +319,8 @@ class FlexibleJpeg(CompressImage):
         """
         ycbcr_image = cv2.cvtColor(image_uncompressed, cv2.COLOR_RGB2YCrCb)
         return ycbcr_image
+
+
     #TODO perhaps establish vertical and horizontal downsampling instead of all as one
     def downsample_chrominance(self, YCbCr_image):
         """
@@ -333,7 +338,8 @@ class FlexibleJpeg(CompressImage):
         if self.downsample_factor == 1:
             return [luminance, Cb, Cr]
 
-        running_average = np.zeros((self.chrominance_dimensions[0], self.chrominance_dimensions[1], 2), dtype=np.float32)
+        running_average = np.zeros((self.chrominance_dimensions[0],
+                                    self.chrominance_dimensions[1], 2), dtype=np.float32)
 
         # Count how many samples contribute to each output pixel (for correct averaging)
         count = np.zeros((self.chrominance_dimensions[0], self.chrominance_dimensions[1]), dtype=np.float32)
@@ -406,6 +412,22 @@ class FlexibleJpeg(CompressImage):
         :param kwargs:
         :return: the quantized block
         """
+        def quantize_function(f_domain_block, config):
+            func_name = config["function"]
+            if func_name == 'Quarter Gauss':
+                return np.round(f_domain_block/ gaussian_matrix(f_domain_block.shape,
+                                                                config["max_quantization"],
+                                                                config["standard_dev"]))
+            elif func_name == 'LN':
+                return np.round(f_domain_block / ln_norm(f_domain_block.shape,
+                                                         config["N"],
+                                                         config["max_val"],
+                                                         config["min_val"]))
+            elif func_name == 'Basic':
+                return np.round(f_domain_block / config["quantization_table"])
+            else:
+                raise NotImplementedError("Only Basic Quantization Tables, L-N Norm and Quarter Gauss Quantization functions have been implemented.")
+
         original_shape = frequency_domain_block.shape
         # Pad to block_size if needed
         if original_shape != (self.block_size, self.block_size):
@@ -414,9 +436,9 @@ class FlexibleJpeg(CompressImage):
             frequency_domain_block = padded_block
 
         if ch_num == 0:
-            quantized_block = np.round(frequency_domain_block / self.luminance_quantization_table)
+            quantized_block = quantize_function(frequency_domain_block, self.config["chromiance_quantization"])
         else:
-            quantized_block = np.round(frequency_domain_block / self.chrominance_quantization_table)
+            quantized_block = quantize_function(frequency_domain_block, self.config["luminance_quantization"])
         # needs to be zero for RLE to be successful
         quantized_block[-1, -1] = 0
 
@@ -643,7 +665,7 @@ class FlexibleJpeg(CompressImage):
         channels = self.channel_amount
         uncompressed_size_theoretical = round(height * width * channels / 1024, 3)
         # Compression metrics
-        compression_ratio = round(compressed_size / uncompressed_size, 3)
+        compression_ratio = round(compressed_size / uncompressed_size_theoretical, 3)
         space_savings = round((1 - compression_ratio) * 100, 1)
         bits_per_pixel = round((compressed_size * 8192) / (width * height), 3)  # 1024*8=8192 bits per KB
         bits_per_pixel_uncompressed = round((uncompressed_size * 8192) / (width * height), 3)  # 1024*8=8192 bits per KB
@@ -737,7 +759,7 @@ if __name__ == '__main__':
 
     compression_config = os.path.join(os.getcwd(),
                                               "compression_configurations",
-                                              "homemade_compression_jpeg_like.yaml")
+                                              "homemade_compression_gauss.yaml")
     flexible_jpeg = FlexibleJpeg(compression_config)
     flexible_jpeg(test_image_path)
 
