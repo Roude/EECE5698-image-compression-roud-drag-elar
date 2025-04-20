@@ -27,7 +27,7 @@ import struct
 import cv2
 from collections import Counter
 #from skimage.color.colorconv import ycbcr_from_rgb
-from src.utilities import parse_huffman_table, make_serializable_table, bytes_to_bools
+from src.utilities import parse_huffman_table, make_serializable_table, bytes_to_bools, gaussian_matrix, ln_norm
 
 from src.compression import BaselineJpeg, FlexibleJpeg
 from src.huffman import generate_zigzag_pattern, inverse_zigzag_order
@@ -230,24 +230,27 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         self.downsample_factor = settings.get("chrominance_downsample_factor", 2)
         self.upsample_factor = self.downsample_factor  # For decompression
 
-        # Load quantization tables
-        if "luminance_quantization_table" in settings:
-            self.luminance_quantization_table = np.array(
-                settings["luminance_quantization_table"],
-                dtype=np.uint8
-            )
-        else:
-            #print("not in settings")
-            self.luminance_quantization_table = self.default_luminance_quantization_table
 
-        if "chrominance_quantization_table" in settings:
-            self.chrominance_quantization_table = np.array(
-                settings["chrominance_quantization_table"],
-                dtype=np.uint8
-            )
-        else:
-            #print("not in settings")
-            self.chrominance_quantization_table = self.default_chrominance_quantization_table
+        self.lumance_quantization_settings = settings["luminance_quantization"]
+        self.chromiance_quantization_settings = settings["chromiance_quantization"]
+        # Load quantization tables
+        # if "luminance_quantization_table" in settings:
+        #     self.luminance_quantization_table = np.array(
+        #         settings["luminance_quantization_table"],
+        #         dtype=np.uint8
+        #     )
+        # else:
+        #     #print("not in settings")
+        #     self.luminance_quantization_table = self.default_luminance_quantization_table
+        #
+        # if "chrominance_quantization_table" in settings:
+        #     self.chrominance_quantization_table = np.array(
+        #         settings["chrominance_quantization_table"],
+        #         dtype=np.uint8
+        #     )
+        # else:
+        #     #print("not in settings")
+        #     self.chrominance_quantization_table = self.default_chrominance_quantization_table
 
         # Set zigzag pattern based on block size
         if self.block_size == 8:
@@ -490,6 +493,24 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :param kwargs:
         :return: The dequantized frequency domain block
         """
+
+        def dequantize_function(f_domain_block, config):
+            func_name = config["function"]
+            if func_name == 'Quarter Gauss':
+                return np.round(f_domain_block * gaussian_matrix(f_domain_block.shape,
+                                                                 config["max_quantization"],
+                                                                 config["standard_dev"]))
+            elif func_name == 'LN':
+                return np.round(f_domain_block * ln_norm(f_domain_block.shape,
+                                                         config["N"],
+                                                         config["max_val"],
+                                                         config["min_val"]))
+            elif func_name == 'Basic':
+                return np.round(f_domain_block * config["quantization_table"])
+            else:
+                raise NotImplementedError(
+                    "Only Basic Quantization Tables, L-N Norm and Quarter Gauss Quantization functions have been implemented.")
+
         original_shape = quantized_block.shape
         # Pad to block_size if needed
         if original_shape != (self.block_size, self.block_size):
@@ -498,9 +519,9 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             quantized_block = padded_block
 
         if ch_num == 0:
-            dequantized_block = quantized_block * self.luminance_quantization_table
+            dequantized_block = dequantize_function(quantized_block, self.lumance_quantization_settings)
         else:
-            dequantized_block = quantized_block * self.chrominance_quantization_table
+            dequantized_block = dequantize_function(quantized_block, self.chromiance_quantization_settings)
 
         if original_shape != (self.block_size, self.block_size):
             dequantized_block = dequantized_block[:original_shape[0], :original_shape[1]]

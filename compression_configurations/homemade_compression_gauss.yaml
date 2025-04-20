@@ -14,14 +14,15 @@ block_size: 8
 # Basic: Use default quantization tables.
 chromiance_quantization:
   function: 'Quarter Gauss'
-  max_quantization: 25
+  max_quantization: 2
   standard_dev: 5
 
 luminance_quantization:
   function: 'Quarter Gauss'
-  max_quantization: 40
+  max_quantization: 1
   standard_dev: 7
 
+quiet_mode: True
 
 YCbCr_conversion_matrix:
   - [65.738, 129.057, 25.064]
