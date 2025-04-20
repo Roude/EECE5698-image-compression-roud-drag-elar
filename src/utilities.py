@@ -119,3 +119,75 @@ def display_greyscale_image(fig, image_array, **kwargs):
     fig.update_yaxes(autorange='reversed', scaleanchor='x', constrain='domain')
     fig.update_xaxes(constrain='domain')
     fig.update_layout(coloraxis_showscale=False)  # Remove color scale
+
+
+def gaussian_matrix(shape, max_value, std_dev):
+    """
+    Generate a 2D Gaussian matrix with the peak at the bottom-right corner.
+
+    Parameters:
+        shape (tuple): Shape of the matrix as (rows, cols).
+        max_value (float): Maximum value of the Gaussian (at bottom-right).
+        std_dev (float): Standard deviation of the Gaussian.
+
+    Returns:
+        numpy.ndarray: 2D matrix with Gaussian distribution.
+    """
+    rows, cols = shape
+    x = np.arange(cols)
+    y = np.arange(rows)
+    x_grid, y_grid = np.meshgrid(x, y)
+
+    # Bottom-right corner is (cols-1, rows-1)
+    x0, y0 = cols - 1, rows - 1
+
+    # Calculate squared distance from the peak for each point
+    dist_sq = (x_grid - x0)**2 + (y_grid - y0)**2
+
+    # Apply 2D Gaussian function
+    gaussian = np.exp(-dist_sq / (2 * std_dev**2))
+
+    # Normalize so the max is 1, then scale to max_value
+    gaussian *= max_value / gaussian[y0, x0]
+
+    return gaussian
+
+import numpy as np
+
+def ln_norm(shape, max_value, min_value, norm_order):
+    """
+    Generate a 2D matrix with a Gaussian-like decay based on the L-N norm distance
+    from the bottom-right corner.
+
+    Parameters:
+        shape (tuple): Shape of the matrix as (rows, cols).
+        max_value (float): Maximum value at the bottom-right corner.
+        std_dev (float): Spread (controls decay rate).
+        norm_order (float): Order of the norm (e.g., 1 for Manhattan, 2 for Euclidean, np.inf for Chebyshev).
+
+    Returns:
+        numpy.ndarray: Matrix with generalized Gaussian decay.
+    """
+    rows, cols = shape
+    x = np.arange(cols)
+    y = np.arange(rows)
+    x_grid, y_grid = np.meshgrid(x, y)
+
+    # Coordinates of the peak (bottom-right)
+    x0, y0 = cols - 1, rows - 1
+
+    # Compute L-N distance from each point to the bottom-right
+    dx = np.abs(x_grid - x0)
+    dy = np.abs(y_grid - y0)
+    distance = (dx**norm_order + dy**norm_order)**(1.0 / norm_order)
+    slope = (max_value - min_value)/np.max(distance)
+
+    # Exponential decay
+    matrix = max_value - slope*distance
+
+    return matrix
+
+
+if __name__ == '__main__':
+    matrix = gaussian_matrix(shape=(5, 5), max_value=1.0, std_dev=4.0)
+    print(matrix)

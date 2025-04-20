@@ -137,15 +137,18 @@ class TestImageCompression(unittest.TestCase):
                 decompression_engine(f"{compressed_img_filepath}.rde")
 
 
-    def test_jpeg_baseline_compression(self, settings_filepath=None):
+    def test_jpeg_baseline_compression(self,
+                                       settings_filepath=None,
+                                       results_filename=None,
+                                       test_path="../assets/test_images"):
         clean_temp_results()
         if not settings_filepath:
             settings_filepath = "../compression_configurations/baseline_jpeg_q100.yaml"
-        results_name = f"iou_results_{os.path.basename(settings_filepath)}_{dt.now():%Y-%m-%d_%H-%M-%S}.csv"
+        results_name = f"{results_filename}_{os.path.basename(settings_filepath)}_{dt.now():%Y-%m-%d_%H-%M-%S}.csv"
         baseline_jpeg_compression_engine = BaselineJpeg(settings_filepath)
         results_df = pd.DataFrame(columns=["Image Name", "Compression Name", "Uncompressed Reference Label", "Reference Probability", "Compressed Probabilty of Reference Label", "Confidence Drift"])
 
-        for root, dirs, files in os.walk("../assets/test_images"):
+        for root, dirs, files in os.walk(test_path):
             for file in files:
                 test_image_path = os.path.join(root, file)
                 topk_result = compare_topk_to_uncompressed_reference(test_image_path,
@@ -173,5 +176,32 @@ class TestImageCompression(unittest.TestCase):
         for settings_filepath in settings_path_list:
             self.test_jpeg_baseline_compression(settings_filepath=settings_filepath)
 
+    def test_homemade_compression(self,
+                                  settings_filepath,
+                                  results_filename=None,
+                                  test_image_dir="../assets/test_images"):
+        clean_temp_results()
+        if not settings_filepath:
+            settings_filepath = "../compression_configurations/baseline_jpeg_q100.yaml"
+        results_name = f"{results_filename}_{os.path.basename(settings_filepath)}_{dt.now():%Y-%m-%d_%H-%M-%S}.csv"
+        baseline_jpeg_compression_engine = BaselineJpeg(settings_filepath)
+        results_df = pd.DataFrame(
+            columns=["Image Name", "Compression Name", "Uncompressed Reference Label", "Reference Probability",
+                     "Compressed Probabilty of Reference Label", "Confidence Drift"])
+
+        for root, dirs, files in os.walk(test_image_dir):
+            for file in files:
+                test_image_path = os.path.join(root, file)
+                topk_result = compare_topk_to_uncompressed_reference(test_image_path,
+                                                                     baseline_jpeg_compression_engine)
+
+                results_df = df_add_row(results_df, [file,
+                                                     os.path.basename(settings_filepath),
+                                                     topk_result["top1_class_index"],
+                                                     topk_result["uncompressed_prob"],
+                                                     topk_result["compressed_prob"],
+                                                     topk_result["confidence_delta"]])
+
+        results_df.to_csv(os.path.join(os.getcwd(), "results", results_name))
 if __name__ == "__main__":
     unittest.main()

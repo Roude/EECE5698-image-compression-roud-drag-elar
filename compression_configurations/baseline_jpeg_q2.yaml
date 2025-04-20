@@ -1,5 +1,0 @@
----
-# This tells our python function what image compression algorithm to run
-compression_algorithm: "jpeg_baseline"
-
-quality_factor: 2
