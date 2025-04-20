@@ -169,10 +169,11 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
 
         # Read and parse the compressed file
         bit_data, huffman_table, settings = self.decode_from_file(compressed_file)
-
+        self.quiet_mode = settings.get("quite_mode", False)
         self._load_decompression_settings(settings)
 
-        print(self.block_size)
+        if not self.quiet_mode:
+           print(self.block_size)
 
         self.chrominance_dimensions = (np.ceil(self.image_dimensions[0] / self.upsample_factor).astype(np.uint16),
                                   np.ceil(self.image_dimensions[1] / self.upsample_factor).astype(np.uint16))
@@ -193,13 +194,15 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         rgb_image = self.convert_colorspace_inverse(upsampled_image)
         self.timings['convert_colorspaces_ms'] = int((time.time() - self.last_time) * 1000)
         self.last_time = time.time()
-        print(f"Successfully decompressed image")
+
+        if not self.quiet_mode:
+            print(f"Successfully decompressed image")
 
         # Save the decompressed image
         if save_location:
             imageio.imwrite(save_location, rgb_image.astype(np.uint8))
-
-        print(f"Decompressed image saved to: {save_location}")
+        if not self.quiet_mode:
+            print(f"Decompressed image saved to: {save_location}")
 
         self.timings['saving_ms'] = int((time.time() - self.last_time) * 1000)
         self.timings['total_compression_time_ms'] = sum(self.timings.values())
@@ -212,7 +215,8 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         except Exception as e:
             print(f"Warning: Could not save metrics files: {str(e)}")
             self.timings['metrics_files'] = {'error': str(e)}
-        print("Saved metrics files: in", timings_paths)
+        if not self.quiet_mode:
+            print("Saved metrics files: in", timings_paths)
 
         return rgb_image, save_location
 
@@ -231,26 +235,26 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         self.upsample_factor = self.downsample_factor  # For decompression
 
 
-        self.lumance_quantization_settings = settings["luminance_quantization"]
-        self.chromiance_quantization_settings = settings["chromiance_quantization"]
+        # self.lumance_quantization_settings = settings["luminance_quantization"]
+        # self.chromiance_quantization_settings = settings["chromiance_quantization"]
         # Load quantization tables
-        # if "luminance_quantization_table" in settings:
-        #     self.luminance_quantization_table = np.array(
-        #         settings["luminance_quantization_table"],
-        #         dtype=np.uint8
-        #     )
-        # else:
-        #     #print("not in settings")
-        #     self.luminance_quantization_table = self.default_luminance_quantization_table
-        #
-        # if "chrominance_quantization_table" in settings:
-        #     self.chrominance_quantization_table = np.array(
-        #         settings["chrominance_quantization_table"],
-        #         dtype=np.uint8
-        #     )
-        # else:
-        #     #print("not in settings")
-        #     self.chrominance_quantization_table = self.default_chrominance_quantization_table
+        if "luminance_quantization_table" in settings:
+            self.luminance_quantization_table = np.array(
+                settings["luminance_quantization_table"],
+                dtype=np.uint8
+            )
+        else:
+            #print("not in settings")
+            self.luminance_quantization_table = self.default_luminance_quantization_table
+
+        if "chrominance_quantization_table" in settings:
+            self.chrominance_quantization_table = np.array(
+                settings["chrominance_quantization_table"],
+                dtype=np.uint8
+            )
+        else:
+            #print("not in settings")
+            self.chrominance_quantization_table = self.default_chrominance_quantization_table
 
         # Set zigzag pattern based on block size
         if self.block_size == 8:
@@ -277,8 +281,9 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :param file_path: Path to the compressed file
         :return: Tuple of (bit_data, huffman_table, settings)
         """
-        print('File decoding process started')
-        print('- Begin extraction')
+        if not self.quiet_mode:
+            print('File decoding process started')
+            print('- Begin extraction')
         if file_path.endswith('.rde'):
             with open(file_path, 'rb') as file:
                 # Read header length (first 4 bytes)
@@ -296,9 +301,9 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
                 huffman_tables_raw = header['huffman_tables']
                 huffman_tables = parse_huffman_table(huffman_tables_raw)
                 self.image_dimensions = header['image_dimensions']
-
-        print('- Evaluated succesfully')
-        print('File decoding process ended')
+        if not self.quiet_mode:
+            print('- Evaluated succesfully')
+            print('File decoding process ended')
         return bit_data, huffman_tables, settings
 
     def entropy_decode(self, compressed_bits, huffman_tables):
@@ -308,8 +313,9 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :param huffman_tables: Huffman codes dictionary
         :return: List of quantized blocks
         """
-        print('Entropy decoding process started')
-        print('- Begin separating and inverting huffman tables')
+        if not self.quiet_mode:
+            print('Entropy decoding process started')
+            print('- Begin separating and inverting huffman tables')
 
         reverse_huffman = {
             table_name: {v: k for k, v in table.items()}  # Invert key-value pairs
@@ -346,7 +352,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
 
         #chrominance muss später korrekt upsampled werden
         # this includes non full blocks
-        #TODO make sure your ceil function does not fuck up over floating points
+        #TODO make sure your ceil function
         num_total_y_blocks = (np.ceil(self.image_dimensions[0] / self.block_size)).astype(np.uint32) * (np.ceil(
                     self.image_dimensions[1] / self.block_size)).astype(np.uint32)
         num_total_c_blocks = (np.ceil(self.chrominance_dimensions[0] / self.block_size)).astype(np.uint32) * (np.ceil(
@@ -361,7 +367,8 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         current_pos = 0  # Current bit position in the array
         bit_length = len(compressed_bits)
 
-        print('- Begin decoding the blocks')
+        if not self.quiet_mode:
+            print('- Begin decoding the blocks')
 
 
         for block_num in range(num_total_full_blocks):
@@ -461,7 +468,8 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             end_j = min(j + self.block_size, num_cols)
             decoded_blocks[channel_idx][i:end_i, j:end_j] = block[:end_i - i, :end_j - j]
 
-        print('Entropy decoding completed')
+        if not self.quiet_mode:
+            print('Entropy decoding completed')
         #print(decoded_blocks[2])
         return decoded_blocks
 
@@ -494,22 +502,22 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         :return: The dequantized frequency domain block
         """
 
-        def dequantize_function(f_domain_block, config):
-            func_name = config["function"]
-            if func_name == 'Quarter Gauss':
-                return np.round(f_domain_block * gaussian_matrix(f_domain_block.shape,
-                                                                 config["max_quantization"],
-                                                                 config["standard_dev"]))
-            elif func_name == 'LN':
-                return np.round(f_domain_block * ln_norm(f_domain_block.shape,
-                                                         config["N"],
-                                                         config["max_val"],
-                                                         config["min_val"]))
-            elif func_name == 'Basic':
-                return np.round(f_domain_block * config["quantization_table"])
-            else:
-                raise NotImplementedError(
-                    "Only Basic Quantization Tables, L-N Norm and Quarter Gauss Quantization functions have been implemented.")
+        # def dequantize_function(f_domain_block, config):
+        #     func_name = config["function"]
+        #     if func_name == 'Quarter Gauss':
+        #         return np.round(f_domain_block * gaussian_matrix(f_domain_block.shape,
+        #                                                          config["max_quantization"],
+        #                                                          config["standard_dev"]))
+        #     elif func_name == 'LN':
+        #         return np.round(f_domain_block * ln_norm(f_domain_block.shape,
+        #                                                  config["N"],
+        #                                                  config["max_val"],
+        #                                                  config["min_val"]))
+        #     elif func_name == 'Basic':
+        #         return np.round(f_domain_block * config["quantization_table"])
+        #     else:
+        #         raise NotImplementedError(
+        #             "Only Basic Quantization Tables, L-N Norm and Quarter Gauss Quantization functions have been implemented.")
 
         original_shape = quantized_block.shape
         # Pad to block_size if needed
@@ -519,9 +527,9 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
             quantized_block = padded_block
 
         if ch_num == 0:
-            dequantized_block = dequantize_function(quantized_block, self.lumance_quantization_settings)
+            dequantized_block = quantized_block * self.luminance_quantization_table
         else:
-            dequantized_block = dequantize_function(quantized_block, self.chromiance_quantization_settings)
+            dequantized_block = quantized_block * self.chrominance_quantization_table
 
         if original_shape != (self.block_size, self.block_size):
             dequantized_block = dequantized_block[:original_shape[0], :original_shape[1]]
@@ -538,15 +546,14 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         inverse_DCT = np.clip(idctn(frequency_block, norm='ortho') + 128, 0, 255).astype(np.uint8)
         return inverse_DCT
 
-
-
     def upsample_chrominance(self, channels):
         """
         Upsample chrominance channels to match luminance channel dimensions
         :param channels: List of [Y, Cb, Cr] channels
         :return: YCbCr image with full resolution chrominance channels
         """
-        print('upsample factor:', self.upsample_factor)
+        if not self.quiet_mode:
+            print('upsample factor:', self.upsample_factor)
 
         Y = channels[0]
 

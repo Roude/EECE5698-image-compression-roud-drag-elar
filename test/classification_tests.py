@@ -2,33 +2,55 @@ import os
 import unittest
 import torch
 import torchvision.transforms as transforms
+from datetime import datetime as dt
 import yaml
-from torchvision import models
+from torchvision.models import resnet50, ResNet50_Weights
+import torchvision.transforms.functional as F
 from PIL import Image
+from imageio.v2 import imsave
 import pillow_avif
 import pandas as pd
 import numpy as np
-from datetime import datetime as dt
 import warnings
 
 from src.compression import BaselineJpeg, FlexibleJpeg
 from src.decompression import FlexibleJpegDecompress, DecompressImage
+import urllib.request
 
 results_name = f"iou_results_{dt.now():%Y-%m-%d_%H-%M-%S}.csv"
 
+url = "https://raw.githubusercontent.com/pytorch/hub/master/imagenet_classes.txt"
+class_labels_resnet50 = urllib.request.urlopen(url).read().decode("utf-8").splitlines()
+# Load model with ImageNet-1k pretrained weights
+weights = ResNet50_Weights.IMAGENET1K_V1  # or V2
+model = resnet50(weights=weights)
+model.eval()
+
 def preprocess_image(image_path: str):
     transform = transforms.Compose([
-        transforms.Resize((224, 224)),
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.Normalize(
+            mean=[0.485, 0.456, 0.406],
+            std=[0.229, 0.224, 0.225]
+        )
     ])
     image = Image.open(image_path).convert("RGB")
-    return transform(image).unsqueeze(0)
+    img_tensor = transform(image).unsqueeze(0)  # [1, 3, 224, 224]
+    print("Normalized:", img_tensor.min(), img_tensor.max(), img_tensor.mean())
+    img_for_display = F.to_pil_image(img_tensor.squeeze(0).clamp(0, 1))  # Remove bat
+    imsave(f"tmp/preprocessed_image_{dt.now():%Y-%m-%d_%H-%M-%S}.tif", img_for_display)
 
-def classify_image(model, image_tensor, k=5):
+    return img_tensor
+
+def classify_image(model, image_tensor):
     with torch.no_grad():
         outputs = model(image_tensor)
-    probs = torch.nn.functional.softmax(outputs, dim=1)
+        probs = torch.nn.functional.softmax(outputs[0], dim=0)
+    top5_prob, top5_catid = torch.topk(probs, 5)
+    for i in range(5):
+        print(f"{i + 1}: {class_labels_resnet50[top5_catid[i]]} ({top5_prob[i].item() * 100:.2f}%)")
     return probs.squeeze()
 
 def intersection_over_union(set1, set2):
@@ -53,20 +75,15 @@ def compare_topk_to_uncompressed_reference_flexible(uncompressed_img,
     warnings.simplefilter('ignore')
 
     def get_probs(img):
-        model = models.resnet50(pretrained=True)
-        tensor = preprocess_image(img)
-        return classify_image(model, tensor)
+        preprocess = weights.transforms()
+        img_tensor = preprocess(Image.open(img).convert("RGB")).unsqueeze(0)
+        return classify_image(model, img_tensor)
 
-        input_tensor = transform(img).unsqueeze(0)
-        with torch.no_grad():
-            output = model(input_tensor)
-        probs = torch.nn.functional.softmax(output, dim=1)
-        return probs.squeeze()
 
     # Get probabilities for both images
     uncompressed_probs = get_probs(uncompressed_img)
 
-    compressed_img_location = compression_engine(uncompressed_img)
+    compressed_img_location, metrics = compression_engine(uncompressed_img)
     compressed_probs = get_probs(decompression_engine(compressed_img_location)[1])
 
     # Get Top-1 prediction from uncompressed image
@@ -77,6 +94,7 @@ def compare_topk_to_uncompressed_reference_flexible(uncompressed_img,
 
     return {
         "top1_class_index": top1_idx,
+        "compression_ratio": metrics['compression_metrics']['compression_ratio'],
         "uncompressed_prob": uncompressed_prob,
         "compressed_prob": compressed_prob,
         "confidence_delta": delta

@@ -1,7 +1,6 @@
 ---
 chrominance_downsample_factor: 2
 block_size: 8
-#Todo MAKE THESE WORK
 #quality_factor: 50
 # Available Chromiance quantization functions:
 # Quarter Gaussian: Gaussian function from the bottom right corner of the matrix.

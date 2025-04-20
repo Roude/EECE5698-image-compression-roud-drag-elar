@@ -1,17 +1,7 @@
 ---
 chrominance_downsample_factor: 2
 block_size: 8
-#Todo MAKE THESE WORK
-#quality_factor: 50
-# Available Chromiance quantization functions:
-# Quarter Gaussian: Gaussian function from the bottom right corner of the matrix.
-#   Parameters: [Max Quantization, standard deviation]
-#
-# LN Norm: Quantization values are the max quantization value (bottom right corner of the matrix), dividided by the
-# LN norm of the distance from that matrix entry to the bottom right corner.
-#   Parameters: [Max Quantization, N, distance_factor]
-#
-# Basic: Use default quantization tables.
+quiet_mode: True
 chromiance_quantization:
   function: 'Basic'
   quantization_table:

@@ -47,6 +47,7 @@ class CompressImage:
         if not config:
             self.config = {}
             self.compression_function = None
+            self.quiet_mode = True
             print("No configuration initially provided")
         else:
             with open(config,'r') as config_file:
@@ -59,7 +60,7 @@ class CompressImage:
                 self.config = yaml.load(config_file, yaml.SafeLoader)
         else:
             self.config = config
-        #print(self.config)
+        self.quiet_mode = self.config.get("quite_mode", False)
 
     def set_datatype_and_channels(self, image_uncompressed):
         if image_uncompressed.dtype != np.uint8:
@@ -110,6 +111,7 @@ class FlexibleJpeg(CompressImage):
         self.YCbCr_conversion_matrix = None
         self.YCbCr_conversion_offset = None
         self.zigzag_pattern = None
+        self.metrics = {}
         self.default_YCbCr_conversion_matrix = np.array([[65.738, 129.057, 25.064],
                                                  [-37.945, -74.494, 112.439],
                                                  [112.439, -94.154, -18.285]], dtype=np.float32) / 256
@@ -149,6 +151,7 @@ class FlexibleJpeg(CompressImage):
                                                 [21, 34, 37, 47, 50, 56, 59, 61],
                                                 [35, 36, 48, 49, 57, 58, 62, 63]])
         # If config was provided, load it immediately
+        self.save_location = os.path.join(os.getcwd(), "tmp", f"flex_jpeg_comp")
         if config:
             self._load_config(config)
 
@@ -169,8 +172,10 @@ class FlexibleJpeg(CompressImage):
                     raise FileNotFoundError(f"Config file not found at {config}")
 
                 with open(config, 'r') as f:
-                    config = yaml.safe_load(f)
-                    print("Successfully loaded config!")
+                    self.config = yaml.safe_load(f)
+                    self.quiet_mode = self.config.get("quite_mode", False)
+                    if not self.quiet_mode:
+                        print("Successfully loaded config!")
                     #print(json.dumps(config, indent=2))  # Pretty print
 
                 if not config:  # Empty dict
@@ -181,8 +186,8 @@ class FlexibleJpeg(CompressImage):
             raise
 
         # Update core parameters
-        self.block_size = config.get("block_size", self.block_size)
-        self.downsample_factor = config.get("chrominance_downsample_factor", self.downsample_factor)
+        self.block_size = self.config.get("block_size", self.block_size)
+        self.downsample_factor = self.config.get("chrominance_downsample_factor", self.downsample_factor)
 
         # Keep as such for now
         self.YCbCr_conversion_matrix = self.default_YCbCr_conversion_matrix
@@ -193,6 +198,7 @@ class FlexibleJpeg(CompressImage):
             self.zigzag_pattern = self.default_zigzag_pattern
         # We use the generated ones for 8 too as it makes it more comparable
         self.zigzag_pattern = generate_zigzag_pattern(self.block_size)
+
         self.luminance_quantization_table, self.chrominance_quantization_table = (self.generate_parameter_matrices())
 
 
@@ -206,9 +212,7 @@ class FlexibleJpeg(CompressImage):
         self.timings = {}
         self.last_time = time.time()
 
-        self.save_location = kwargs.get("save_location",
-                                        os.path.join(os.getcwd(),
-                                                     "tmp", f"flex_jpeg_comp")) # define save_location here to avoid AttributeError in encode_to_file(). this ensures we can either pass a custom save path or fall back to the default inside that method
+        self.save_location = kwargs.get("save_location", self.save_location) # define save_location here to avoid AttributeError in encode_to_file(). this ensures we can either pass a custom save path or fall back to the default inside that method
 
         #TODO implement quality factor
         if isinstance(image, str):
@@ -236,23 +240,7 @@ class FlexibleJpeg(CompressImage):
         else:
             settings = self.config
 
-        #TODO was there a reason we didn't use it for homemade JPEG
         image_uncompressed = self.set_datatype_and_channels(image_uncompressed)
-
-        #TODO are we going to change the quantization table with different quality factors? if so just multiply by a scalar or this?
-        # how about making a plot or something regarding the distribution of values in the frequency space
-        # please find generator function below
-        '''
-         def create_emphasis_matrix(self, emphasis_factor):
-            matrix = np.zeros((self.block_size, self.block_size), dtype=np.float32)
-            for i in range(self.block_size):
-                for j in range(self.block_size):
-                    # Calculate distance from top-left corner (0,0)
-                    distance = np.sqrt(i * i + j * j)
-                    # Base value that increases with distance
-                    matrix[i, j] = max(1, np.floor(1/(self.block_size * self.block_size) * emphasis_factor * distance))
-            return matrix
-        '''
 
         self.image_dimensions = image_uncompressed.shape[:2]
         self.channel_amount = image_uncompressed.shape[2]
@@ -294,21 +282,29 @@ class FlexibleJpeg(CompressImage):
         self.timings['entropy_encode_ms'] = int((time.time() - self.last_time) * 1000)
         self.last_time = time.time()
         self.encode_to_file(compressed_image_datastream, huffman_tables, settings)
-        return self.binary_save_location
+        return self.binary_save_location, self.metrics
 
-    #TODO come up with something better for this is provisional
+    # The quantization tables are now generated when
     def generate_parameter_matrices(self):
-        luminance_qtable = np.zeros((self.block_size, self.block_size), dtype=np.uint8)
-        chrominance_qtable = np.zeros((self.block_size, self.block_size), dtype=np.uint8)
-        #factor = 4
-        factor = np.sqrt(self.block_size)
-        for i in range(self.block_size):
-            for j in range(self.block_size):
-                distance = np.sqrt(i * i + j * j)
-                if distance == 0: distance = 1
-                luminance_qtable[i, j] = max(1, np.floor(1 * factor * distance))
-                chrominance_qtable[i, j] = max(1, np.floor(1.5 * factor * distance))
-        return luminance_qtable, chrominance_qtable
+
+        def quantize_matrix(config):
+            func_name = config["function"]
+            if func_name == 'Quarter Gauss':
+                return gaussian_matrix((self.block_size, self.block_size),
+                                       config["max_quantization"],
+                                        config["standard_dev"])
+            elif func_name == 'LN':
+                return ln_norm((self.block_size, self.block_size), config["N"], config["max_val"], config["min_val"])
+            elif func_name == 'Basic':
+                return config["quantization_table"]
+            else:
+                raise NotImplementedError("Only Basic Quantization Tables, L-N Norm and Quarter Gauss Quantization functions have been implemented.")
+
+        lum_q_mat = np.round(quantize_matrix(self.config["luminance_quantization"]),0)
+        lum_q_mat[lum_q_mat == 0] = 1
+        chrom_q_mat = np.round(quantize_matrix(self.config["chromiance_quantization"]),0)
+        chrom_q_mat[chrom_q_mat == 0] = 1
+        return lum_q_mat, chrom_q_mat
 
     def convert_colorspace(self, image_uncompressed):
         """
@@ -329,7 +325,8 @@ class FlexibleJpeg(CompressImage):
         :param YCbCr_image: The image already converted to YCbCr format
         :return: A Tuple, element 0 is the lumiance channel, element 1 is the chrominance channels
         """
-        print('Downsample factor:', self.downsample_factor)
+        if not self.quiet_mode:
+            print('Downsample factor:', self.downsample_factor)
 
         luminance = YCbCr_image[:, :, 0]  # No need to convert dtype if input is already uint8
         Cb = YCbCr_image[:, :, 1]
@@ -412,21 +409,21 @@ class FlexibleJpeg(CompressImage):
         :param kwargs:
         :return: the quantized block
         """
-        def quantize_function(f_domain_block, config):
-            func_name = config["function"]
-            if func_name == 'Quarter Gauss':
-                return np.round(f_domain_block/ gaussian_matrix(f_domain_block.shape,
-                                                                config["max_quantization"],
-                                                                config["standard_dev"]))
-            elif func_name == 'LN':
-                return np.round(f_domain_block / ln_norm(f_domain_block.shape,
-                                                         config["N"],
-                                                         config["max_val"],
-                                                         config["min_val"]))
-            elif func_name == 'Basic':
-                return np.round(f_domain_block / config["quantization_table"])
-            else:
-                raise NotImplementedError("Only Basic Quantization Tables, L-N Norm and Quarter Gauss Quantization functions have been implemented.")
+        # def quantize_function(f_domain_block, config):
+        #     func_name = config["function"]
+        #     if func_name == 'Quarter Gauss':
+        #         return np.round(f_domain_block/ gaussian_matrix(f_domain_block.shape,
+        #                                                         config["max_quantization"],
+        #                                                         config["standard_dev"]))
+        #     elif func_name == 'LN':
+        #         return np.round(f_domain_block / ln_norm(f_domain_block.shape,
+        #                                                  config["N"],
+        #                                                  config["max_val"],
+        #                                                  config["min_val"]))
+        #     elif func_name == 'Basic':
+        #         return np.round(f_domain_block / config["quantization_table"])
+        #     else:
+        #         raise NotImplementedError("Only Basic Quantization Tables, L-N Norm and Quarter Gauss Quantization functions have been implemented.")
 
         original_shape = frequency_domain_block.shape
         # Pad to block_size if needed
@@ -436,9 +433,9 @@ class FlexibleJpeg(CompressImage):
             frequency_domain_block = padded_block
 
         if ch_num == 0:
-            quantized_block = quantize_function(frequency_domain_block, self.config["chromiance_quantization"])
+            quantized_block = frequency_domain_block / self.luminance_quantization_table
         else:
-            quantized_block = quantize_function(frequency_domain_block, self.config["luminance_quantization"])
+            quantized_block = frequency_domain_block / self.chrominance_quantization_table
         # needs to be zero for RLE to be successful
         quantized_block[-1, -1] = 0
 
@@ -453,8 +450,9 @@ class FlexibleJpeg(CompressImage):
         :param: quantized_blocks: The output of quantize_block
         :return: compressed bits, the huffman code
         """
-        print('Entropy encoding started')
-        print(' - Begin preliminary encoding')
+        if not self.quiet_mode:
+            print('Entropy encoding started')
+            print(' - Begin preliminary encoding')
 
 
         # Create separate DC and AC symbols for each channel type
@@ -521,7 +519,8 @@ class FlexibleJpeg(CompressImage):
                     block_index += 1
         #print(block_index)
         #print(self.num_total_blocks)
-        print(' - Begin Huffman table building')
+        if not self.quiet_mode:
+            print(' - Begin Huffman table building')
 
         def build_huffman_table(symbols):
             freq = Counter(symbols)
@@ -547,7 +546,8 @@ class FlexibleJpeg(CompressImage):
         compressed_bits = []
 
         # Reset the delta DC tracking for encoding
-        print(' - Begin Huffman encoding')
+        if not self.quiet_mode:
+            print(' - Begin Huffman encoding')
 
         block_index = 0
         for block in all_blocks:
@@ -579,8 +579,8 @@ class FlexibleJpeg(CompressImage):
             # Combine DC and AC bits
             compressed_bits.append(dc_bits + ''.join(ac_bits))
             block_index += 1
-
-        print('Entropy encoding ended')
+        if not self.quiet_mode:
+            print('Entropy encoding ended')
         return compressed_bits, huffman_tables
 
     def encode_to_file(self, encoded_data_stream, huffman_tables, settings):
@@ -666,11 +666,12 @@ class FlexibleJpeg(CompressImage):
         uncompressed_size_theoretical = round(height * width * channels / 1024, 3)
         # Compression metrics
         compression_ratio = round(compressed_size / uncompressed_size_theoretical, 3)
+        compression_rate = round(1/compression_ratio, 3)
         space_savings = round((1 - compression_ratio) * 100, 1)
         bits_per_pixel = round((compressed_size * 8192) / (width * height), 3)  # 1024*8=8192 bits per KB
         bits_per_pixel_uncompressed = round((uncompressed_size * 8192) / (width * height), 3)  # 1024*8=8192 bits per KB
         # Create comprehensive metrics dictionary
-        metrics = {
+        self.metrics = {
             # Size breakdown components
             'compressed_size_components': {
                 'encoded_image_data_kb': encoded_image_size,
@@ -693,6 +694,7 @@ class FlexibleJpeg(CompressImage):
             'time_metrics': self.timings,
             'compression_metrics': {
                 'compression_ratio': compression_ratio,
+                'compression_rate':compression_rate,
                 'space_savings_percent': space_savings,
                 'bits_per_pixel': bits_per_pixel,
                 'bits_per_pixel_uncompressed': bits_per_pixel_uncompressed,
@@ -706,43 +708,45 @@ class FlexibleJpeg(CompressImage):
         }
 
         # Print results in a clean, aligned format
-        print("\n=== Compression Metrics ===")
-        print(f"{'Metric':<35} {'Value':>15}")
-        print("-" * 50)
-        print(f"{'Original image path:':<35} {self.original_path:>15}")
-        print(f"{'Compressed file path:':<35} {self.binary_save_location:>15}")
-        print(f"{'Image dimensions:':<35} {f'{width}x{height}':>15}")
-        print(f"{'Color channels:':<35} {channels:>15}")
-        print("-" * 50)
-        print(f"{'Compression algorithm':<35} {algorithm:>15}")
-        print(f"{'Compression Time (ms)':<35} {self.timings['total_compression_time_ms']:>15}")
-        print("-" * 50)
-        print(f"{'Encoded image data:':<35} {encoded_image_size:>15,.3f} KB")
-        print(f"{'Huffman tables size:':<35} {huffman_tables_size:>15,.3f} KB")
-        print(f"{'Compression settings:':<35} {settings_size:>15,.3f} KB")
-        print(f"{'Header overhead:':<35} {header_size:>15,.3f} KB")
-        print(f"{'Total theoretical size:':<35} {total_theoretical_size:>15,.3f} KB")
-        print(f"{'Actual compressed size:':<35} {compressed_size:>15,.3f} KB")
-        print("-" * 50)
-        print(f"{'Actual uncompressed size:':<35} {uncompressed_size:>15,.3f} KB")
-        print(f"{'Theoretical uncompressed:':<35} {uncompressed_size_theoretical:>15,.3f} KB")
-        print("-" * 50)
-        print(f"{'Compression ratio:':<35} {compression_ratio:>15,.3f}")
-        print(f"{'Space savings:':<35} {space_savings:>15,.1f}%")
-        print(f"{'Bits per pixel:':<35} {bits_per_pixel:>15,.3f}")
-        print(f"{'Bits per pixel (uncompressed):':<35} {bits_per_pixel_uncompressed:>15,.3f}")
-        print("=" * 50)
+        if not self.quiet_mode:
+            print("\n=== Compression Metrics ===")
+            print(f"{'Metric':<35} {'Value':>15}")
+            print("-" * 50)
+            print(f"{'Original image path:':<35} {self.original_path:>15}")
+            print(f"{'Compressed file path:':<35} {self.binary_save_location:>15}")
+            print(f"{'Image dimensions:':<35} {f'{width}x{height}':>15}")
+            print(f"{'Color channels:':<35} {channels:>15}")
+            print("-" * 50)
+            print(f"{'Compression algorithm':<35} {algorithm:>15}")
+            print(f"{'Compression Time (ms)':<35} {self.timings['total_compression_time_ms']:>15}")
+            print("-" * 50)
+            print(f"{'Encoded image data:':<35} {encoded_image_size:>15,.3f} KB")
+            print(f"{'Huffman tables size:':<35} {huffman_tables_size:>15,.3f} KB")
+            print(f"{'Compression settings:':<35} {settings_size:>15,.3f} KB")
+            print(f"{'Header overhead:':<35} {header_size:>15,.3f} KB")
+            print(f"{'Total theoretical size:':<35} {total_theoretical_size:>15,.3f} KB")
+            print(f"{'Actual compressed size:':<35} {compressed_size:>15,.3f} KB")
+            print("-" * 50)
+            print(f"{'Actual uncompressed size:':<35} {uncompressed_size:>15,.3f} KB")
+            print(f"{'Theoretical uncompressed:':<35} {uncompressed_size_theoretical:>15,.3f} KB")
+            print("-" * 50)
+            print(f"{'Compression ratio:':<35} {compression_ratio:>15,.3f}")
+            print(f"{'Space savings:':<35} {space_savings:>15,.1f}%")
+            print(f"{'Bits per pixel:':<35} {bits_per_pixel:>15,.3f}")
+            print(f"{'Bits per pixel (uncompressed):':<35} {bits_per_pixel_uncompressed:>15,.3f}")
+            print("=" * 50)
 
         metrics_paths = f"{self.save_location}.metrics.json"
         try:
             with open(metrics_paths, 'w') as f:  # Fixed - use metrics_paths directly
-                json.dump(metrics, f, indent=2)
+                json.dump(self.metrics, f, indent=2)
         except Exception as e:
             print(f"Warning: Could not save metrics files: {str(e)}")
-            metrics['metrics_files'] = {'error': str(e)}
+            self.metrics['metrics_files'] = {'error': str(e)}
 
         # Print save locations
-        print("\nSaved metrics files: in", metrics_paths)
+        if not self.quiet_mode:
+            print("\nSaved metrics files: in", metrics_paths)
 
 
 if __name__ == '__main__':
@@ -759,7 +763,12 @@ if __name__ == '__main__':
 
     compression_config = os.path.join(os.getcwd(),
                                               "compression_configurations",
-                                              "homemade_compression_gauss.yaml")
+                                              "gauss_quantization_most_agressive.yaml")
     flexible_jpeg = FlexibleJpeg(compression_config)
-    flexible_jpeg(test_image_path)
+    comp_image_path, _ = flexible_jpeg(test_image_path)
 
+    from src.decompression import FlexibleJpegDecompress
+
+    decompress = FlexibleJpegDecompress()
+
+    decompress(comp_image_path)
