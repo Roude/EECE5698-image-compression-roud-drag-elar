@@ -8,14 +8,11 @@ from PIL import Image
 import pillow_avif
 import pandas as pd
 import numpy as np
-from typing import Callable
 from datetime import datetime as dt
 import warnings
 
 from src.compression import BaselineJpeg, FlexibleJpeg
 from src.decompression import FlexibleJpegDecompress, DecompressImage
-
-
 
 results_name = f"iou_results_{dt.now():%Y-%m-%d_%H-%M-%S}.csv"
 
@@ -39,8 +36,53 @@ def intersection_over_union(set1, set2):
     union = len(set1 | set2)
     return intersection / union if union > 0 else 0.0
 
+def compare_topk_to_uncompressed_reference_flexible(uncompressed_img,
+                                                    compression_engine,
+                                                    decompression_engine,
+                                                    topk: int = 5):
+    """
+    Args:
+        uncompressed_img: PIL Image (original)
+        compressed_img: PIL Image (compressed version)
+        topk: Top-k value for comparison
 
-def compare_topk_to_uncompressed_reference(uncompressed_img,
+    Returns:
+        Dictionary with match result and predictions
+    """
+
+    warnings.simplefilter('ignore')
+
+    def get_probs(img):
+        model = models.resnet50(pretrained=True)
+        tensor = preprocess_image(img)
+        return classify_image(model, tensor)
+
+        input_tensor = transform(img).unsqueeze(0)
+        with torch.no_grad():
+            output = model(input_tensor)
+        probs = torch.nn.functional.softmax(output, dim=1)
+        return probs.squeeze()
+
+    # Get probabilities for both images
+    uncompressed_probs = get_probs(uncompressed_img)
+
+    compressed_img_location = compression_engine(uncompressed_img)
+    compressed_probs = get_probs(decompression_engine(compressed_img_location)[1])
+
+    # Get Top-1 prediction from uncompressed image
+    top1_idx = torch.argmax(uncompressed_probs).item()
+    uncompressed_prob = uncompressed_probs[top1_idx].item()
+    compressed_prob = compressed_probs[top1_idx].item()
+    delta = abs(compressed_prob/uncompressed_prob - 1)
+
+    return {
+        "top1_class_index": top1_idx,
+        "uncompressed_prob": uncompressed_prob,
+        "compressed_prob": compressed_prob,
+        "confidence_delta": delta
+    }
+
+def compare_topk_to_uncompressed_reference_jpeg(uncompressed_img,
                                            compression_engine,
                                            topk: int = 5):
     """
@@ -74,7 +116,7 @@ def compare_topk_to_uncompressed_reference(uncompressed_img,
     top1_idx = torch.argmax(uncompressed_probs).item()
     uncompressed_prob = uncompressed_probs[top1_idx].item()
     compressed_prob = compressed_probs[top1_idx].item()
-    delta = compressed_prob/uncompressed_prob
+    delta = abs(compressed_prob/uncompressed_prob - 1)
 
     return {
         "top1_class_index": top1_idx,
@@ -111,6 +153,37 @@ def clean_temp_results():
         file_path = os.path.join("tmp", filename)
         if os.path.isfile(file_path):
             os.remove(file_path)
+
+
+def test_homemade_compression(self,
+                              settings_filepath=None,
+                              results_filename=None,
+                              test_image_dir="../assets/test_images/short test"):
+    clean_temp_results()
+    if not settings_filepath:
+        settings_filepath = "../compression_configurations/homemade_compression_gauss.yaml"
+    results_name = f"{results_filename}_{os.path.basename(settings_filepath)}_{dt.now():%Y-%m-%d_%H-%M-%S}.csv"
+    compression_engine = FlexibleJpeg(settings_filepath)
+    decompresion_engine = FlexibleJpegDecompress()
+    results_df = pd.DataFrame(
+        columns=["Image Name", "Compression Name", "Uncompressed Reference Label", "Reference Probability",
+                 "Compressed Probabilty of Reference Label", "Confidence Drift"])
+
+    for root, dirs, files in os.walk(test_image_dir):
+        for file in files:
+            test_image_path = os.path.join(root, file)
+            topk_result = compare_topk_to_uncompressed_reference_flexible(test_image_path,
+                                                                          compression_engine,
+                                                                          decompresion_engine)
+
+            results_df = df_add_row(results_df, [file,
+                                                 os.path.basename(settings_filepath),
+                                                 topk_result["top1_class_index"],
+                                                 topk_result["uncompressed_prob"],
+                                                 topk_result["compressed_prob"],
+                                                 topk_result["confidence_delta"]])
+
+    results_df.to_csv(os.path.join(os.getcwd(), "results", results_name))
 
 class TestImageCompression(unittest.TestCase):
     def __init__(self, methodName="runTest", image_file=None, settings_file=None, compress_function=None):
@@ -151,7 +224,7 @@ class TestImageCompression(unittest.TestCase):
         for root, dirs, files in os.walk(test_path):
             for file in files:
                 test_image_path = os.path.join(root, file)
-                topk_result = compare_topk_to_uncompressed_reference(test_image_path,
+                topk_result = compare_topk_to_uncompressed_reference_jpeg(test_image_path,
                                                                      baseline_jpeg_compression_engine)
 
                 results_df = df_add_row(results_df, [file,
@@ -175,33 +248,5 @@ class TestImageCompression(unittest.TestCase):
                               "../compression_configurations/baseline_jpeg_q1.yaml"]
         for settings_filepath in settings_path_list:
             self.test_jpeg_baseline_compression(settings_filepath=settings_filepath)
-
-    def test_homemade_compression(self,
-                                  settings_filepath,
-                                  results_filename=None,
-                                  test_image_dir="../assets/test_images"):
-        clean_temp_results()
-        if not settings_filepath:
-            settings_filepath = "../compression_configurations/baseline_jpeg_q100.yaml"
-        results_name = f"{results_filename}_{os.path.basename(settings_filepath)}_{dt.now():%Y-%m-%d_%H-%M-%S}.csv"
-        baseline_jpeg_compression_engine = BaselineJpeg(settings_filepath)
-        results_df = pd.DataFrame(
-            columns=["Image Name", "Compression Name", "Uncompressed Reference Label", "Reference Probability",
-                     "Compressed Probabilty of Reference Label", "Confidence Drift"])
-
-        for root, dirs, files in os.walk(test_image_dir):
-            for file in files:
-                test_image_path = os.path.join(root, file)
-                topk_result = compare_topk_to_uncompressed_reference(test_image_path,
-                                                                     baseline_jpeg_compression_engine)
-
-                results_df = df_add_row(results_df, [file,
-                                                     os.path.basename(settings_filepath),
-                                                     topk_result["top1_class_index"],
-                                                     topk_result["uncompressed_prob"],
-                                                     topk_result["compressed_prob"],
-                                                     topk_result["confidence_delta"]])
-
-        results_df.to_csv(os.path.join(os.getcwd(), "results", results_name))
 if __name__ == "__main__":
-    unittest.main()
+    test_homemade_compression()

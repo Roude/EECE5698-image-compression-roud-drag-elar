@@ -294,6 +294,7 @@ class FlexibleJpeg(CompressImage):
         self.timings['entropy_encode_ms'] = int((time.time() - self.last_time) * 1000)
         self.last_time = time.time()
         self.encode_to_file(compressed_image_datastream, huffman_tables, settings)
+        return self.binary_save_location
 
     #TODO come up with something better for this is provisional
     def generate_parameter_matrices(self):
@@ -664,7 +665,7 @@ class FlexibleJpeg(CompressImage):
         channels = self.channel_amount
         uncompressed_size_theoretical = round(height * width * channels / 1024, 3)
         # Compression metrics
-        compression_ratio = round(compressed_size / uncompressed_size, 3)
+        compression_ratio = round(compressed_size / uncompressed_size_theoretical, 3)
         space_savings = round((1 - compression_ratio) * 100, 1)
         bits_per_pixel = round((compressed_size * 8192) / (width * height), 3)  # 1024*8=8192 bits per KB
         bits_per_pixel_uncompressed = round((uncompressed_size * 8192) / (width * height), 3)  # 1024*8=8192 bits per KB
