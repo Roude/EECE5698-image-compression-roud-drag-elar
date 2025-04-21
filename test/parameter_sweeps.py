@@ -307,8 +307,8 @@ def sweep_baseline_jpeg_compression():
 
 if __name__ == '__main__':
     # sweep_baseline_jpeg_compression()
-    LN_quantization()
-    sweep_quantization_chroma_luma()
+    # LN_quantization()
+    # sweep_quantization_chroma_luma()
     sweep_quantization_chroma()
     sweep_quantization_luma()
     sweep_block_size()

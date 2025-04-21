@@ -1,0 +1,85 @@
+,Image Name,Compression Config,Chromiance Downsample Factor,Block Size,Luma Quantization Max,Luma Quantization Stdv,Chroma Quantization Max,Chroma Quantization Stdv,Encoded Image Data Size,Huffman Table Size (kB),Header Info Size (kB),Compression Ratio,Compression Preprocessing Time (mS),Image Compression Time (mS),Entropy Encoding Time (mS),File Encoding Time (mS),Decompression Preprocessing Time (mS),Decompression Entropy Decoding Time (mS),Decompression Block Processing time (mS),Uncompressed Reference Index,Uncompressed Reference Label,Reference Probability,Compressed Probability of Reference Label,Confidence Drift
+0,landscape_crowd.tif,high_downsampling.yaml,18,8,1,1,1,1,1327.704,116.851,118.082,0.066,26,2256,5256,345,28,20919,2114,981,ballplayer,0.16,0.11,0.303
+1,landscape_el_capitain_with_night_sky.webp,high_downsampling.yaml,18,8,1,1,1,1,491.279,44.134,45.365,0.095,174,567,1156,108,11,5467,532,972,cliff,0.45,0.31,0.309
+2,landscape_hill.png,high_downsampling.yaml,18,8,1,1,1,1,2355.703,76.701,77.933,0.175,236,1063,3531,514,26,26918,1313,984,rapeseed,0.25,0.15,0.407
+3,landscape_iceberg.webp,high_downsampling.yaml,18,8,1,1,1,1,148.136,47.546,48.775,0.206,29,109,262,34,10,2219,104,296,ice bear,0.17,0.03,0.854
+4,subject_Brooklyn_bridge.webp,high_downsampling.yaml,18,8,1,1,1,1,518.624,101.23,102.461,0.196,89,272,741,113,20,4850,297,718,pier,0.88,0.9,0.022
+5,subject_bunny.tif,high_downsampling.yaml,18,8,1,1,1,1,4010.967,91.506,92.737,0.186,25,1752,5558,1677,29,42744,2108,330,wood rabbit,0.51,0.53,0.038
+6,subject_cat.webp,high_downsampling.yaml,18,8,1,1,1,1,125.227,53.439,54.669,0.164,34,150,251,30,10,1429,106,281,tabby,0.75,0.73,0.026
+7,subject_flowers.webp,high_downsampling.yaml,18,8,1,1,1,1,301.751,83.556,84.786,0.108,92,338,723,88,21,3865,340,883,vase,0.45,0.44,0.025
+8,subject_greenroom.tif,high_downsampling.yaml,18,8,1,1,1,1,3473.525,129.676,130.907,0.163,22,1743,6191,737,33,38295,2248,526,desk,0.67,0.73,0.088
+9,subject_jellyfish.png,high_downsampling.yaml,18,8,1,1,1,1,267.493,58.924,60.155,0.077,86,360,870,60,11,3571,403,107,jellyfish,1.0,1.0,0.0
+10,subject_partial_dog.webp,high_downsampling.yaml,18,8,1,1,1,1,84.686,41.976,43.205,0.119,29,126,238,23,10,1119,102,253,basenji,0.17,0.08,0.532
+11,subject_puppy.png,high_downsampling.yaml,18,8,1,1,1,1,573.84,85.906,87.138,0.131,83,425,1066,127,18,7364,487,207,golden retriever,0.94,0.98,0.036
+12,subject_racecar.tif,high_downsampling.yaml,18,8,1,1,1,1,2346.06,130.301,131.532,0.112,26,1717,4771,533,30,29608,2094,573,go-kart,0.83,0.85,0.021
+13,subject_radio.webp,high_downsampling.yaml,18,8,1,1,1,1,844.055,96.594,97.825,0.231,119,327,1782,282,29,9757,391,754,radio,0.97,0.95,0.028
+14,landscape_crowd.tif,low_downsampling.yaml,6,8,1,1,1,1,1391.221,128.364,129.595,0.069,23,1780,5296,327,24,19453,2153,981,ballplayer,0.16,0.14,0.146
+15,landscape_el_capitain_with_night_sky.webp,low_downsampling.yaml,6,8,1,1,1,1,502.938,47.632,48.862,0.098,116,459,1193,108,11,6169,572,972,cliff,0.45,0.39,0.126
+16,landscape_hill.png,low_downsampling.yaml,6,8,1,1,1,1,2411.529,88.971,90.201,0.18,230,1073,3458,516,27,27190,1358,984,rapeseed,0.25,0.21,0.156
+17,landscape_iceberg.webp,low_downsampling.yaml,6,8,1,1,1,1,153.524,54.174,55.402,0.218,39,131,262,34,11,1636,99,296,ice bear,0.17,0.15,0.16
+18,subject_Brooklyn_bridge.webp,low_downsampling.yaml,6,8,1,1,1,1,533.097,108.229,109.458,0.203,94,307,802,121,23,5819,351,718,pier,0.88,0.87,0.008
+19,subject_bunny.tif,low_downsampling.yaml,6,8,1,1,1,1,4152.831,97.221,98.451,0.193,22,1763,5585,877,32,44943,2218,330,wood rabbit,0.51,0.52,0.033
+20,subject_cat.webp,low_downsampling.yaml,6,8,1,1,1,1,129.007,56.567,57.796,0.17,39,130,263,31,11,1452,109,281,tabby,0.75,0.76,0.025
+21,subject_flowers.webp,low_downsampling.yaml,6,8,1,1,1,1,311.585,90.922,92.151,0.113,78,342,784,72,18,3692,352,883,vase,0.45,0.46,0.033
+22,subject_greenroom.tif,low_downsampling.yaml,6,8,1,1,1,1,3518.549,139.37,140.601,0.166,22,1807,5830,738,35,38806,2179,526,desk,0.67,0.67,0.006
+23,subject_jellyfish.png,low_downsampling.yaml,6,8,1,1,1,1,276.31,67.903,69.134,0.081,76,384,849,62,13,3657,424,107,jellyfish,1.0,1.0,0.0
+24,subject_partial_dog.webp,low_downsampling.yaml,6,8,1,1,1,1,89.005,46.96,48.188,0.127,28,127,254,21,8,1106,111,253,basenji,0.17,0.15,0.166
+25,subject_puppy.png,low_downsampling.yaml,6,8,1,1,1,1,586.31,97.831,99.062,0.136,92,452,1921,354,31,9301,551,207,golden retriever,0.94,0.96,0.019
+26,subject_racecar.tif,low_downsampling.yaml,6,8,1,1,1,1,2402.771,142.296,143.526,0.115,27,1920,5149,524,34,30318,2165,573,go-kart,0.83,0.77,0.074
+27,subject_radio.webp,low_downsampling.yaml,6,8,1,1,1,1,863.945,104.663,105.894,0.238,154,375,1240,188,24,11157,469,754,radio,0.97,0.98,0.006
+28,landscape_crowd.tif,moderate_downsampling.yaml,12,8,1,1,1,1,1340.673,121.815,123.047,0.066,28,1881,4061,292,25,18519,2096,981,ballplayer,0.16,0.13,0.173
+29,landscape_el_capitain_with_night_sky.webp,moderate_downsampling.yaml,12,8,1,1,1,1,493.483,45.158,46.39,0.096,128,504,1185,109,10,5394,533,972,cliff,0.45,0.34,0.234
+30,landscape_hill.png,moderate_downsampling.yaml,12,8,1,1,1,1,2365.111,80.587,81.818,0.176,243,1059,3470,516,25,25794,1426,984,rapeseed,0.25,0.17,0.3
+31,landscape_iceberg.webp,moderate_downsampling.yaml,12,8,1,1,1,1,149.212,49.391,50.62,0.209,34,117,273,34,10,1657,104,296,ice bear,0.17,0.06,0.639
+32,subject_Brooklyn_bridge.webp,moderate_downsampling.yaml,12,8,1,1,1,1,521.219,103.467,104.697,0.198,107,287,772,117,21,5052,371,718,pier,0.88,0.9,0.024
+33,subject_bunny.tif,moderate_downsampling.yaml,12,8,1,1,1,1,4032.19,93.544,94.775,0.187,23,1754,5682,889,33,44253,2350,330,wood rabbit,0.51,0.49,0.024
+34,subject_cat.webp,moderate_downsampling.yaml,12,8,1,1,1,1,125.99,54.53,55.76,0.165,41,139,262,30,10,1465,110,281,tabby,0.75,0.72,0.03
+35,subject_flowers.webp,moderate_downsampling.yaml,12,8,1,1,1,1,303.842,85.367,86.598,0.109,93,316,789,81,19,3756,361,883,vase,0.45,0.48,0.063
+36,subject_greenroom.tif,moderate_downsampling.yaml,12,8,1,1,1,1,3480.871,133.291,134.522,0.164,27,2031,5286,799,37,38836,2136,526,desk,0.67,0.73,0.084
+37,subject_jellyfish.png,moderate_downsampling.yaml,12,8,1,1,1,1,269.119,61.844,63.075,0.078,85,373,839,62,13,4156,495,107,jellyfish,1.0,1.0,0.0
+38,subject_partial_dog.webp,moderate_downsampling.yaml,12,8,1,1,1,1,85.673,43.775,45.005,0.121,37,187,268,23,10,1192,105,253,basenji,0.17,0.09,0.457
+39,subject_puppy.png,moderate_downsampling.yaml,12,8,1,1,1,1,576.51,89.123,90.354,0.132,109,521,1194,131,19,6384,491,207,golden retriever,0.94,0.97,0.034
+40,subject_racecar.tif,moderate_downsampling.yaml,12,8,1,1,1,1,2356.874,134.282,135.514,0.113,26,1761,4829,542,33,31557,2225,573,go-kart,0.83,0.8,0.032
+41,subject_radio.webp,moderate_downsampling.yaml,12,8,1,1,1,1,847.04,99.01,100.241,0.233,147,332,1160,188,22,10215,397,754,radio,0.97,0.96,0.011
+42,landscape_crowd.tif,no_downsampling.yaml,1,8,1,1,1,1,2229.938,138.995,140.226,0.107,22,5286,11470,494,32,35538,6519,981,ballplayer,0.16,0.16,0.033
+43,landscape_el_capitain_with_night_sky.webp,no_downsampling.yaml,1,8,1,1,1,1,651.315,60.649,61.88,0.127,136,1451,3456,145,14,8802,1670,972,cliff,0.45,0.41,0.08
+44,landscape_hill.png,no_downsampling.yaml,1,8,1,1,1,1,4696.705,108.209,109.439,0.345,257,3205,9183,1152,38,56634,4044,984,rapeseed,0.25,0.25,0.006
+45,landscape_iceberg.webp,no_downsampling.yaml,1,8,1,1,1,1,219.757,69.396,70.625,0.303,40,334,630,52,13,2664,286,296,ice bear,0.17,0.16,0.083
+46,subject_Brooklyn_bridge.webp,no_downsampling.yaml,1,8,1,1,1,1,707.589,128.87,130.1,0.265,106,783,1908,160,26,8052,937,718,pier,0.88,0.87,0.007
+47,subject_bunny.tif,no_downsampling.yaml,1,8,1,1,1,1,6280.005,120.095,121.325,0.29,23,5326,13757,1391,45,72398,6586,330,wood rabbit,0.51,0.53,0.045
+48,subject_cat.webp,no_downsampling.yaml,1,8,1,1,1,1,172.859,65.325,66.554,0.218,37,391,739,42,14,2567,326,281,tabby,0.75,0.73,0.017
+49,subject_flowers.webp,no_downsampling.yaml,1,8,1,1,1,1,418.135,110.301,111.53,0.148,93,883,1896,100,21,6271,1237,883,vase,0.45,0.45,0.01
+50,subject_greenroom.tif,no_downsampling.yaml,1,8,1,1,1,1,4206.034,161.957,163.188,0.198,28,5394,12497,979,50,53949,6395,526,desk,0.67,0.68,0.015
+51,subject_jellyfish.png,no_downsampling.yaml,1,8,1,1,1,1,508.202,90.396,91.627,0.14,81,1092,2270,112,16,7587,1300,107,jellyfish,1.0,1.0,0.0
+52,subject_partial_dog.webp,no_downsampling.yaml,1,8,1,1,1,1,144.351,55.316,56.545,0.187,33,333,596,34,10,2006,316,253,basenji,0.17,0.2,0.144
+53,subject_puppy.png,no_downsampling.yaml,1,8,1,1,1,1,968.686,133.938,135.168,0.218,95,1261,2875,214,28,12126,1490,207,golden retriever,0.94,0.95,0.004
+54,subject_racecar.tif,no_downsampling.yaml,1,8,1,1,1,1,2964.52,169.815,171.046,0.142,23,5221,12402,697,41,44415,6476,573,go-kart,0.83,0.79,0.047
+55,subject_radio.webp,no_downsampling.yaml,1,8,1,1,1,1,1713.479,130.28,131.511,0.453,147,965,3144,470,32,21895,1202,754,radio,0.97,0.97,0.0
+56,landscape_crowd.tif,very_high_downsampling.yaml,24,8,1,1,1,1,1322.201,114.754,115.985,0.065,23,1825,4245,294,24,18029,2129,981,ballplayer,0.16,0.07,0.546
+57,landscape_el_capitain_with_night_sky.webp,very_high_downsampling.yaml,24,8,1,1,1,1,490.336,43.131,44.362,0.095,131,465,1158,110,10,5943,541,972,cliff,0.45,0.33,0.251
+58,landscape_hill.png,very_high_downsampling.yaml,24,8,1,1,1,1,2351.876,73.845,75.076,0.174,249,1055,3390,507,23,25364,1347,984,rapeseed,0.25,0.12,0.519
+59,landscape_iceberg.webp,very_high_downsampling.yaml,24,8,1,1,1,1,147.769,46.546,47.775,0.204,35,124,267,35,10,2034,117,296,ice bear,0.17,0.02,0.868
+60,subject_Brooklyn_bridge.webp,very_high_downsampling.yaml,24,8,1,1,1,1,517.604,99.516,100.746,0.195,126,281,802,143,26,5158,307,718,pier,0.88,0.87,0.005
+61,subject_bunny.tif,very_high_downsampling.yaml,24,8,1,1,1,1,4003.929,89.703,90.935,0.186,24,1758,5535,876,33,44063,2197,330,wood rabbit,0.51,0.49,0.034
+62,subject_cat.webp,very_high_downsampling.yaml,24,8,1,1,1,1,124.96,52.366,53.596,0.163,37,144,265,30,10,1531,110,281,tabby,0.75,0.66,0.121
+63,subject_flowers.webp,very_high_downsampling.yaml,24,8,1,1,1,1,300.818,82.19,83.421,0.108,100,312,713,69,16,4097,351,883,vase,0.45,0.4,0.095
+64,subject_greenroom.tif,very_high_downsampling.yaml,24,8,1,1,1,1,3470.797,127.09,128.321,0.163,23,1841,5176,760,33,38936,2138,526,desk,0.67,0.78,0.155
+65,subject_jellyfish.png,very_high_downsampling.yaml,24,8,1,1,1,1,266.796,57.255,58.486,0.076,94,407,883,65,11,3611,475,107,jellyfish,1.0,1.0,0.0
+66,subject_partial_dog.webp,very_high_downsampling.yaml,24,8,1,1,1,1,84.288,40.731,41.961,0.117,38,138,260,22,7,1112,108,253,basenji,0.17,0.05,0.716
+67,subject_puppy.png,very_high_downsampling.yaml,24,8,1,1,1,1,572.659,84.145,85.376,0.13,104,435,1112,130,17,6431,498,207,golden retriever,0.94,0.98,0.037
+68,subject_racecar.tif,very_high_downsampling.yaml,24,8,1,1,1,1,2341.662,128.536,129.768,0.112,27,1781,5072,622,34,30131,2108,573,go-kart,0.83,0.73,0.12
+69,subject_radio.webp,very_high_downsampling.yaml,24,8,1,1,1,1,843.094,94.341,95.572,0.231,145,333,1062,186,21,9901,396,754,radio,0.97,0.94,0.037
+70,landscape_crowd.tif,very_low_downsampling.yaml,2,8,1,1,1,1,1760.039,134.176,135.406,0.086,38,3014,6142,400,34,24432,3184,981,ballplayer,0.16,0.14,0.126
+71,landscape_el_capitain_with_night_sky.webp,very_low_downsampling.yaml,2,8,1,1,1,1,554.889,53.889,55.119,0.108,131,659,1679,122,13,6455,817,972,cliff,0.45,0.45,0.006
+72,landscape_hill.png,very_low_downsampling.yaml,2,8,1,1,1,1,2932.185,102.362,103.593,0.218,247,1670,4796,647,31,33380,2196,984,rapeseed,0.25,0.22,0.094
+73,landscape_iceberg.webp,very_low_downsampling.yaml,2,8,1,1,1,1,177.691,63.242,64.471,0.253,33,185,345,44,12,2035,149,296,ice bear,0.17,0.18,0.048
+74,subject_Brooklyn_bridge.webp,very_low_downsampling.yaml,2,8,1,1,1,1,595.38,121.039,122.269,0.227,106,408,1058,136,24,6388,468,718,pier,0.88,0.88,0.002
+75,subject_bunny.tif,very_low_downsampling.yaml,2,8,1,1,1,1,5112.084,108.658,109.889,0.237,23,2618,8061,1135,38,62716,3255,330,wood rabbit,0.51,0.53,0.055
+76,subject_cat.webp,very_low_downsampling.yaml,2,8,1,1,1,1,144.378,62.375,63.604,0.189,35,211,428,36,13,1739,161,281,tabby,0.75,0.75,0.003
+77,subject_flowers.webp,very_low_downsampling.yaml,2,8,1,1,1,1,349.582,103.056,104.285,0.127,85,459,1784,141,33,4607,649,883,vase,0.45,0.45,0.003
+78,subject_greenroom.tif,very_low_downsampling.yaml,2,8,1,1,1,1,3832.052,150.765,151.995,0.181,25,2817,7673,822,38,43058,3132,526,desk,0.67,0.66,0.024
+79,subject_jellyfish.png,very_low_downsampling.yaml,2,8,1,1,1,1,341.176,80.644,81.874,0.099,78,522,1148,79,15,4625,607,107,jellyfish,1.0,1.0,0.0
+80,subject_partial_dog.webp,very_low_downsampling.yaml,2,8,1,1,1,1,106.82,53.283,54.512,0.15,28,181,333,26,10,1490,539,253,basenji,0.17,0.2,0.16
+81,subject_puppy.png,very_low_downsampling.yaml,2,8,1,1,1,1,664.348,116.496,117.727,0.155,109,594,1498,143,24,7459,716,207,golden retriever,0.94,0.95,0.004
+82,subject_racecar.tif,very_low_downsampling.yaml,2,8,1,1,1,1,2663.535,155.584,156.814,0.128,23,2540,7926,560,35,34510,3229,573,go-kart,0.83,0.76,0.081
+83,subject_radio.webp,very_low_downsampling.yaml,2,8,1,1,1,1,1078.037,117.27,118.5,0.294,124,475,1487,235,26,13737,581,754,radio,0.97,0.97,0.0

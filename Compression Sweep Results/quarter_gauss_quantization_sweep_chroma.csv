@@ -1,0 +1,85 @@
+,Image Name,Compression Config,Chromiance Downsample Factor,Block Size,Luma Quantization Max,Luma Quantization Stdv,Chroma Quantization Max,Chroma Quantization Stdv,Encoded Image Data Size,Huffman Table Size (kB),Header Info Size (kB),Compression Ratio,Compression Preprocessing Time (mS),Image Compression Time (mS),Entropy Encoding Time (mS),File Encoding Time (mS),Decompression Preprocessing Time (mS),Decompression Entropy Decoding Time (mS),Decompression Block Processing time (mS),Uncompressed Reference Index,Uncompressed Reference Label,Reference Probability,Compressed Probability of Reference Label,Confidence Drift
+0,landscape_crowd.tif,gauss_quantization_agressive.yaml,2,8,1,8,125,8,1328.54,104.422,105.746,0.065,28,2521,6193,288,20,19423,3091,981,ballplayer,0.16,0.05,0.681
+1,landscape_el_capitain_with_night_sky.webp,gauss_quantization_agressive.yaml,2,8,1,8,125,8,492.834,38.643,39.967,0.095,116,656,1759,124,8,6042,793,972,cliff,0.45,0.34,0.244
+2,landscape_hill.png,gauss_quantization_agressive.yaml,2,8,1,8,125,8,2356.787,63.397,64.722,0.174,292,1580,4817,539,20,26330,2065,984,rapeseed,0.25,0.11,0.563
+3,landscape_iceberg.webp,gauss_quantization_agressive.yaml,2,8,1,8,125,8,148.134,43.265,44.587,0.201,36,177,344,35,9,1636,138,296,ice bear,0.17,0.02,0.881
+4,subject_Brooklyn_bridge.webp,gauss_quantization_agressive.yaml,2,8,1,8,125,8,518.734,95.347,96.67,0.194,102,389,956,114,19,5128,467,718,pier,0.88,0.87,0.008
+5,subject_bunny.tif,gauss_quantization_agressive.yaml,2,8,1,8,125,8,4012.6,83.635,84.959,0.186,21,2559,7146,862,32,44616,3177,330,wood rabbit,0.51,0.52,0.024
+6,subject_cat.webp,gauss_quantization_agressive.yaml,2,8,1,8,125,8,125.365,50.01,51.332,0.161,33,186,316,30,10,1580,179,281,tabby,0.75,0.77,0.03
+7,subject_flowers.webp,gauss_quantization_agressive.yaml,2,8,1,8,125,8,302.278,77.73,79.054,0.107,87,531,1016,69,14,3919,563,883,vase,0.45,0.5,0.127
+8,subject_greenroom.tif,gauss_quantization_agressive.yaml,2,8,1,8,125,8,3481.44,118.938,120.262,0.163,24,2493,6657,804,30,39066,3144,526,desk,0.67,0.76,0.124
+9,subject_jellyfish.png,gauss_quantization_agressive.yaml,2,8,1,8,125,8,269.078,51.886,53.21,0.075,80,522,1083,60,9,3812,645,107,jellyfish,1.0,1.0,0.0
+10,subject_partial_dog.webp,gauss_quantization_agressive.yaml,2,8,1,8,125,8,84.546,37.935,39.257,0.115,29,185,292,21,6,1140,154,253,basenji,0.17,0.09,0.467
+11,subject_puppy.png,gauss_quantization_agressive.yaml,2,8,1,8,125,8,574.705,78.123,79.447,0.129,92,593,1453,123,19,6545,729,207,golden retriever,0.94,0.96,0.021
+12,subject_racecar.tif,gauss_quantization_agressive.yaml,2,8,1,8,125,8,2351.026,121.555,122.879,0.112,25,2636,6454,498,26,30853,3072,573,go-kart,0.83,0.65,0.213
+13,subject_radio.webp,gauss_quantization_agressive.yaml,2,8,1,8,125,8,844.979,90.508,91.832,0.23,125,485,1349,188,19,9953,596,754,radio,0.97,0.92,0.058
+14,landscape_crowd.tif,gauss_quantization_high_quality.yaml,2,8,1,3,20,3,1672.407,134.347,135.593,0.082,27,2511,6103,363,31,22851,3116,981,ballplayer,0.16,0.15,0.101
+15,landscape_el_capitain_with_night_sky.webp,gauss_quantization_high_quality.yaml,2,8,1,3,20,3,544.855,52.441,53.688,0.106,122,650,1539,118,13,6388,794,972,cliff,0.45,0.44,0.006
+16,landscape_hill.png,gauss_quantization_high_quality.yaml,2,8,1,3,20,3,2720.69,104.599,105.845,0.203,244,1556,4573,613,32,31379,1965,984,rapeseed,0.25,0.21,0.126
+17,landscape_iceberg.webp,gauss_quantization_high_quality.yaml,2,8,1,3,20,3,170.5,62.171,63.415,0.244,34,175,333,41,12,1962,148,296,ice bear,0.17,0.19,0.072
+18,subject_Brooklyn_bridge.webp,gauss_quantization_high_quality.yaml,2,8,1,3,20,3,577.07,120.161,121.406,0.221,99,391,997,128,23,5716,448,718,pier,0.88,0.88,0.003
+19,subject_bunny.tif,gauss_quantization_high_quality.yaml,2,8,1,3,20,3,4723.264,108.259,109.505,0.219,23,2565,7363,1022,40,52408,3143,330,wood rabbit,0.51,0.54,0.057
+20,subject_cat.webp,gauss_quantization_high_quality.yaml,2,8,1,3,20,3,141.048,61.337,62.581,0.185,35,198,332,34,12,1676,161,281,tabby,0.75,0.74,0.002
+21,subject_flowers.webp,gauss_quantization_high_quality.yaml,2,8,1,3,20,3,336.93,102.042,103.287,0.123,95,454,1067,76,20,4244,525,883,vase,0.45,0.45,0.01
+22,subject_greenroom.tif,gauss_quantization_high_quality.yaml,2,8,1,3,20,3,3735.45,150.74,151.986,0.176,27,2566,7081,855,50,42624,3155,526,desk,0.67,0.65,0.03
+23,subject_jellyfish.png,gauss_quantization_high_quality.yaml,2,8,1,3,20,3,314.964,78.596,79.842,0.092,81,520,1148,70,14,4377,674,107,jellyfish,1.0,1.0,0.0
+24,subject_partial_dog.webp,gauss_quantization_high_quality.yaml,2,8,1,3,20,3,103.317,52.323,53.567,0.146,33,178,303,25,10,1338,151,253,basenji,0.17,0.2,0.141
+25,subject_puppy.png,gauss_quantization_high_quality.yaml,2,8,1,3,20,3,633.288,115.554,116.8,0.148,89,610,1480,141,24,7126,831,207,golden retriever,0.94,0.95,0.003
+26,subject_racecar.tif,gauss_quantization_high_quality.yaml,2,8,1,3,20,3,2596.337,157.918,159.164,0.125,24,2694,6516,557,35,33023,3194,573,go-kart,0.83,0.77,0.074
+27,subject_radio.webp,gauss_quantization_high_quality.yaml,2,8,1,3,20,3,987.354,120.304,121.55,0.273,154,469,1390,215,29,11657,573,754,radio,0.97,0.97,0.001
+28,landscape_crowd.tif,gauss_quantization_moderate.yaml,2,8,1,6,75,6,1339.269,105.783,107.077,0.066,24,2540,5668,289,21,18813,3109,981,ballplayer,0.16,0.11,0.346
+29,landscape_el_capitain_with_night_sky.webp,gauss_quantization_moderate.yaml,2,8,1,6,75,6,493.694,39.239,40.533,0.095,128,650,1547,114,11,5741,812,972,cliff,0.45,0.35,0.225
+30,landscape_hill.png,gauss_quantization_moderate.yaml,2,8,1,6,75,6,2366.584,66.314,67.608,0.175,248,1610,4858,513,22,25331,2048,984,rapeseed,0.25,0.21,0.162
+31,landscape_iceberg.webp,gauss_quantization_moderate.yaml,2,8,1,6,75,6,148.994,44.571,45.863,0.203,41,186,300,34,9,1653,139,296,ice bear,0.17,0.07,0.57
+32,subject_Brooklyn_bridge.webp,gauss_quantization_moderate.yaml,2,8,1,6,75,6,521.213,96.632,97.925,0.196,107,387,971,115,19,5094,454,718,pier,0.88,0.89,0.009
+33,subject_bunny.tif,gauss_quantization_moderate.yaml,2,8,1,6,75,6,4026.597,85.063,86.357,0.187,23,2530,6975,873,32,45018,3243,330,wood rabbit,0.51,0.48,0.052
+34,subject_cat.webp,gauss_quantization_moderate.yaml,2,8,1,6,75,6,125.75,50.42,51.712,0.162,35,209,312,28,10,1503,160,281,tabby,0.75,0.76,0.022
+35,subject_flowers.webp,gauss_quantization_moderate.yaml,2,8,1,6,75,6,304.009,78.977,80.27,0.108,97,443,947,67,15,3884,521,883,vase,0.45,0.44,0.015
+36,subject_greenroom.tif,gauss_quantization_moderate.yaml,2,8,1,6,75,6,3486.144,120.577,121.871,0.164,26,2564,6723,737,31,39168,3176,526,desk,0.67,0.66,0.016
+37,subject_jellyfish.png,gauss_quantization_moderate.yaml,2,8,1,6,75,6,270.856,54.061,55.354,0.076,81,523,1095,60,10,3933,612,107,jellyfish,1.0,1.0,0.0
+38,subject_partial_dog.webp,gauss_quantization_moderate.yaml,2,8,1,6,75,6,85.289,38.601,39.893,0.116,29,183,302,21,7,1149,155,253,basenji,0.17,0.12,0.29
+39,subject_puppy.png,gauss_quantization_moderate.yaml,2,8,1,6,75,6,576.962,79.192,80.486,0.13,85,629,1458,124,18,6644,716,207,golden retriever,0.94,0.96,0.023
+40,subject_racecar.tif,gauss_quantization_moderate.yaml,2,8,1,6,75,6,2358.007,123.374,124.668,0.113,29,2795,6400,505,31,30963,3170,573,go-kart,0.83,0.77,0.074
+41,subject_radio.webp,gauss_quantization_moderate.yaml,2,8,1,6,75,6,848.494,92.301,93.595,0.232,133,546,1388,181,21,10257,577,754,radio,0.97,0.95,0.02
+42,landscape_crowd.tif,gauss_quantization_most_agressive.yaml,2,8,1,10,200,10,1326.332,104.159,105.519,0.065,23,2636,6095,284,20,19021,3185,981,ballplayer,0.16,0.02,0.878
+43,landscape_el_capitain_with_night_sky.webp,gauss_quantization_most_agressive.yaml,2,8,1,10,200,10,490.784,38.516,39.875,0.094,122,665,1523,106,10,5767,816,972,cliff,0.45,0.05,0.883
+44,landscape_hill.png,gauss_quantization_most_agressive.yaml,2,8,1,10,200,10,2355.429,62.957,64.316,0.174,251,1567,4315,530,23,26232,1992,984,rapeseed,0.25,0.06,0.761
+45,landscape_iceberg.webp,gauss_quantization_most_agressive.yaml,2,8,1,10,200,10,147.893,42.964,44.321,0.201,33,191,334,40,10,1680,165,296,ice bear,0.17,0.0,0.997
+46,subject_Brooklyn_bridge.webp,gauss_quantization_most_agressive.yaml,2,8,1,10,200,10,518.313,94.946,96.305,0.194,97,395,970,116,19,5073,462,718,pier,0.88,0.83,0.054
+47,subject_bunny.tif,gauss_quantization_most_agressive.yaml,2,8,1,10,200,10,4011.639,83.397,84.757,0.186,24,2610,6938,927,33,44235,3130,330,wood rabbit,0.51,0.65,0.292
+48,subject_cat.webp,gauss_quantization_most_agressive.yaml,2,8,1,10,200,10,124.929,49.967,51.324,0.16,38,203,329,30,9,1581,157,281,tabby,0.75,0.5,0.333
+49,subject_flowers.webp,gauss_quantization_most_agressive.yaml,2,8,1,10,200,10,301.878,77.429,78.787,0.107,97,449,956,68,15,3897,594,883,vase,0.45,0.52,0.166
+50,subject_greenroom.tif,gauss_quantization_most_agressive.yaml,2,8,1,10,200,10,3480.594,118.339,119.698,0.163,25,2664,7097,754,34,39629,3198,526,desk,0.67,0.79,0.175
+51,subject_jellyfish.png,gauss_quantization_most_agressive.yaml,2,8,1,10,200,10,268.604,51.214,52.573,0.075,85,521,1117,60,11,3875,601,107,jellyfish,1.0,1.0,0.0
+52,subject_partial_dog.webp,gauss_quantization_most_agressive.yaml,2,8,1,10,200,10,84.038,37.798,39.155,0.114,31,185,299,21,7,1203,156,253,basenji,0.17,0.02,0.871
+53,subject_puppy.png,gauss_quantization_most_agressive.yaml,2,8,1,10,200,10,574.126,77.935,79.294,0.129,94,606,1444,125,16,6417,810,207,golden retriever,0.94,0.97,0.032
+54,subject_racecar.tif,gauss_quantization_most_agressive.yaml,2,8,1,10,200,10,2349.893,121.057,122.416,0.112,25,2570,6409,559,27,31354,3374,573,go-kart,0.83,0.55,0.332
+55,subject_radio.webp,gauss_quantization_most_agressive.yaml,2,8,1,10,200,10,844.337,89.782,91.142,0.23,153,497,1420,197,21,10050,615,754,radio,0.97,0.81,0.165
+56,landscape_crowd.tif,gauss_quantization_no_quant.yaml,2,8,1,1,1,1,1760.039,134.176,135.406,0.086,22,2587,5979,390,30,25480,3799,981,ballplayer,0.16,0.14,0.126
+57,landscape_el_capitain_with_night_sky.webp,gauss_quantization_no_quant.yaml,2,8,1,1,1,1,554.889,53.889,55.119,0.108,130,783,1648,125,14,9366,818,972,cliff,0.45,0.45,0.006
+58,landscape_hill.png,gauss_quantization_no_quant.yaml,2,8,1,1,1,1,2932.185,102.362,103.593,0.218,256,1587,4812,682,31,33457,1979,984,rapeseed,0.25,0.22,0.094
+59,landscape_iceberg.webp,gauss_quantization_no_quant.yaml,2,8,1,1,1,1,177.691,63.242,64.471,0.253,33,171,320,40,12,1976,135,296,ice bear,0.17,0.18,0.048
+60,subject_Brooklyn_bridge.webp,gauss_quantization_no_quant.yaml,2,8,1,1,1,1,595.38,121.039,122.269,0.227,102,391,1048,132,25,6719,433,718,pier,0.88,0.88,0.002
+61,subject_bunny.tif,gauss_quantization_no_quant.yaml,2,8,1,1,1,1,5112.084,108.658,109.889,0.237,22,2565,7607,1149,41,55308,3030,330,wood rabbit,0.51,0.53,0.055
+62,subject_cat.webp,gauss_quantization_no_quant.yaml,2,8,1,1,1,1,144.378,62.375,63.604,0.189,33,183,357,38,14,2561,156,281,tabby,0.75,0.75,0.003
+63,subject_flowers.webp,gauss_quantization_no_quant.yaml,2,8,1,1,1,1,349.582,103.056,104.285,0.127,79,445,969,77,19,4353,511,883,vase,0.45,0.45,0.003
+64,subject_greenroom.tif,gauss_quantization_no_quant.yaml,2,8,1,1,1,1,3832.052,150.765,151.995,0.181,21,2496,8036,826,38,43507,3013,526,desk,0.67,0.66,0.024
+65,subject_jellyfish.png,gauss_quantization_no_quant.yaml,2,8,1,1,1,1,341.176,80.644,81.874,0.099,74,520,1189,75,15,4521,641,107,jellyfish,1.0,1.0,0.0
+66,subject_partial_dog.webp,gauss_quantization_no_quant.yaml,2,8,1,1,1,1,106.82,53.283,54.512,0.15,33,479,390,30,11,1401,159,253,basenji,0.17,0.2,0.16
+67,subject_puppy.png,gauss_quantization_no_quant.yaml,2,8,1,1,1,1,664.348,116.496,117.727,0.155,91,590,1525,142,23,7192,746,207,golden retriever,0.94,0.95,0.004
+68,subject_racecar.tif,gauss_quantization_no_quant.yaml,2,8,1,1,1,1,2663.535,155.584,156.814,0.128,26,3413,6560,613,35,33927,3161,573,go-kart,0.83,0.76,0.081
+69,subject_radio.webp,gauss_quantization_no_quant.yaml,2,8,1,1,1,1,1078.037,117.27,118.5,0.294,118,472,1554,238,26,13155,561,754,radio,0.97,0.97,0.0
+70,landscape_crowd.tif,gauss_quantization_quality.yaml,2,8,1,5,40,5,1372.268,109.727,111.015,0.067,23,2485,5598,295,21,19612,3045,981,ballplayer,0.16,0.14,0.112
+71,landscape_el_capitain_with_night_sky.webp,gauss_quantization_quality.yaml,2,8,1,5,40,5,497.42,41.538,42.826,0.096,110,648,1581,121,11,5757,1498,972,cliff,0.45,0.42,0.063
+72,landscape_hill.png,gauss_quantization_quality.yaml,2,8,1,5,40,5,2405.95,73.335,74.623,0.178,264,1501,4310,500,23,26243,1915,984,rapeseed,0.25,0.23,0.06
+73,landscape_iceberg.webp,gauss_quantization_quality.yaml,2,8,1,5,40,5,151.743,47.778,49.064,0.21,31,181,315,34,9,1674,136,296,ice bear,0.17,0.14,0.172
+74,subject_Brooklyn_bridge.webp,gauss_quantization_quality.yaml,2,8,1,5,40,5,528.757,100.0,101.287,0.199,93,382,946,115,19,6083,512,718,pier,0.88,0.88,0.003
+75,subject_bunny.tif,gauss_quantization_quality.yaml,2,8,1,5,40,5,4100.176,88.469,89.757,0.19,22,2683,6897,876,30,43965,3101,330,wood rabbit,0.51,0.48,0.052
+76,subject_cat.webp,gauss_quantization_quality.yaml,2,8,1,5,40,5,127.34,51.964,53.25,0.164,38,183,317,30,10,1502,155,281,tabby,0.75,0.76,0.019
+77,subject_flowers.webp,gauss_quantization_quality.yaml,2,8,1,5,40,5,308.511,82.35,83.637,0.11,93,479,976,67,15,3844,496,883,vase,0.45,0.43,0.038
+78,subject_greenroom.tif,gauss_quantization_quality.yaml,2,8,1,5,40,5,3501.673,124.738,126.026,0.165,23,2645,7635,725,30,38427,3000,526,desk,0.67,0.69,0.028
+79,subject_jellyfish.png,gauss_quantization_quality.yaml,2,8,1,5,40,5,275.738,58.895,60.183,0.079,75,500,1079,60,12,3847,579,107,jellyfish,1.0,1.0,0.0
+80,subject_partial_dog.webp,gauss_quantization_quality.yaml,2,8,1,5,40,5,87.561,40.549,41.835,0.12,27,180,297,19,7,1292,182,253,basenji,0.17,0.18,0.027
+81,subject_puppy.png,gauss_quantization_quality.yaml,2,8,1,5,40,5,583.983,83.449,84.737,0.132,83,635,2192,201,25,6526,695,207,golden retriever,0.94,0.96,0.022
+82,subject_racecar.tif,gauss_quantization_quality.yaml,2,8,1,5,40,5,2382.344,128.064,129.353,0.114,22,2440,6771,505,28,30735,3013,573,go-kart,0.83,0.77,0.078
+83,subject_radio.webp,gauss_quantization_quality.yaml,2,8,1,5,40,5,865.951,97.04,98.328,0.237,122,508,1349,183,21,10402,558,754,radio,0.97,0.97,0.005
