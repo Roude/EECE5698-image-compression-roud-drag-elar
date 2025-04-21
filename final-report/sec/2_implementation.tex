@@ -1,0 +1,114 @@
+\section{Implementation}
+\label{sec:implementation}
+
+Our Python-based JPEG-like compression system is designed with modularity and experimentation in mind. It mirrors key stages of the classical JPEG pipeline while allowing for customized configurations through YAML files. In this section, we describe the architecture and underlying algorithms for each major component of our system, which include preprocessing, block-based DCT, quantization, Huffman encoding, and full decompression support.
+
+\subsection{Overall Pipeline Structure}
+
+The compression process consists of the following sequential stages:
+\begin{enumerate}
+    \item \textbf{Preprocessing}: Loading, resizing, color space conversion, and channel downsampling.
+    \item \textbf{Block Division}: Splitting images into fixed-size blocks (e.g., 8\,x\,8).
+    \item \textbf{Discrete Cosine Transform (DCT)}: Transforming spatial pixel values to frequency domain.
+    \item \textbf{Quantization}: Reducing frequency resolution based on configurable quantization tables.
+    \item \textbf{Huffman Encoding}: Entropy-encoding of coefficients to compress data.
+\end{enumerate}
+The decompression process reverses each of these steps.
+
+Each of the above steps is parameterized through YAML configuration files. Users can adjust quality settings, block sizes, quantization levels, and downsampling rates to generate different compression schemes.
+
+\subsection{Image Preprocessing}
+\label{sec:preprocessing}
+
+All image loading and resizing operations are handled using the \texttt{Pillow} library. To enable JPEG-style processing, we first convert RGB images to the YCbCr color space:
+\begin{equation}
+\begin{bmatrix} Y \\ Cb \\ Cr \end{bmatrix} = 
+\begin{bmatrix} 0.299 & 0.587 & 0.114 \\ -0.1687 & -0.3313 & 0.5 \\ 0.5 & -0.4187 & -0.0813 \end{bmatrix} \begin{bmatrix} R \\ G \\ B \end{bmatrix} + \begin{bmatrix} 0 \\ 128 \\ 128 \end{bmatrix}
+\end{equation}
+
+The Y (luma) channel captures intensity, while Cb and Cr represent chroma components. Configurable downsampling factors (e.g., 4:2:0, 4:2:2) are applied to the chroma channels via bilinear interpolation. Padding is used to ensure image dimensions are divisible by the block size.
+
+\subsection{Block Division and DCT}
+
+Each channel is divided into non-overlapping square blocks (e.g., 8\,x\,8, configurable). The 2D DCT is applied to each block using the following formula:
+\begin{align}
+  F(u, v) &= \frac{1}{4} C(u)C(v) \sum_{x=0}^{7} \sum_{y=0}^{7} f(x,y) \,
+  \cos\left( \frac{(2x+1)u\pi}{16} \right) \nonumber \\
+  &\hspace{3em} \cdot \cos\left( \frac{(2y+1)v\pi}{16} \right)
+\end{align}
+where $C(k) = \frac{1}{\sqrt{2}}$ if $k = 0$ and $C(k) = 1$ otherwise. This concentrates most of the image energy into the upper-left corner of the DCT block.
+
+Implementation leverages \texttt{scipy.fftpack.dct} for speed and numerical accuracy, applying DCT first along rows, then columns.
+
+\subsection{Quantization}
+
+Quantization discards high-frequency DCT coefficients to reduce data size. Each coefficient $F(u,v)$ is divided by a quantization matrix $Q(u,v)$ and rounded:
+\begin{equation}
+F_Q(u,v) = \left\lfloor \frac{F(u,v)}{Q(u,v)} + 0.5 \right\rfloor
+\end{equation}
+
+We provide multiple quantization strategies, including:
+\begin{itemize}
+    \item \textbf{Baseline JPEG-style}: A scaled standard luminance matrix.
+    \item \textbf{Gaussian-inspired}: Tighter control on high frequencies.
+    \item \textbf{Custom sweep}: Users can specify arbitrary YAML matrices.
+\end{itemize}
+
+Quality can be tuned directly or indirectly via configuration files in \texttt{compression\_configurations/\allowbreak quantization\_sweep/}.
+
+\subsection{Entropy Coding: Huffman Encoding}
+
+After quantization, 2D blocks are flattened using zigzag ordering and run-length encoded. We implemented our own Huffman encoder from scratch (see \texttt{src/huffman.py}). Symbol frequencies are derived from a training set and stored in \texttt{huffman\_tables\_comp.json}.
+
+Our encoder builds a binary tree, assigns codes, and encodes bitstreams block-by-block. The compressed output is saved alongside metadata to enable decompression.
+
+\subsection{Decompression Pipeline}
+
+Decompression reverses all previous stages:
+\begin{enumerate}
+    \item Huffman decoding and run-length decoding
+    \item Inverse quantization
+    \item Inverse DCT
+    \item Block merging and image reconstruction
+    \item Upsampling and RGB color space restoration
+\end{enumerate}
+
+Padding added during compression is stripped out automatically. The decompression logic is implemented in \texttt{src/decompression.py}.
+
+\subsection{Configuration Management}
+
+All compression parameters are stored in human-readable YAML files. These files are passed into the system via CLI (e.g., \texttt{results\_compression.py --config homemade\_compression\_jpeg\_like.yaml}).
+
+Sweeps are conducted using \texttt{test/parameter\_sweeps.py}, which iterates over YAML directories for block sizes, downsampling levels, and quantization schemes.
+
+Additional configuration directories (e.g., \texttt{quantization\_sweep\_chroma/}, \texttt{quantization\_sweep\_luma/}, \texttt{quantization\_sweep\_small\_blocks/}) were created during final testing to support more granular sweep control over chroma and luma quantization matrices.
+
+\subsection{Implementation Highlights}
+
+The repository is structured as follows:
+\begin{itemize}
+    \item \texttt{src/}: core pipeline (compression, decompression, utilities)
+    \item \texttt{compression\_configurations/}: parameter sweep YAMLs
+    \item \texttt{test/}: experimental evaluation, sweeps, classification
+    \item \texttt{assets/}: test images
+\end{itemize}
+
+The test image suite was recently expanded and reorganized to support broader variation in content and file types. New naming conventions (e.g., \texttt{subject\_*}, \texttt{landscape\_*}) and formats (including TIFF, AVIF, PNG, and high-resolution RAW CR2) enable more granular benchmarking of compression behavior across diverse scenes, lighting conditions, and semantic content.
+
+Key implementation goals included:
+\begin{enumerate}
+    \item Enabling experimentation with minimal code changes
+    \item Supporting multiple image formats (PNG, JPG, AVIF, WEBP, CR2)
+    \item Using only Python and standard packages (\texttt{numpy}, \texttt{PIL}, \texttt{scipy}, etc.)
+    \item Support for advanced quantization experiments, including Quarter Gaussian and L-N norm-based matrices, with separate control over luminance and chrominance channels
+\end{enumerate}
+
+\subsection{Division of Work}
+\label{sec:division-of-work}
+
+While the initial division of work outlined in our February project proposal was tentative, the responsibilities naturally evolved during development. Although all team members collaborated conceptually, the division of work is outlined below:
+\begin{itemize}
+  \item George Roudebush: compression pipeline, parameter sweeps, quantization table development, baseline JPEG comparison, image classification testing, utility methods, test image dataset curation, and configuration integration
+  \item Nicolas Drager: Huffman encoding/decoding, entropy coding, size estimation and compression metrics, block alignment handling, decompression, and zigzag module
+  \item Muhammad Elarbi: decompression pipeline, padding error fixes, unit test development, raw image test dataset creation (CR2), output location handling, final-report drafting, documentation, and code cleanup
+\end{itemize}
