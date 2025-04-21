@@ -161,7 +161,7 @@ The compiled version of the final project report is automatically built via GitH
 Nicolas Drager, Muhammad Elarbi, George Roudebush,  
 Department of Electrical and Computer Engineering  
 Northeastern University  
-`{drager.k, elarbi.m, roudebush.g,}@northeastern.edu`
+`{drager.n, elarbi.m, roudebush.g,}@northeastern.edu`
 
 ## License
 
