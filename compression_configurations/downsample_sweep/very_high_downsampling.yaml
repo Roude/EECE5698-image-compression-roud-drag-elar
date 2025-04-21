@@ -1,6 +1,6 @@
 ---
 quite_mode: True
-chrominance_downsample_factor: 8
+chrominance_downsample_factor: 24
 block_size: 8
 #quality_factor: 50
 # Available Chromiance quantization functions:

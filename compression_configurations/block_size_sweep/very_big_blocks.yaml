@@ -15,12 +15,12 @@ block_size: 48
 chromiance_quantization:
   function: 'Quarter Gauss'
   max_quantization: 50
-  standard_dev: 4
+  standard_dev: 24
 
 luminance_quantization:
   function: 'Quarter Gauss'
   max_quantization: 50
-  standard_dev: 4
+  standard_dev: 24
 
 YCbCr_conversion_matrix:
   - [65.738, 129.057, 25.064]

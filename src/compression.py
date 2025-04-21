@@ -12,23 +12,16 @@ from tokenize import String
 import sys
 import yaml
 from yaml import safe_load
-from skimage import io, color
+from skimage import io
 import imageio.v3 as imageio
 import os
 from datetime import datetime
 import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-from skimage.color import convert_colorspace
-from skimage.io import imread
-from scipy.fftpack import dct, idct, dctn,idctn
-from torch.nn.functional import channel_shuffle
+from scipy.fftpack import dctn
 
 from src.utilities import display_greyscale_image, make_serializable_table, gaussian_matrix, ln_norm
 from src.huffman import generate_zigzag_pattern, zigzag_order, run_length_encoding, build_huffman_tree, generate_huffman_codes, huffman_encode
 from collections import Counter
-import pkgutil
 import json
 import cv2
 import rawpy
@@ -98,7 +91,9 @@ class BaselineJpeg(CompressImage):
 
         imageio.imwrite(save_location, image_uncompressed,
                   quality=quality_factor)
-        return save_location
+        metrics = {'compression_metrics': {'compression_ratio' : os.path.getsize(save_location)/os.path.getsize(image)}}
+
+        return save_location, metrics
 
 class FlexibleJpeg(CompressImage):
     def __init__(self, config=None):

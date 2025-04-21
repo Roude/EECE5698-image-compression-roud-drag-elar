@@ -90,7 +90,7 @@ def compare_topk_to_uncompressed_reference_flexible(uncompressed_img,
     top1_idx = torch.argmax(uncompressed_probs).item()
     uncompressed_prob = uncompressed_probs[top1_idx].item()
     compressed_prob = compressed_probs[top1_idx].item()
-    delta = abs(compressed_prob/uncompressed_prob - 1)
+    delta = abs((compressed_prob - uncompressed_prob)/uncompressed_prob)
 
     return {
         "top1_class_index": top1_idx,
