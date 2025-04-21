@@ -39,43 +39,43 @@ pip install numpy scipy scikit-image opencv-python Pillow matplotlib imageio raw
 Or use GitHub Actions to retrieve the latest compiled version (see below).
 ## Repository Structure
 ```
-├── README.md
-├── requirements.txt
-├── src/                             # Core compression & decompression source code
-│   ├── compression.py
-│   ├── decompression.py
-│   ├── huffman.py
-│   ├── utilities.py
-│   └── main.py
-├── test/                            # Test scripts and evaluation tools
-│   ├── classification_tests.py
-│   ├── parameter_sweeps.py
-│   ├── results_compression.py
-│   └── results_decompression.py
-├── assets/                          # Test images and research references
-│   ├── test_images/                # .CR2, .webp, .tif, etc. for compression input
-│   └── unit_test_images/          # Small 16x16 synthetic images
-├── compression_configurations/     # YAML config files for sweep experiments
-│   ├── baseline_jpeg_sweep/
-│   ├── block_size_sweep/
-│   ├── downsample_sweep/
-│   ├── quantization_sweep/
-│   └── ...
-├── results/                         # Saved .rde files and metrics.json from compression runs
-│   ├── <timestamped_sweep_name>/
+├── README.md                       # This file
+├── requirements.txt                # Python dependencies
+├── src/                            # Core compression/decompression logic
+│   ├── compression.py              # FlexibleJPEG class: compression pipeline
+│   ├── decompression.py            # FlexibleJPEGDecompress class: decompression pipeline
+│   ├── huffman.py                  # Custom Huffman tree + encoder/decoder
+│   ├── utilities.py                # Zigzag scan, quantization matrix generators, padding
+│   └── main.py                     # Optional unified CLI entry point (can be expanded)
+├── test/                           # Experimental and evaluation scripts
+│   ├── classification_tests.py     # Top-1 drift testing with ResNet50
+│   ├── parameter_sweeps.py         # Batch sweep runner (block size, quant, etc.)
+│   ├── results_compression.py      # Outputs metrics + rde for single image
+│   └── results_decompression.py    # Reconstructs + logs from `.rde` output
+├── compression_configurations/     # YAML configurations for different sweep strategies
+│   ├── baseline_jpeg_sweep/        # JPEG-matching quantization quality levels
+│   ├── block_size_sweep/           # Block size variations (e.g., 8x8, 16x16, etc.)
+│   ├── downsample_sweep/           # Chroma subsampling schemes (e.g., 4:4:4, 4:2:0)
+│   ├── quantization_sweep/         # Gaussian-inspired quantization tables
+│   ├── quantization_sweep_chroma/  # Targeted quantization for chroma channels
+│   ├── quantization_sweep_luma/    # Targeted quantization for luma channel
+│   └── quantization_sweep_small_blocks/ # Small block + high quantization stress tests
+├── assets/
+│   ├── test_images/                # Real-world and synthetic input images (.cr2, .webp, .tif, .png)
+│   └── unit_test_images/          # 16×16 synthetic grids for debugging
+├── results/                        # `.rde` binaries and `.metrics.json` logs
+│   └── <timestamped_run>/         # Output from `parameter_sweeps.py` or other tools
 ├── notebooks/
-│   └── plot_results.ipynb          # Jupyter notebook for analyzing compression metrics
-├── final-report/                   # LaTeX source and compiled PDF of final writeup
-│   ├── main.tex
-│   ├── main.pdf
-│   ├── main.bib
-│   ├── cvpr.sty
-│   └── sec/
-│       ├── 0_abstract.tex
-│       ├── 1_intro.tex
-│       └── ...
-├── huffman_tables_comp.json        # Optional pre-generated Huffman tables
-└── tmp/                             # Temporary output files from test runs
+│   └── plot_results.ipynb         # Jupyter notebook: visualizations for compression trends
+├── final-report/                   # CVPR-style final paper for course submission
+│   ├── main.tex                    # Entry point LaTeX file
+│   ├── main.pdf                    # Compiled report (also available via GitHub Actions)
+│   ├── main.bib                    # BibTeX source
+│   ├── cvpr.sty                    # Conference style file
+│   └── sec/                        # Individual sections of paper in modular .tex files
+├── huffman_tables_comp.json        # Pre-trained symbol frequency table for encoding
+├── tmp/                            # Temp folder used for on-the-fly compression results
+└── venv/                           # Python virtual environment (excluded from version control)
 ```
 
 ## How to Use
