@@ -1,0 +1,64 @@
+\section{Results}
+\label{sec:results}
+
+This section presents an evaluation of our JPEG-like compression system across multiple parameter sweeps and test scenarios. The goal is to assess compression performance with respect to visual quality, file size, semantic preservation, and runtime efficiency.
+
+\subsection{Overview of Evaluation Goals}
+Our evaluation focuses on the following:
+\begin{itemize}
+    \item \textbf{Visual Fidelity}: Comparison of output image quality under various compression settings
+    \item \textbf{Compression Ratio}: Size reduction achieved with each configuration
+    \item \textbf{Semantic Preservation}: Classification consistency of compressed images using pre-trained models
+    \item \textbf{Runtime Performance}: Timing analysis for compression and decompression operations
+\end{itemize}
+
+\subsection{Test Methodology}
+Experiments are conducted using YAML configurations across:
+\begin{itemize}
+    \item \texttt{compression\_configurations/\allowbreak quantization\_sweep/}
+    \item \texttt{compression\_configurations/\allowbreak downsample\_sweep/}
+    \item \texttt{compression\_configurations/\allowbreak block\_size\_sweep/}
+    \item \texttt{compression\_configurations/\allowbreak quantization\_sweep\_chroma/}
+    \item \texttt{compression\_configurations/\allowbreak quantization\_sweep\_luma/}
+    \item \texttt{compression\_configurations/\allowbreak quantization\_sweep\_small\_blocks/}
+\end{itemize}
+
+Each configuration is tested on a standardized dataset of images (\texttt{assets/test\_images/}) with various formats and content types. Results are logged in corresponding metrics files (.metrics.json) and visual artifacts are stored in \texttt{results/}.
+
+These additional sweeps were introduced after the initial draft to better isolate compression artifacts and parameter sensitivity across chroma and luma components.
+
+To assist with analysis and visualization, we created a dedicated Jupyter notebook (\texttt{notebooks/plot\_results.ipynb}) to plot trends in PSNR, SSIM, compression ratios, and runtime performance across different sweep parameters.
+
+\textit{Insert evaluation table or summary here when ready}
+
+\subsection{Compression Quality}
+% TODO: add PSNR/SSIM charts, or image quality metrics.
+Placeholder: Figures will be added here comparing PSNR and/or SSIM across sweep configurations. Add compression ratio graphs (original vs compressed file size).
+
+\subsection{Semantic Preservation}
+% TODO: Add classification model accuracy results on original vs. compressed images
+Images were evaluated using a pre-trained classification model (e.g., ResNet50) to test whether compression degrades semantic content. This was done using \texttt{test/classification\_tests.py}.
+
+
+\textit{Insert classification accuracy plots and tables here}
+
+\subsection{Runtime and Performance}
+% TODO: populate runtime benchmarks from .metrics.json
+Execution time for both compression and decompression is measured and stored during sweeps. Aggregate runtime plots can be shown here.
+
+
+\textit{Insert line/bar plots of compression vs. decompression runtime across settings}
+
+\subsection{Discussion}
+This subsection will summarize observed trends from the plots once all data is collected.
+
+\textit{Pending: Discuss how image quality trades off with size reduction, runtime trends, and what configurations offered best balance}
+
+% Note to team:
+\textbf{NOTE TO TEAM:} Feel free to add figures using the `figure' environment, or tables using `table'. If any scripts output LaTeX-ready tables/plots, drop them in here. If results are still being generated, you can drop bullet points or markdown-style notes and we will convert them later.
+
+\begin{itemize}
+    \item \texttt{Use \textbackslash includegraphics\{filename\}} for figures stored in the same folder
+    \item Comment clearly where plots/data are pending so we can track what still needs work
+    \item Mention which script produced a plot to help trace reproducibility
+\end{itemize}
