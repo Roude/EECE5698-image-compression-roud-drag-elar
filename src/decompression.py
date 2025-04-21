@@ -218,7 +218,7 @@ class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):
         if not self.quiet_mode:
             print("Saved metrics files: in", timings_paths)
 
-        return rgb_image, save_location
+        return rgb_image, save_location, self.timings
 
     def _load_decompression_settings(self, settings):
         """

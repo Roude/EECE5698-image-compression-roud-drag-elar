@@ -289,7 +289,10 @@ class FlexibleJpeg(CompressImage):
                                        config["max_quantization"],
                                         config["standard_dev"])
             elif func_name == 'LN':
-                return ln_norm((self.block_size, self.block_size), config["N"], config["max_val"], config["min_val"])
+                return ln_norm((self.block_size, self.block_size),
+                               config["max_val"],
+                               config["min_val"],
+                               config["N"])
             elif func_name == 'Basic':
                 return config["quantization_table"]
             else:
@@ -758,7 +761,7 @@ if __name__ == '__main__':
 
     compression_config = os.path.join(os.getcwd(),
                                               "compression_configurations",
-                                              "gauss_quantization_most_agressive.yaml")
+                                              "L1-5_quantization_most_agressive.yaml")
     flexible_jpeg = FlexibleJpeg(compression_config)
     comp_image_path, _ = flexible_jpeg(test_image_path)
 

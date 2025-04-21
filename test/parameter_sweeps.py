@@ -65,7 +65,7 @@ def test_compression_resnet50(settings_filepath=None,
             compression_engine.save_location = os.path.join(results_dir,
                                                             "compressed_files",
                                                             f"{file.split(".")[0]}_{os.path.basename(settings_filepath)}_{dt.now().strftime("%Y%m%d_%H-%M-%S")}")
-            topk_result = compare_topk_to_uncompressed_reference_flexible(test_image_path,
+            topk_result, compression_metrics, decompression_timings = compare_topk_to_uncompressed_reference_flexible(test_image_path,
                                                                           compression_engine,
                                                                           decompresion_engine)
 
@@ -77,7 +77,68 @@ def test_compression_resnet50(settings_filepath=None,
                                                  compression_engine.config["luminance_quantization"]["standard_dev"],
                                                  compression_engine.config["chromiance_quantization"]["max_quantization"],
                                                  compression_engine.config["chromiance_quantization"]["standard_dev"],
-                                                 round(topk_result["compression_ratio"],3),
+                                                 compression_metrics["compressed_size_components"]["encoded_image_data_kb"],
+                                                 compression_metrics["compressed_size_components"]["huffman_tables_kb"],
+                                                 compression_metrics["compressed_size_components"]["header_overhead_kb"],
+                                                 compression_metrics["compression_metrics"]["compression_ratio"],
+                                                 compression_metrics["time_metrics"]["preliminaries_ms"],
+                                                 compression_metrics["time_metrics"]["process_blocks_ms"],
+                                                 compression_metrics["time_metrics"]["entropy_encode_ms"],
+                                                 compression_metrics["time_metrics"]["encode_to_file_ms"],
+                                                 decompression_timings["preliminaries_ms"],
+                                                 decompression_timings["entropy_decoding_ms"],
+                                                 decompression_timings["process_blocks_ms"],
+                                                 topk_result["top1_class_index"],
+                                                 class_labels_resnet50[topk_result["top1_class_index"]],
+                                                 round(topk_result["uncompressed_prob"],2),
+                                                 round(topk_result["compressed_prob"],2),
+                                                 round(topk_result["confidence_delta"],3)])
+            # print(results_df)
+    return results_df
+
+def test_compression_LN_resnet50(settings_filepath=None,
+                              results_dir=None,
+                              test_image_dir="../assets/test_images/short test",
+                              results_df=None):
+    clean_temp_results()
+    if not settings_filepath:
+        settings_filepath = "../compression_configurations/homemade_compression_gauss.yaml"
+    # results_name = f"{results_filename}_{os.path.basename(settings_filepath)}_{dt.now():%Y-%m-%d_%H-%M-%S}.csv"
+    compression_engine = FlexibleJpeg(settings_filepath)
+    decompresion_engine = FlexibleJpegDecompress()
+    decompresion_engine.save_location = os.path.join(results_dir, "processed_images")
+
+
+    for root, dirs, files in os.walk(test_image_dir):
+        for file in files:
+            test_image_path = os.path.join(root, file)
+            compression_engine.save_location = os.path.join(results_dir,
+                                                            "compressed_files",
+                                                            f"{file.split(".")[0]}_{os.path.basename(settings_filepath)}_{dt.now().strftime("%Y%m%d_%H-%M-%S")}")
+            topk_result, compression_metrics, decompression_timings = compare_topk_to_uncompressed_reference_flexible(test_image_path,
+                                                                          compression_engine,
+                                                                          decompresion_engine)
+
+            results_df = df_add_row(results_df, [file,
+                                                 os.path.basename(settings_filepath),
+                                                 compression_engine.config["chrominance_downsample_factor"],
+                                                 compression_engine.config["block_size"],
+                                                 compression_engine.config["luminance_quantization"]["N"],
+                                                 compression_engine.config["luminance_quantization"]["max_val"],
+                                                 compression_engine.config["luminance_quantization"]["min_val"],
+                                                 compression_engine.config["chromiance_quantization"]["max_val"],
+                                                 compression_engine.config["chromiance_quantization"]["min_val"],
+                                                 compression_metrics["compressed_size_components"]["encoded_image_data_kb"],
+                                                 compression_metrics["compressed_size_components"]["huffman_tables_kb"],
+                                                 compression_metrics["compressed_size_components"]["header_overhead_kb"],
+                                                 compression_metrics["compression_metrics"]["compression_ratio"],
+                                                 compression_metrics["time_metrics"]["preliminaries_ms"],
+                                                 compression_metrics["time_metrics"]["process_blocks_ms"],
+                                                 compression_metrics["time_metrics"]["entropy_encode_ms"],
+                                                 compression_metrics["time_metrics"]["encode_to_file_ms"],
+                                                 decompression_timings["preliminaries_ms"],
+                                                 decompression_timings["entropy_decoding_ms"],
+                                                 decompression_timings["process_blocks_ms"],
                                                  topk_result["top1_class_index"],
                                                  class_labels_resnet50[topk_result["top1_class_index"]],
                                                  round(topk_result["uncompressed_prob"],2),
@@ -89,14 +150,24 @@ def test_compression_resnet50(settings_filepath=None,
 def sweep_gaussian_quantization(settings_dir, image_dir, results_dir, results_name):
     result_df = pd.DataFrame(
         columns=["Image Name",
-                 "Compression Name",
+                 "Compression Config",
                  "Chromiance Downsample Factor",
                  "Block Size",
                  "Luma Quantization Max",
                  "Luma Quantization Stdv",
                  "Chroma Quantization Max",
-                 "Chroma Quantizatoin Stdv",
-                 "Compression Rate (uncompressed image size / compressed file size)",
+                 "Chroma Quantization Stdv",
+                 "Encoded Image Data Size",
+                 "Huffman Table Size (kB)",
+                 "Header Info Size (kB)",
+                 "Compression Ratio",
+                 "Compression Preprocessing Time (mS)",
+                 "Image Compression Time (mS)",
+                 "Entropy Encoding Time (mS)",
+                 "File Encoding Time (mS)",
+                 "Decompression Preprocessing Time (mS)",
+                 "Decompression Entropy Decoding Time (mS)",
+                 "Decompression Block Processing time (mS)",
                  "Uncompressed Reference Index",
                  "Uncompressed Reference Label",
                  "Reference Probability",
@@ -129,8 +200,40 @@ def sweep_baseline_jpeg(settings_dir, image_dir, results_dir, results_name):
             result_df = test_compression_baseline_resnet50(settings_filepath, results_dir, image_dir, result_df)
     result_df.to_csv(os.path.join(results_dir, f"{results_name}.csv"))
 
-def sweep_LN_quantization(settings_dir, image_dir, results_dir):
-    pass
+def sweep_LN_quantization(settings_dir, image_dir, results_dir, results_name):
+    result_df = pd.DataFrame(
+        columns=["Image Name",
+                 "Compression Config",
+                 "Chromiance Downsample Factor",
+                 "Block Size",
+                 "Norm N",
+                 "Luma Quantization Max",
+                 "Luma Quantization Min",
+                 "Chroma Quantization Max",
+                 "Chroma Quantization Min",
+                 "Encoded Image Data Size",
+                 "Huffman Table Size (kB)",
+                 "Header Info Size (kB)",
+                 "Compression Ratio",
+                 "Compression Preprocessing Time (mS)",
+                 "Image Compression Time (mS)",
+                 "Entropy Encoding Time (mS)",
+                 "File Encoding Time (mS)",
+                 "Decompression Preprocessing Time (mS)",
+                 "Decompression Entropy Decoding Time (mS)",
+                 "Decompression Block Processing time (mS)",
+                 "Uncompressed Reference Index",
+                 "Uncompressed Reference Label",
+                 "Reference Probability",
+                 "Compressed Probability of Reference Label",
+                 "Confidence Drift"])
+
+    for root, dirs, files in os.walk(settings_dir):
+        for settings_file in files:
+            settings_filepath = os.path.join(root, settings_file)
+            # results_filepath = os.path.join(results_dir, f"{results_name}_{os.path.basename(settings_filepath)}_{dt.now():%Y-%m-%d_%H-%M-%S}.csv")
+            result_df = test_compression_LN_resnet50(settings_filepath, results_dir, image_dir, result_df)
+    result_df.to_csv(os.path.join(results_dir, f"{results_name}.csv"))
 
 def sweep_quantization_chroma_luma():
     settings_dir = os.path.join(os.getcwd(), 'compression_configurations', 'quantization_sweep')
@@ -143,7 +246,7 @@ def sweep_quantization_chroma_luma():
     sweep_gaussian_quantization(settings_dir, img_dir, results_dir, 'quarter_gauss_quantization_sweep_chroma_luma')
 
 def sweep_quantization_chroma():
-    settings_dir = os.path.join(os.getcwd(), 'compression_configurations', 'quantization_sweep')
+    settings_dir = os.path.join(os.getcwd(), 'compression_configurations', 'quantization_sweep_chroma')
     results_dir = os.path.join(os.getcwd(), 'test', 'results', 'quantization_sweep')
     os.makedirs(results_dir, exist_ok=True)
     os.makedirs(os.path.join(results_dir, "compressed_files"), exist_ok=True)
@@ -153,7 +256,7 @@ def sweep_quantization_chroma():
     sweep_gaussian_quantization(settings_dir, img_dir, results_dir, 'quarter_gauss_quantization_sweep_chroma')
 
 def sweep_quantization_luma():
-    settings_dir = os.path.join(os.getcwd(), 'compression_configurations', 'quantization_sweep')
+    settings_dir = os.path.join(os.getcwd(), 'compression_configurations', 'quantization_sweep_luma')
     results_dir = os.path.join(os.getcwd(), 'test', 'results', 'quantization_sweep')
     os.makedirs(results_dir, exist_ok=True)
     os.makedirs(os.path.join(results_dir, "compressed_files"), exist_ok=True)
@@ -182,6 +285,16 @@ def sweep_downsample_chromiance():
 
     sweep_gaussian_quantization(settings_dir, img_dir, results_dir, 'downsample_chromiance_sweep')
 
+def LN_quantization():
+    settings_dir = os.path.join(os.getcwd(), 'compression_configurations', 'quantization_sweep_LN_norm')
+    results_dir = os.path.join(os.getcwd(), 'test', 'results', 'quantization_sweep')
+    os.makedirs(results_dir, exist_ok=True)
+    os.makedirs(os.path.join(results_dir, "compressed_files"), exist_ok=True)
+    # os.makedirs(os.path.join(results_dir, "processed_images"), exist_ok=True)
+    img_dir = os.path.join(os.getcwd(), 'assets', 'test_images', 'short test')
+
+    sweep_LN_quantization(settings_dir, img_dir, results_dir, 'quantization_sweep_LN_norm')
+
 def sweep_baseline_jpeg_compression():
     settings_dir = os.path.join(os.getcwd(), 'compression_configurations', 'baseline_jpeg_sweep')
     results_dir = os.path.join(os.getcwd(), 'test', 'results', 'jpeg_sweep')
@@ -193,7 +306,10 @@ def sweep_baseline_jpeg_compression():
     sweep_baseline_jpeg(settings_dir, img_dir, results_dir, 'baseline_jpeg_sweep')
 
 if __name__ == '__main__':
-    sweep_baseline_jpeg_compression()
-    sweep_quantization()
+    # sweep_baseline_jpeg_compression()
+    LN_quantization()
+    sweep_quantization_chroma_luma()
+    sweep_quantization_chroma()
+    sweep_quantization_luma()
     sweep_block_size()
     sweep_downsample_chromiance()
