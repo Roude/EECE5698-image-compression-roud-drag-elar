@@ -1,10 +1,12 @@
 % CVPR 2025 Paper Template; see https://github.com/cvpr-org/author-kit
 
 \documentclass[10pt,twocolumn,letterpaper]{article}
+\usepackage{amsmath}
 
 %%%%%%%%% PAPER TYPE  - PLEASE UPDATE FOR FINAL VERSION
 % \usepackage{cvpr}              % To produce the CAMERA-READY version
-\usepackage[review]{cvpr}      % To produce the REVIEW version
+% \usepackage[review]{cvpr}      % To produce the REVIEW version -- hides authors
+\usepackage{cvpr}  % To produce the CAMERA-READY version    
 % \usepackage[pagenumbers]{cvpr} % To force page numbers, e.g. for an arXiv version
 
 % Import additional packages in the preamble file, before hyperref
@@ -25,32 +27,22 @@
 \def\confName{CVPR}
 \def\confYear{2025}
 
-%%%%%%%%% TITLE - PLEASE UPDATE
-\title{\LaTeX\ Author Guidelines for \confName~Proceedings}
+\title{Final Project Report: Python-based JPEG-like Compression System}
 
-%%%%%%%%% AUTHORS - PLEASE UPDATE
-\author{First Author\\
-Institution1\\
-Institution1 address\\
-{\tt\small firstauthor@i1.org}
-% For a paper whose authors are all at the same institution,
-% omit the following lines up until the closing ``}''.
-% Additional authors and addresses can be added with ``\and'',
-% just like the second author.
-% To save space, use either the email address or home page, not both
-\and
-Second Author\\
-Institution2\\
-First line of institution2 address\\
-{\tt\small secondauthor@i2.org}
+\author{
+Muhammad Elarbi, George Roudebush, Nicolas Drager\\
+Department of Electrical and Computer Engineering\\
+Northeastern University\\
+\texttt{\{elarbi.m, roudebush.g, drager.k\}@northeastern.edu}
 }
 
 \begin{document}
 \maketitle
 \input{sec/0_abstract}    
 \input{sec/1_intro}
-\input{sec/2_formatting}
-\input{sec/3_finalcopy}
+\input{sec/2_implementation}
+\input{sec/3_results}
+\input{sec/4_conclusion}
 {
     \small
     \bibliographystyle{ieeenat_fullname}

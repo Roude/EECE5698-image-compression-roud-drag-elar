@@ -1,0 +1,22 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+This project presents a modular, Python-based JPEG-like image compression system developed for EECE 5698: Visual Sensing and Computing. Our implementation emulates the classical JPEG compression pipeline while introducing key enhancements to promote experimentation and flexibility. By decoupling pipeline stages and supporting parameterized configuration files, our system allows users to explore the impact of various compression strategies (including downsampling factors, block sizes, and quantization levels) on image quality and file size.
+
+We implemented every core stage of the compression and decompression workflow, including color space conversion, block-based DCT, configurable quantization, entropy encoding via a custom Huffman implementation, and a full-featured decompression pipeline. Throughout development, we prioritized technical rigor and reproducibility, carefully handling edge cases such as padding, alignment, and raw image format compatibility (e.g., Canon CR2). All major system parameters are exposed via YAML configuration files, which enable both one-off experiments and automated parameter sweeps. Supporting scripts like \texttt{results\_compression.py}, \texttt{parameter\_sweeps.py}, and \texttt{results\_decompression.py} were developed to streamline batch testing and metrics collection.
+
+Initial evaluation of the system suggests promising results. While full testing is still underway at the time of writing, early sweeps demonstrate that the system behaves in line with theoretical expectations — increasing quantization severity yields smaller file sizes at the cost of quality, and chroma subsampling schemes like 4:2:0 result in noticeable color loss while preserving perceptual fidelity. A detailed analysis of these results, including compression ratios, PSNR, SSIM, runtime metrics, and semantic preservation scores, will be finalized and integrated into Section~\ref{sec:results}. Future updates to this paper should incorporate those results, along with any generated figures, graphs, or evaluation tables. We ask our team members leading testing efforts to append this section accordingly.
+
+Beyond implementation fidelity, the system’s architecture serves as a useful sandbox for exploring compression tradeoffs. Unlike most off-the-shelf JPEG implementations, our system exposes every internal stage, allowing students and researchers to tune, visualize, and analyze the consequences of individual design decisions. This modularity makes it well-suited for further experimentation, including the integration of alternative transforms (e.g., wavelets), advanced quantization techniques, or perceptual encoding strategies such as saliency-aware masking.
+
+Despite its strengths, the system has limitations. While sufficient for academic exploration, it is not optimized for real-time performance or production-scale workloads. Huffman table generation is fixed at encode-time based on a training set and lacks adaptive tuning. Error resilience and fault tolerance are minimal, and certain test images (especially large or atypically dimensioned files) may reveal edge case bugs. These limitations point to several promising areas for future work, such as:
+
+\begin{itemize}
+    \item \textbf{Adaptive Huffman tables} that update dynamically based on image content
+    \item \textbf{Advanced entropy coding} (e.g., arithmetic coding or context modeling)
+    \item \textbf{Support for progressive JPEG encoding}
+    \item \textbf{Integration of perceptual metrics or machine learning-based tuning}
+    \item \textbf{Visualization tools} for examining intermediate DCT coefficients, zigzag orderings, or compression artifacts
+\end{itemize}
+
+In conclusion, our JPEG-like image compression system fulfills the project’s objectives and provides a valuable learning tool for understanding and exploring lossy image compression. Through collaborative development and structured testing, we delivered a working pipeline that balances classical compression principles with modern engineering flexibility. We hope that future students, researchers, or contributors will build upon this foundation to explore more advanced or novel compression techniques.

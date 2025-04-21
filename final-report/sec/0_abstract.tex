@@ -1,7 +1,8 @@
 \begin{abstract}
-The ABSTRACT is to be in fully justified italicized text, at the top of the left-hand column, below the author and affiliation information.
-Use the word ``Abstract'' as the title, in 12-point Times, boldface type, centered relative to the column, initially capitalized.
-The abstract is to be in 10-point, single-spaced type.
-Leave two blank lines after the Abstract, then begin the main text.
-Look at previous \confName abstracts to get a feel for style and length.
-\end{abstract}
+    This report presents a modular, Python-based JPEG-like image compression system developed for the course project in EECE 5698: Visual Sensing and Computing. The implementation supports a full compression and decompression pipeline, including image preprocessing, RGB-to-YCbCr color space conversion, customizable downsampling, fixed-size block division, Discrete Cosine Transform (DCT), quantization, entropy encoding via Huffman tables, and corresponding inverse operations. 
+    
+    To facilitate flexible experimentation, the system utilizes YAML-based configuration files that allow users to modify compression parameters such as quality factor, block size, and downsampling strategy. Parameter sweeps and semantic classification tests were conducted to evaluate tradeoffs between compression efficiency, processing time, and semantic preservation. Raw image input support and modular code structure enable advanced use cases, making the framework suitable for both academic exploration and practical testing.
+    
+    Although inspired by the JPEG standard, the system introduces configurable elements and detailed analysis tools to better understand compression behaviors. This report adheres to the CVPR-style conference paper format, as required by the course, despite being an academic project submission rather than a formal publication.
+    \end{abstract}
+    
