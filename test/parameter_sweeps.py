@@ -30,14 +30,14 @@ def test_compression_baseline_resnet50(settings_filepath=None,
             compression_engine.save_location = os.path.join(results_dir,
                                                             "compressed_files",
                                                             f"{file.split(".")[0]}_{os.path.basename(settings_filepath)}_{dt.now().strftime("%Y%m%d_%H-%M-%S")}")
-            topk_result = compare_topk_to_uncompressed_reference_flexible(test_image_path,
+            topk_result, comp_metrics, decomp_metrics  = compare_topk_to_uncompressed_reference_flexible(test_image_path,
                                                                           compression_engine,
                                                                           decompresion_engine)
 
             results_df = df_add_row(results_df, [file,
                                                  os.path.basename(settings_filepath),
                                                  compression_engine.config["quality_factor"],
-                                                 round(topk_result["compression_ratio"],3),
+                                                 round(comp_metrics["compression_metrics"]["compression_ratio"],3),
                                                  topk_result["top1_class_index"],
                                                  class_labels_resnet50[topk_result["top1_class_index"]],
                                                  round(topk_result["uncompressed_prob"],2),
@@ -306,10 +306,11 @@ def sweep_baseline_jpeg_compression():
     sweep_baseline_jpeg(settings_dir, img_dir, results_dir, 'baseline_jpeg_sweep')
 
 if __name__ == '__main__':
-    # sweep_baseline_jpeg_compression()
+    sweep_baseline_jpeg_compression()
     # LN_quantization()
     # sweep_quantization_chroma_luma()
-    sweep_quantization_chroma()
-    sweep_quantization_luma()
-    sweep_block_size()
-    sweep_downsample_chromiance()
+    # sweep_quantization_chroma()
+    # sweep_quantization_luma()
+    # sweep_block_size()
+    # sweep_downsample_chromiance()
+#
