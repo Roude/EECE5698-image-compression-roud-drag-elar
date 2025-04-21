@@ -132,7 +132,7 @@ def sweep_baseline_jpeg(settings_dir, image_dir, results_dir, results_name):
 def sweep_LN_quantization(settings_dir, image_dir, results_dir):
     pass
 
-def sweep_quantization():
+def sweep_quantization_chroma_luma():
     settings_dir = os.path.join(os.getcwd(), 'compression_configurations', 'quantization_sweep')
     results_dir = os.path.join(os.getcwd(), 'test', 'results', 'quantization_sweep')
     os.makedirs(results_dir, exist_ok=True)
@@ -140,7 +140,27 @@ def sweep_quantization():
     # os.makedirs(os.path.join(results_dir, "processed_images"), exist_ok=True)
     img_dir = os.path.join(os.getcwd(), 'assets', 'test_images', 'short test')
 
-    sweep_gaussian_quantization(settings_dir, img_dir, results_dir, 'quarter_gauss_quantization_sweep')
+    sweep_gaussian_quantization(settings_dir, img_dir, results_dir, 'quarter_gauss_quantization_sweep_chroma_luma')
+
+def sweep_quantization_chroma():
+    settings_dir = os.path.join(os.getcwd(), 'compression_configurations', 'quantization_sweep')
+    results_dir = os.path.join(os.getcwd(), 'test', 'results', 'quantization_sweep')
+    os.makedirs(results_dir, exist_ok=True)
+    os.makedirs(os.path.join(results_dir, "compressed_files"), exist_ok=True)
+    # os.makedirs(os.path.join(results_dir, "processed_images"), exist_ok=True)
+    img_dir = os.path.join(os.getcwd(), 'assets', 'test_images', 'short test')
+
+    sweep_gaussian_quantization(settings_dir, img_dir, results_dir, 'quarter_gauss_quantization_sweep_chroma')
+
+def sweep_quantization_luma():
+    settings_dir = os.path.join(os.getcwd(), 'compression_configurations', 'quantization_sweep')
+    results_dir = os.path.join(os.getcwd(), 'test', 'results', 'quantization_sweep')
+    os.makedirs(results_dir, exist_ok=True)
+    os.makedirs(os.path.join(results_dir, "compressed_files"), exist_ok=True)
+    # os.makedirs(os.path.join(results_dir, "processed_images"), exist_ok=True)
+    img_dir = os.path.join(os.getcwd(), 'assets', 'test_images', 'short test')
+
+    sweep_gaussian_quantization(settings_dir, img_dir, results_dir, 'quarter_gauss_quantization_sweep_luma')
 
 def sweep_block_size():
     settings_dir = os.path.join(os.getcwd(), 'compression_configurations', 'block_size_sweep')
@@ -160,7 +180,7 @@ def sweep_downsample_chromiance():
     # os.makedirs(os.path.join(results_dir, "processed_images"), exist_ok=True)
     img_dir = os.path.join(os.getcwd(), 'assets', 'test_images', 'short test')
 
-    sweep_gaussian_quantization(settings_dir, img_dir, results_dir, 'block_size_quantization_sweep')
+    sweep_gaussian_quantization(settings_dir, img_dir, results_dir, 'downsample_chromiance_sweep')
 
 def sweep_baseline_jpeg_compression():
     settings_dir = os.path.join(os.getcwd(), 'compression_configurations', 'baseline_jpeg_sweep')
@@ -170,7 +190,7 @@ def sweep_baseline_jpeg_compression():
     # os.makedirs(os.path.join(results_dir, "processed_images"), exist_ok=True)
     img_dir = os.path.join(os.getcwd(), 'assets', 'test_images', 'short test')
 
-    sweep_baseline_jpeg(settings_dir, img_dir, results_dir, 'block_size_quantization_sweep')
+    sweep_baseline_jpeg(settings_dir, img_dir, results_dir, 'baseline_jpeg_sweep')
 
 if __name__ == '__main__':
     sweep_baseline_jpeg_compression()
