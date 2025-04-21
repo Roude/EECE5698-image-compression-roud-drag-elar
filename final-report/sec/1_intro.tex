@@ -3,7 +3,7 @@
 
 Image compression plays a vital role in modern visual communication systems, enabling efficient storage and transmission of large volumes of image data. From digital photography and medical imaging to web services and embedded systems, effective compression algorithms are crucial for managing bandwidth and storage constraints without significantly degrading perceptual quality.
 
-One of the most widely used lossy compression standards is JPEG, which balances visual fidelity with significant size reduction through a series of mathematical operations including color space transformation, downsampling, block-based Discrete Cosine Transform (DCT), quantization, and entropy encoding. While JPEG has become a de facto standard, its fixed configuration leaves limited room for direct parameter exploration or algorithmic customization.
+One of the most widely used lossy compression standards is JPEG, which balances visual fidelity with significant size reduction through a series of mathematical operations including color space transformation, downsampling, block-based Discrete Cosine Transform (DCT), quantization, and entropy encoding~\cite{haines1992compression,jpegOverview2025}. While JPEG has become a de facto standard, its fixed configuration leaves limited room for direct parameter exploration or algorithmic customization.
 
 In this project, we designed and implemented a JPEG-inspired image compression system in Python, as part of the final coursework for EECE 5698: Visual Sensing and Computing. Our system follows a traditional compression pipeline while remaining modular and customizable, allowing for flexible experimentation with compression settings such as block size, quantization strategy, and downsampling rate. 
 
