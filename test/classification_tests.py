@@ -83,8 +83,9 @@ def compare_topk_to_uncompressed_reference_flexible(uncompressed_img,
     # Get probabilities for both images
     uncompressed_probs = get_probs(uncompressed_img)
 
-    compressed_img_location, metrics = compression_engine(uncompressed_img)
-    compressed_probs = get_probs(decompression_engine(compressed_img_location)[1])
+    compressed_img_location, comp_metrics = compression_engine(uncompressed_img)
+    _, decomp_image, decomp_timings = decompression_engine(compressed_img_location)
+    compressed_probs = get_probs(decomp_image)
 
     # Get Top-1 prediction from uncompressed image
     top1_idx = torch.argmax(uncompressed_probs).item()
@@ -94,11 +95,10 @@ def compare_topk_to_uncompressed_reference_flexible(uncompressed_img,
 
     return {
         "top1_class_index": top1_idx,
-        "compression_ratio": metrics['compression_metrics']['compression_ratio'],
         "uncompressed_prob": uncompressed_prob,
         "compressed_prob": compressed_prob,
         "confidence_delta": delta
-    }
+    }, comp_metrics, decomp_timings
 
 def compare_topk_to_uncompressed_reference_jpeg(uncompressed_img,
                                            compression_engine,
