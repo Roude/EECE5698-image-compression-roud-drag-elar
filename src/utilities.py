@@ -187,6 +187,23 @@ def ln_norm(shape, max_value, min_value, norm_order):
 
     return matrix
 
+def match_dimensions_by_clipping(arr1: np.ndarray, arr2: np.ndarray):
+    """
+    Clips the larger array along each axis so that both arrays match the shape of the smaller one.
+    Returns the two clipped arrays.
+    """
+    # Get the minimum shape along each dimension
+    min_shape = tuple(min(s1, s2) for s1, s2 in zip(arr1.shape, arr2.shape))
+
+    # Define slicing helper
+    def crop_to_shape(arr, shape):
+        slices = tuple(slice(0, s) for s in shape)
+        return arr[slices]
+
+    arr1_cropped = crop_to_shape(arr1, min_shape)
+    arr2_cropped = crop_to_shape(arr2, min_shape)
+
+    return arr1_cropped, arr2_cropped
 
 if __name__ == '__main__':
     matrix = gaussian_matrix(shape=(5, 5), max_value=1.0, std_dev=4.0)

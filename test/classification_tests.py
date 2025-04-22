@@ -1,3 +1,4 @@
+import io
 import os
 import unittest
 import torch
@@ -12,10 +13,13 @@ import pillow_avif
 import pandas as pd
 import numpy as np
 import warnings
-
+from skimage.metrics import structural_similarity as ssim
+from skimage.metrics import peak_signal_noise_ratio as psnr
+from skimage import io
 from src.compression import BaselineJpeg, FlexibleJpeg
 from src.decompression import FlexibleJpegDecompress, DecompressImage
 import urllib.request
+from src.utilities import match_dimensions_by_clipping
 
 results_name = f"iou_results_{dt.now():%Y-%m-%d_%H-%M-%S}.csv"
 
@@ -84,7 +88,7 @@ def compare_topk_to_uncompressed_reference_flexible(uncompressed_img,
     uncompressed_probs = get_probs(uncompressed_img)
 
     compressed_img_location, comp_metrics = compression_engine(uncompressed_img)
-    _, decomp_image, decomp_timings = decompression_engine(compressed_img_location)
+    decomp_img_arry, decomp_image, decomp_timings = decompression_engine(compressed_img_location)
     compressed_probs = get_probs(decomp_image)
 
     # Get Top-1 prediction from uncompressed image
@@ -92,13 +96,19 @@ def compare_topk_to_uncompressed_reference_flexible(uncompressed_img,
     uncompressed_prob = uncompressed_probs[top1_idx].item()
     compressed_prob = compressed_probs[top1_idx].item()
     delta = abs((compressed_prob - uncompressed_prob)/uncompressed_prob)
+    uncompressed_img_array = io.imread(uncompressed_img)
+    uncompressed_img_array, decomp_img_arry = match_dimensions_by_clipping(uncompressed_img_array, decomp_img_arry)
+    score, diff = ssim(uncompressed_img_array, decomp_img_arry, channel_axis=-1, full=True)
+    psrn_val = psnr(uncompressed_img_array, decomp_img_arry)
 
     return {
         "top1_class_index": top1_idx,
         "uncompressed_prob": uncompressed_prob,
         "compressed_prob": compressed_prob,
-        "confidence_delta": delta
-    }, comp_metrics, decomp_timings
+        "confidence_delta": delta,
+        "ssim_score": score,
+        "psnr_value": psrn_val
+    }, comp_metrics, decomp_timings, diff
 
 def compare_topk_to_uncompressed_reference_jpeg(uncompressed_img,
                                            compression_engine,
