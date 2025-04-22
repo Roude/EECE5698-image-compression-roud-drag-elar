@@ -40,37 +40,6 @@ Images were evaluated using a pre-trained classification model (e.g., ResNet50) 
 
 \subsubsection{Semantic Preservation Metric}
 
-Evaluating the Semantic Preservation of a compression algorithm is essentially asking \enquote Does the compressed image produce the same classification result with the same model input parameters? \enquote. A competing requirement for compression performance is compression ratio, or the fraction of image data the compressed encoded image takes up. As the compression ratio approaches zero, it's expected that the semantic content of the image would be lost. Therefore, understanding what compression parameters improve compression rate without degrading semantic content is the subject of exploration for this next section.
-
-We propose Confidence Error as a general summary metric for Semantic Preservation. Let $C_{err}$ represent our metric, the Confidence Error. Let $L_{max}$ be the highest probability label from and inference pass with Resnet50 on the uncompressed image. Let $P^{Lmax}_{uncompressed}$ be the probability of this label. Let $P^{Lmax}_{compressed}$ be the classification probability of label $L_{max}$ on the compressed image.
-
-$$
-\textrm{C}_{err} = \frac{\|P^{Lmax}_{uncompressed} - P^{Lmax}_{compressed}\|}{P^{Lmax}_{uncompressed}}
-$$
-
-When performing parameter sweeps across various compression parameters, we evaluate Confidence Error with the following algorithm
-\begin{algorithm}
-    \label{alg:Confidence Error Algorithm}
-    \caption{Evaluating Confidence Error during compression parameter sweeps}
-    \textbf{Input: } Reference image $I_{ref}$, compressed image $I_{cmp}$, pretrained model $Res50$
-    \textbf{Output: } $C_{err}$ for the two images
-    \begin{itemize}
-        \item $I_{ref, pp}$ = preprocess($I_{ref}$)
-        \item $W_{ref outputs}$ = $Res50$.inference($I_{ref, pp}$)
-        \item $P_{ref classes}$ = softmax($W_{outputs}$)
-        \item $L_{max}$ = argmax({$P_{ref classes}$})
-        \item $P^{Lmax}_{uncompressed}$ = $P_{classes}$[$L_{max}$]
-        \item $I_{cmp, pp}$ = preprocess($I_{comp}$)
-        \item $W_{comp outputs}$ = $Res50$.inference($I_{cmp, pp}$)
-        \item $P_{cmp classes}$ = softmax($W_{outputs}$)
-        \item $P^{Lmax}_{compressed}$ =  $P_{cmp classes}$[$L_{max}$]
-        \item $\textbf{return}\ \frac{P^{Lmax}_{uncompressed} - P^{Lmax}_{compressed}}{P^{Lmax}_{uncompressed}}$
-        \end{itemize}
-    \end{algorithm}
-
-%TODO: Add Description of preprocessing and classification for resnet50 to Implementation Section.
-
-In this way, the semantic content is systematically compared and evaluated for each of the test images.
 
 \subsubsection{Test Images}
 

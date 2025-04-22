@@ -62,25 +62,28 @@ If \(d > 1\), a running average is put into place for each of the two chrominanc
 These are then rounded to integers and put in a python list together with the unchanged Y channel. It obviously doesn't make sense anymore to represent the image as a regular array, instead they are being treated as 3 arrays in a python list.
 
 If \(d = 1\), or in other words downsampling is not to be applied, it will just return the YCbCr channels in a list, to save computation time instead of doing an identity operation.
-
+It is important to note that this is different than how downsampling is executed in the JPEG standard. 
+With JPEG compression, the downsampling is performed by keeping individual pixels values in a pattern.
+This is done with speed, rather than accuracy or quality in mind. 
+For small downsample factors, keeping individual pixel values and averaging nearby pixels does essentially the same thing, but we are also interested in the compression behavior when downsample factors become very large, at which point there will be a noticable difference between individual pixels and average pixel downsampling approaches.
 
 \subsection{Block Processing}
 To go from here, each channel is divided into usually square non-overlapping blocks using the block size parameter \(b \in \mathbb{N}^+\) (e.g. 8 is used in standard JPEG, ours is configurable). In cases where \(h \mod b \neq 0\) or \(w \mod b \neq 0\) for either the regular or the chrominance dimensions, the blocks will not be square, which is something that needs to be accounted for later. 
 
 \subsubsection{Discrete Cosine Transformation}
-First, the unsigned 8 bit integer blocks are converted to signed 8 bit integers, while getting centered to zero by subtracting 128.
+First, the unsigned 8 bit integer blocks are converted to signed 16 bit integers, while getting centered to zero by subtracting 128.
 
 Then, an orthonormal type II 2D Discrete Cosine Transformation (DCT), which is a real-valued offshoot of the Discrete Fourier Transformation (DFT), is applied to each block using the following formula:
 
-THIS IS NOT THE CORRECT formula
 \begin{align}
-  F(u, v) &= \frac{1}{4} C(u)C(v) \sum_{x=0}^{7} \sum_{y=0}^{7} f(x,y) \,
-  \cos\left( \frac{(2x+1)u\pi}{16} \right) \nonumber \\
-  &\hspace{3em} \cdot \cos\left( \frac{(2y+1)v\pi}{16} \right)
+  &F(u, v) = \frac{1}{\sqrt{2N}} C(u)C(v) \\ \sum_{x=0}^{N} \sum_{y=0}^{N} f(x,y)
+  &\cos\left( \frac{(2x+1)u\pi}{2N} \right) \cdot \cos\left( \frac{(2y+1)v\pi}{2N} \right)
 \end{align}
-where $C(k) = \frac{1}{\sqrt{2}}$ if $k = 0$ and $C(k) = 1$ otherwise. Here, most of the image energy is usually concentrated into the upper-left lower-frequency corner of the DCT block.
 
-Our implementation hereby leverages \texttt{scipy.fftpack.dct} for speed and numerical accuracy, applying DCT first along rows, then columns.
+where $C(k) = \frac{1}{\sqrt{2}}$ if $k = 0$ and $C(k) = 1$ otherwise. Because the block represents only a small portion of the image, which usually includes very little varriation across the block, most of the image energy is usually concentrated into the upper-left lower-frequency corner of the DCT block.
+
+Our implementation hereby leverages \texttt{scipy.fftpack.dct} for speed and numerical accuracy.
+
 \subsubsection{Quantization}
 Quantization now discards high-frequency DCT coefficients in each block, by dividing element-wise with a previously configured quantization matrix $Q \in \mathbb{N}^{b\times b}$. This is done to reduce the amount of less information carrying, nonzero components which makes Run-Length-Encoding later on much more effective. It should be noted that different quantization matrices are used for luminance and chrominance, with the latter usually receiving harsher quantization. Each coefficient $F(u,v)$ is divided by a quantization matrix $Q(u,v)$ and rounded:
 
@@ -98,13 +101,52 @@ The highest-frequency component is principally set to zero to avoid issues with 
 	F_Q(b-1,b-1) = 0
 \end{equation}
 
-We generally provide multiple quantization strategies, including:
+The JPEG quantization matrix values are highly tuned and optimized across a range of quality factor for 8x8 blocks.
+However, because one of the goals of this projects is to understand compression characteristics across a range of bloc sizes, we need to be able to generate quantization parameters that quantize a similar portion of the matrix for a range of block sizes. 
+Because of this, we implemented two different functions that generate quantization matrix values from a small set of parameters.
 \begin{itemize}
     \item \textbf{Baseline JPEG-style}: A scaled standard luminance matrix.
-    \item \textbf{Gaussian-inspired}: Tighter control on high frequencies.
+    \item \textbf{Quarter-Gauss-Distribution}: Tighter control on high frequencies.
+    \item \textbf{LN-Norm}: Control over mid-range frequencies and their quantization level relative to high and low frequency component quantization.
     \item \textbf{Custom sweep}: Users can specify arbitrary YAML matrices.
 \end{itemize}
 
+\subsubsection{Quarter-Gauss-Distribution Quantization}
+
+The so called "Quarter Gauss" quantization matrix function generates a quantization matrix of size NxN, using three parameters: The block size ($N$), the max quantization value ($A$), and the standard deviation ($\sigma$).
+
+Let $d_{ab}$ be the L2 norm distance of a matrix entry $M_{ab}$from matrix element $M_{NN}$.
+
+Then each element of the quantization matrix can be generated as shown in figure \ref{fig:gaussian_quant}
+
+\begin{figure}
+	\includegraphics[width=0.5\textwidth]{assets/Quarter Gauss Quantization.png}
+	\caption{Visual representation of the "Quarter Gaussian" quantization parameters.}
+	\label{fig:gaussian_quant}
+\end{figure}
+% \begin{equation}
+% 	\label{eq:gaussian_quant}
+% 	M_{ab} = \frac{A}{2\pi\sigma^2}e^{-\frac{d_{ab}^2}{2\sigma}} 
+% \end{equation}
+
+\subsubsection{LN-Norm}
+
+Gaussian distribution of quantization values gives us fine control over the structure of the quantization matrix, but in the spirit of exploration, we also implemented an LN-Norm function for generating the quantization matricies.
+The LN-norm of two points is defined in equation \ref{eq:ln_norm}
+
+\begin{equation}
+D_{ab, N} = ((x_a - x_b)^N + (y_a - y_b)^N)^{(1/N)}
+\label{eq:ln_norm}
+\end{equation}
+
+Choosing $N\in[1,2]$ will result central elements in the quantization matrix being closer to the top left, so those frequencies will be quantized less agressivly. Choosing $N\in[2,\inf]$ will result in mid-range frequencies being quantized more similarly to the high frequency elements. 
+A visualization of these effects is shown in figure \ref{fig:LN-norm}.
+
+\begin{figure}
+	\includegraphics[width=0.5\textwidth]{assets/LN-Norm.png}
+	\caption{Visualization of LN-Norm for all possible N values. lines represent unit distance from the origin under the chosen N-normalization.}
+	\label{fig:LN-norm}
+\end{figure}
 Quality can be tuned directly or indirectly via configuration files in \texttt{compression\_configurations/\allowbreak quantization\_sweep/}.
 
 \subsection{Entropy Coding}
@@ -221,6 +263,42 @@ Decompression reverses all previous stages, while stripping the data of padded z
 The decompression logic is implemented in \texttt{src/decompression.py}. It was in many cases quite challenging to get the correct output; especially block placement was a point of contention at first.
 
 One point of interest here might be the handling of the upsampling. Before the colors can be converted back to RGB, the lower dimension chrominance channels need to be expanded accordingly. This can be done using any way of interpolation, we decided on nearest-neighbor for computation speed. However linear and other interpolation algorithms can be used to get better results.
+
+\subsection{Evaluation of Semantic Information}
+
+While JPEG and other compression algorithms where designed largely with aesthetic quality preservation in mind, an important metric for modern compression algorithms is loss of semantic information. 
+Evaluating the Semantic Preservation of a compression algorithm is essentially asking \enquote {Does the compressed image produce the same classification result with the same model input parameters?}. A competing requirement for compression performance is compression ratio, or the fraction of image data the compressed encoded image takes up. As the compression ratio approaches zero, it's expected that the semantic content of the image would be lost. Therefore, understanding what compression parameters improve compression rate without degrading semantic content is the subject of exploration for this next section.
+
+We propose Confidence Error as a general summary metric for Semantic Preservation. Let $C_{err}$ represent our metric, the Confidence Error. Let $L_{max}$ be the highest probability label from and inference pass with Resnet50 on the uncompressed image. Let $P^{Lmax}_{uncompressed}$ be the probability of this label. Let $P^{Lmax}_{compressed}$ be the classification probability of label $L_{max}$ on the compressed image.
+
+$$
+\textrm{C}_{err} = \frac{\|P^{Lmax}_{uncompressed} - P^{Lmax}_{compressed}\|}{P^{Lmax}_{uncompressed}}
+$$
+
+When performing parameter sweeps across various compression parameters, we evaluate Confidence Error with the following algorithm
+\begin{algorithm}
+    \label{alg:Confidence Error Algorithm}
+    \caption{Evaluating Confidence Error during compression parameter sweeps}
+    \textbf{Input: } Reference image $I_{ref}$, compressed image $I_{cmp}$, pretrained model $Res50$
+    \textbf{Output: } $C_{err}$ for the two images
+    \begin{itemize}
+        \item $I_{ref, pp}$ = preprocess($I_{ref}$)
+        \item $W_{ref \ outputs}$ = $Res50$.infer($I_{ref, pp}$)
+        \item $P_{ref \ classes}$ = softmax($W_{outputs}$)
+        \item $L_{max}$ = argmax({$P_{ref classes}$})
+        \item $P^{Lmax}_{uncompressed}$ = $P_{classes}$[$L_{max}$]
+        \item $I_{cmp, pp}$ = preprocess($I_{comp}$)
+        \item $W_{comp \ outputs}$ = $Res50$.infer($I_{cmp, pp}$)
+        \item $P_{cmp \ classes}$ = softmax($W_{outputs}$)
+        \item $P^{Lmax}_{compressed}$ =  $P_{cmp \ classes}$[$L_{max}$]
+        \item $\textbf{return}\ \frac{P^{Lmax}_{uncompressed} - P^{Lmax}_{compressed}}{P^{Lmax}_{uncompressed}}$
+        \end{itemize}
+    \end{algorithm}
+
+%TODO: Add Description of preprocessing and classification for resnet50 to Implementation Section.
+
+In this way, the semantic content is systematically compared and evaluated for each of the test images.
+
 \subsection{Configuration Management}
 \label{sec:config_management}
 All compression parameters are stored in human-readable YAML files. These files are passed into the system via CLI (e.g., \texttt{results\_compression.py --config homemade\_compression\_jpeg\_like.yaml}).
@@ -254,7 +332,7 @@ Key implementation goals included:
 
 While the initial division of work outlined in our February project proposal was tentative, the responsibilities naturally evolved during development. Although all team members collaborated conceptually, the division of work is outlined below:
 \begin{itemize}
-  \item George Roudebush: compression pipeline, parameter sweeps, quantization table development, baseline JPEG comparison, image classification testing, utility methods, test image dataset curation, and configuration integration
+  \item George Roudebush: compression pipeline, parameter sweeps, quantization table and function development, baseline JPEG comparison, Semantic Preservation method development and testing, utility methods, test image dataset curation, and configuration integration.
   \item Nicolas Drager: Entropy encoding, file coding, decompression pipeline, size estimation and compression metrics in file coding, bug fixes in all other compression methods, making it possible to switch between parameters, utility methods, huffman methods, testing methods, adapting the introduction in the report, implementation report up to \ref{sec:config_management}
   \item Muhammad Elarbi: decompression pipeline, padding error fixes, unit test development, raw image test dataset creation (CR2), output location handling, final-report drafting, documentation, and code cleanup
 \end{itemize}
