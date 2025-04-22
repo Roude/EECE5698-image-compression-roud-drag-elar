@@ -91,7 +91,8 @@ class BaselineJpeg(CompressImage):
 
         imageio.imwrite(save_location, image_uncompressed,
                   quality=quality_factor)
-        metrics = {'compression_metrics': {'compression_ratio' : os.path.getsize(save_location)/os.path.getsize(image)}}
+        uncompressed_size = image_uncompressed.shape[0]*image_uncompressed.shape[1]*image_uncompressed.shape[2]
+        metrics = {'compression_metrics': {'compression_ratio' : os.path.getsize(save_location)/uncompressed_size}}
 
         return save_location, metrics
 

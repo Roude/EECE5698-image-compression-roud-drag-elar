@@ -136,7 +136,7 @@ class BaselineJpegDecompress(DecompressImage):
         if save_location:
             imageio.imwrite(save_location, decompressed_image)
 
-        return decompressed_image, save_location
+        return decompressed_image, save_location, {}
 
 
 class FlexibleJpegDecompress(DecompressImage, FlexibleJpeg):

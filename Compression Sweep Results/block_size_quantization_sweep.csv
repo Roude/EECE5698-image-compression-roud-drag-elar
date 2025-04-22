@@ -1,0 +1,71 @@
+,Image Name,Compression Config,Chromiance Downsample Factor,Block Size,Luma Quantization Max,Luma Quantization Stdv,Chroma Quantization Max,Chroma Quantization Stdv,Encoded Image Data Size,Huffman Table Size (kB),Header Info Size (kB),Compression Ratio,Compression Preprocessing Time (mS),Image Compression Time (mS),Entropy Encoding Time (mS),File Encoding Time (mS),Decompression Preprocessing Time (mS),Decompression Entropy Decoding Time (mS),Decompression Block Processing time (mS),Uncompressed Reference Index,Uncompressed Reference Label,Reference Probability,Compressed Probability of Reference Label,Confidence Drift
+0,landscape_crowd.tif,big_blocks.yaml,1,24,50,12,50,12,589.988,213.376,220.443,0.037,24,853,9358,136,35,11508,886,981,ballplayer,0.16,0.15,0.058
+1,landscape_el_capitain_with_night_sky.webp,big_blocks.yaml,1,24,50,12,50,12,206.888,63.989,71.057,0.049,121,229,2208,53,15,3432,218,972,cliff,0.45,0.42,0.069
+2,landscape_hill.png,big_blocks.yaml,1,24,50,12,50,12,947.241,154.95,162.018,0.08,239,474,6546,200,32,14281,592,984,rapeseed,0.25,0.24,0.022
+3,landscape_iceberg.webp,big_blocks.yaml,1,24,50,12,50,12,67.639,63.063,70.129,0.144,29,55,464,18,13,926,41,296,ice bear,0.17,0.14,0.17
+4,subject_Brooklyn_bridge.webp,big_blocks.yaml,1,24,50,12,50,12,244.696,119.193,126.26,0.117,85,147,1307,57,24,3449,127,718,pier,0.88,0.88,0.001
+5,subject_bunny.tif,big_blocks.yaml,1,24,50,12,50,12,1882.906,139.41,146.478,0.092,21,836,9987,397,32,24593,871,330,wood rabbit,0.51,0.53,0.047
+6,subject_cat.webp,big_blocks.yaml,1,24,50,12,50,12,53.534,56.922,63.987,0.107,32,52,498,15,12,855,46,281,tabby,0.75,0.71,0.051
+7,subject_flowers.webp,big_blocks.yaml,1,24,50,12,50,12,156.848,118.832,125.898,0.079,88,174,1440,39,23,2721,147,883,vase,0.45,0.48,0.075
+8,subject_greenroom.tif,big_blocks.yaml,1,24,50,12,50,12,1210.295,209.573,216.641,0.065,22,833,9745,271,40,19408,983,526,desk,0.67,0.68,0.008
+9,subject_jellyfish.png,big_blocks.yaml,1,24,50,12,50,12,93.518,91.375,98.442,0.045,75,211,2369,42,29,2312,186,107,jellyfish,1.0,1.0,0.0
+10,subject_partial_dog.webp,big_blocks.yaml,1,24,50,12,50,12,36.313,59.092,66.157,0.095,27,52,490,12,12,623,46,253,basenji,0.17,0.22,0.286
+11,subject_puppy.png,big_blocks.yaml,1,24,50,12,50,12,199.933,151.865,158.933,0.071,83,217,1994,50,33,3499,232,207,golden retriever,0.94,0.94,0.005
+12,subject_racecar.tif,big_blocks.yaml,1,24,50,12,50,12,679.385,201.699,208.767,0.04,22,846,13510,163,38,22120,1449,573,go-kart,0.83,0.8,0.038
+13,subject_radio.webp,big_blocks.yaml,1,24,50,12,50,12,504.954,157.767,164.834,0.165,170,696,2283,115,34,6347,167,754,radio,0.97,0.97,0.001
+14,landscape_crowd.tif,moderate_blocks.yaml,1,16,50,8,50,8,595.964,149.116,152.613,0.034,22,1527,8587,132,22,11265,1932,981,ballplayer,0.16,0.15,0.059
+15,landscape_el_capitain_with_night_sky.webp,moderate_blocks.yaml,1,16,50,8,50,8,186.003,46.656,50.153,0.042,142,433,2345,41,8,3275,444,972,cliff,0.45,0.42,0.067
+16,landscape_hill.png,moderate_blocks.yaml,1,16,50,8,50,8,921.211,109.111,112.608,0.074,233,927,5701,199,23,13612,1083,984,rapeseed,0.25,0.25,0.004
+17,landscape_iceberg.webp,moderate_blocks.yaml,1,16,50,8,50,8,64.524,54.381,57.876,0.128,32,91,455,17,9,932,80,296,ice bear,0.17,0.22,0.243
+18,subject_Brooklyn_bridge.webp,moderate_blocks.yaml,1,16,50,8,50,8,230.891,104.078,107.574,0.107,87,251,1322,55,19,3439,287,718,pier,0.88,0.88,0.001
+19,subject_bunny.tif,moderate_blocks.yaml,1,16,50,8,50,8,1850.186,104.772,108.27,0.089,23,1482,9302,450,32,24083,1739,330,wood rabbit,0.51,0.52,0.024
+20,subject_cat.webp,moderate_blocks.yaml,1,16,50,8,50,8,51.537,49.055,52.55,0.095,33,109,495,14,10,903,95,281,tabby,0.75,0.73,0.022
+21,subject_flowers.webp,moderate_blocks.yaml,1,16,50,8,50,8,139.418,91.305,94.801,0.066,90,275,1448,35,17,2422,287,883,vase,0.45,0.46,0.038
+22,subject_greenroom.tif,moderate_blocks.yaml,1,16,50,8,50,8,1163.529,160.222,163.719,0.06,23,1512,9050,304,24,19906,1895,526,desk,0.67,0.67,0.004
+23,subject_jellyfish.png,moderate_blocks.yaml,1,16,50,8,50,8,91.569,77.544,81.041,0.04,81,325,1754,24,13,2147,339,107,jellyfish,1.0,1.0,0.0
+24,subject_partial_dog.webp,moderate_blocks.yaml,1,16,50,8,50,8,36.227,49.019,52.514,0.082,31,111,464,11,8,634,105,253,basenji,0.17,0.22,0.246
+25,subject_puppy.png,moderate_blocks.yaml,1,16,50,8,50,8,193.754,117.684,121.181,0.062,85,380,2063,48,22,3786,436,207,golden retriever,0.94,0.94,0.005
+26,subject_racecar.tif,moderate_blocks.yaml,1,16,50,8,50,8,648.444,162.463,165.96,0.037,25,1560,8942,147,28,13859,1766,573,go-kart,0.83,0.79,0.053
+27,subject_radio.webp,moderate_blocks.yaml,1,16,50,8,50,8,482.562,122.347,125.844,0.15,128,300,1831,107,27,6381,329,754,radio,0.97,0.97,0.0
+28,landscape_crowd.tif,small_blocks.yaml,1,4,50,2,50,2,749.381,15.999,16.776,0.035,24,20076,16208,176,6,24714,26487,981,ballplayer,0.16,0.13,0.173
+29,landscape_el_capitain_with_night_sky.webp,small_blocks.yaml,1,4,50,2,50,2,180.979,6.949,7.727,0.034,121,4970,4058,43,1,6047,6822,972,cliff,0.45,0.39,0.134
+30,landscape_hill.png,small_blocks.yaml,1,4,50,2,50,2,812.538,14.088,14.865,0.059,252,12249,10622,188,5,20734,16435,984,rapeseed,0.25,0.28,0.124
+31,landscape_iceberg.webp,small_blocks.yaml,1,4,50,2,50,2,60.581,9.903,10.679,0.074,36,892,771,16,2,1427,1074,296,ice bear,0.17,0.19,0.103
+32,subject_Brooklyn_bridge.webp,small_blocks.yaml,1,4,50,2,50,2,209.083,14.344,15.12,0.071,96,2803,2443,51,4,4854,3638,718,pier,0.88,0.88,0.002
+33,subject_bunny.tif,small_blocks.yaml,1,4,50,2,50,2,1622.758,13.716,14.493,0.074,27,19545,16699,358,8,32311,24656,330,wood rabbit,0.51,0.51,0.008
+34,subject_cat.webp,small_blocks.yaml,1,4,50,2,50,2,52.751,9.272,10.048,0.057,38,1066,865,16,3,1418,1213,281,tabby,0.75,0.72,0.03
+35,subject_flowers.webp,small_blocks.yaml,1,4,50,2,50,2,129.86,11.459,12.235,0.04,92,3384,2904,31,2,4181,3952,883,vase,0.45,0.52,0.158
+36,subject_greenroom.tif,small_blocks.yaml,1,4,50,2,50,2,1121.166,18.213,18.99,0.052,24,19499,16627,267,7,30864,24716,526,desk,0.67,0.68,0.011
+37,subject_jellyfish.png,small_blocks.yaml,1,4,50,2,50,2,120.907,14.726,15.503,0.032,83,3870,3111,31,2,4435,4910,107,jellyfish,1.0,1.0,0.0
+38,subject_partial_dog.webp,small_blocks.yaml,1,4,50,2,50,2,42.957,5.89,6.665,0.046,33,1151,913,14,2,1375,1215,253,basenji,0.17,0.16,0.103
+39,subject_puppy.png,small_blocks.yaml,1,4,50,2,50,2,197.135,13.491,14.269,0.042,94,4539,3732,47,3,6079,5627,207,golden retriever,0.94,0.94,0.006
+40,subject_racecar.tif,small_blocks.yaml,1,4,50,2,50,2,737.88,17.774,18.552,0.034,23,19810,16366,177,6,24770,24668,573,go-kart,0.83,0.78,0.06
+41,subject_radio.webp,small_blocks.yaml,1,4,50,2,50,2,408.248,20.316,21.094,0.106,130,3521,3196,93,5,8285,4976,754,radio,0.97,0.97,0.006
+42,landscape_crowd.tif,standard_blocks.yaml,1,8,50,4,50,4,620.588,61.057,62.391,0.031,24,5215,10496,139,10,14841,6394,981,ballplayer,0.16,0.15,0.079
+43,landscape_el_capitain_with_night_sky.webp,standard_blocks.yaml,1,8,50,4,50,4,159.222,21.978,23.312,0.032,129,1335,2729,69,5,3576,1645,972,cliff,0.45,0.37,0.175
+44,landscape_hill.png,standard_blocks.yaml,1,8,50,4,50,4,859.161,48.454,49.788,0.065,244,3268,7053,187,12,14781,4104,984,rapeseed,0.25,0.25,0.021
+45,landscape_iceberg.webp,standard_blocks.yaml,1,8,50,4,50,4,59.125,30.476,31.808,0.095,35,299,501,16,5,988,285,296,ice bear,0.17,0.15,0.113
+46,subject_Brooklyn_bridge.webp,standard_blocks.yaml,1,8,50,4,50,4,206.273,58.108,59.441,0.084,96,760,1644,48,11,3640,918,718,pier,0.88,0.87,0.011
+47,subject_bunny.tif,standard_blocks.yaml,1,8,50,4,50,4,1756.116,48.396,49.73,0.082,23,5186,11569,379,14,26607,6531,330,wood rabbit,0.51,0.53,0.045
+48,subject_cat.webp,standard_blocks.yaml,1,8,50,4,50,4,48.246,29.638,30.97,0.072,38,328,551,13,5,931,330,281,tabby,0.75,0.72,0.03
+49,subject_flowers.webp,standard_blocks.yaml,1,8,50,4,50,4,120.608,45.943,47.276,0.047,88,894,1833,29,8,2814,1027,883,vase,0.45,0.47,0.056
+50,subject_greenroom.tif,standard_blocks.yaml,1,8,50,4,50,4,1078.491,70.612,71.946,0.052,26,5407,11266,242,14,19803,6355,526,desk,0.67,0.69,0.031
+51,subject_jellyfish.png,standard_blocks.yaml,1,8,50,4,50,4,92.327,43.438,44.772,0.032,81,1111,2064,27,7,2704,1239,107,jellyfish,1.0,1.0,0.0
+52,subject_partial_dog.webp,standard_blocks.yaml,1,8,50,4,50,4,37.099,23.0,24.332,0.057,33,317,535,10,3,767,313,253,basenji,0.17,0.22,0.245
+53,subject_puppy.png,standard_blocks.yaml,1,8,50,4,50,4,185.549,50.188,51.521,0.047,99,1266,2525,49,9,3917,1469,207,golden retriever,0.94,0.94,0.005
+54,subject_racecar.tif,standard_blocks.yaml,1,8,50,4,50,4,615.699,74.393,75.727,0.031,23,5275,11066,141,14,16076,6458,573,go-kart,0.83,0.77,0.073
+55,subject_radio.webp,standard_blocks.yaml,1,8,50,4,50,4,446.973,63.587,64.921,0.126,129,958,2234,102,14,5964,1177,754,radio,0.97,0.97,0.001
+56,landscape_crowd.tif,very_big_blocks.yaml,1,48,50,24,50,24,605.969,252.281,278.565,0.04,24,433,9080,144,50,11988,347,981,ballplayer,0.16,0.16,0.001
+57,landscape_el_capitain_with_night_sky.webp,very_big_blocks.yaml,1,48,50,24,50,24,238.382,75.553,101.837,0.06,119,115,2409,68,21,4087,86,972,cliff,0.45,0.41,0.08
+58,landscape_hill.png,very_big_blocks.yaml,1,48,50,24,50,24,991.514,193.081,219.365,0.087,248,210,6176,225,45,15030,217,984,rapeseed,0.25,0.24,0.008
+59,landscape_iceberg.webp,very_big_blocks.yaml,1,48,50,24,50,24,73.844,63.576,89.858,0.171,36,20,502,21,18,994,17,296,ice bear,0.17,0.18,0.035
+60,subject_Brooklyn_bridge.webp,very_big_blocks.yaml,1,48,50,24,50,24,271.917,120.531,146.814,0.132,99,72,1447,77,33,4114,49,718,pier,0.88,0.88,0.0
+61,subject_bunny.tif,very_big_blocks.yaml,1,48,50,24,50,24,1928.449,159.663,185.947,0.096,26,408,9737,433,41,26051,374,330,wood rabbit,0.51,0.53,0.045
+62,subject_cat.webp,very_big_blocks.yaml,1,48,50,24,50,24,59.614,61.011,87.293,0.134,37,26,654,21,23,1159,21,281,tabby,0.75,0.72,0.04
+63,subject_flowers.webp,very_big_blocks.yaml,1,48,50,24,50,24,177.122,115.381,141.664,0.089,95,93,1708,60,37,2848,56,883,vase,0.45,0.48,0.067
+64,subject_greenroom.tif,very_big_blocks.yaml,1,48,50,24,50,24,1286.377,234.184,260.468,0.07,25,397,9518,294,55,20838,341,526,desk,0.67,0.69,0.019
+65,subject_jellyfish.png,very_big_blocks.yaml,1,48,50,24,50,24,103.984,98.536,124.82,0.054,91,111,1834,29,25,2222,67,107,jellyfish,1.0,1.0,0.0
+66,subject_partial_dog.webp,very_big_blocks.yaml,1,48,50,24,50,24,37.389,58.973,85.255,0.114,30,24,619,13,17,633,18,253,basenji,0.17,0.21,0.219
+67,subject_puppy.png,very_big_blocks.yaml,1,48,50,24,50,24,217.703,163.981,190.266,0.081,88,111,2126,56,41,4018,81,207,golden retriever,0.94,0.94,0.005
+68,subject_racecar.tif,very_big_blocks.yaml,1,48,50,24,50,24,757.998,217.042,243.326,0.045,27,396,9293,185,51,13350,343,573,go-kart,0.83,0.81,0.024
+69,subject_radio.webp,very_big_blocks.yaml,1,48,50,24,50,24,538.123,171.763,198.047,0.181,131,88,1948,150,51,7019,84,754,radio,0.97,0.97,0.0
