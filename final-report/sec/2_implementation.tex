@@ -1,53 +1,104 @@
 \section{Implementation}
 \label{sec:implementation}
 
-Our Python-based JPEG-like compression system is designed with modularity and experimentation in mind. It mirrors key stages of the classical JPEG pipeline while allowing for customized configurations through YAML files. In this section, we describe the architecture and underlying algorithms for each major component of our system, which include preprocessing, block-based DCT, quantization, Huffman encoding, and full decompression support.
+Our Python-based JPEG-like compression system is designed with modularity and experimentation in mind. It mirrors key stages of the classical JPEG pipeline while allowing for customized configurations through YAML files. In this section, we describe the architecture and underlying algorithms for each major component of our system, which include preprocessing, block-based DCT, quantization, entropy encoding, and full decompression support.
 
-\subsection{Overall Pipeline Structure}
-
+\subsection{Overall Compression Pipeline Structure}
 The compression process consists of the following sequential stages:
 \begin{enumerate}
-    \item \textbf{Preprocessing}: Loading, resizing, color space conversion, and channel downsampling.
-    \item \textbf{Block Division}: Splitting images into fixed-size blocks (e.g., 8\,x\,8).
-    \item \textbf{Discrete Cosine Transform (DCT)}: Transforming spatial pixel values to frequency domain.
-    \item \textbf{Quantization}: Reducing frequency resolution based on configurable quantization tables.
-    \item \textbf{Huffman Encoding}: Entropy-encoding of coefficients to compress data.
+    \item \textbf{Image Initialization}: Loading the configuration, the image, and ensuring the right format of the latter
+    \item \textbf{Color Conversion}: Transforming the RGB image into YCbCr
+    \item \textbf{Chrominance Downsampling}: Downsampling the two chrominance channels depending on configuration
+    \item \textbf{Block Processing}: Channels get split into blocks, to each of them the following is applied
+    \begin{enumerate}
+    	\item \textbf{Discrete Cosine Transform (DCT)}: Transforming spatial pixel values to frequency domain.
+		\item \textbf{Quantization}: Reducing frequency resolution based on configurable quantization tables.
+    \end{enumerate}
+    \item \textbf{Entropy Encoding}: Lossless entropy-encoding of block coefficients to compress data
+        \begin{enumerate}
+    	\item \textbf{Zigzagging}: Flattening the blocks
+    	\item \textbf{Delta Encoding}: Take the differences of DC coefficients
+    	\item \textbf{Run-Length Encoding}: Shortening AC component Array 
+    	\item \textbf{Huffman Encoding}: Finding and encoding data with minimum length code 
+    \end{enumerate}
+    \item \textbf{File Encoding}: Encodes data and header into binary file, collects metrics
 \end{enumerate}
+\noindent
 The decompression process reverses each of these steps.
-
+\noindent
 Each of the above steps is parameterized through YAML configuration files. Users can adjust quality settings, block sizes, quantization levels, and downsampling rates to generate different compression schemes.
 
-\subsection{Image Preprocessing}
-\label{sec:preprocessing}
+\subsection{Image initialization}
+\label{sec:initialization}
+First, the configuration, if one has been provided either during initialization or calling of the image compressor object, is loaded, overwriting the default parameters.
+Then the image gets loaded using the \texttt{scikit-image} library, unless it is a raw image file like CR2 in which case the loading is handled by using the \texttt{rawpy} wrapper for the \texttt{LibRaw} library.
 
-All image loading and resizing operations are handled using the \texttt{Pillow} library. To enable JPEG-style processing, we first convert RGB images to the YCbCr color space:
+Following the initial loading, all but the RGB channels get removed, since JPEG compression, with the exception of JPEG XL does not handle those. Furthermore, in case the channels have values outside of the 8 bit range (0 to 255), those get normalized and converted to unsigned integer 8 bit values per channel.
+
+Thus, if we let  \(\bm{x} = (x,y)^T\) denote pixel coordinates, 
+where $x \in \{0, \dots, w-1\}$ and $y \in \{0, \dots, h-1\}$, we now have the following RGB image $I$ which maps $\bm{x}$ to intensity values:
+\[
+I_{\text{RGB}}(\bm{x}) = \big( R(\bm{x}),\, G(\bm{x}),\, B(\bm{x}) \big) \in \{0, \dots, 255\}^3.
+\]
+Here each element of \( I(x, y) = (R(x,y), G(x,y), B(x,y)) \) contains three 8-bit unsigned integers, which are the RGB channels and are forwarded to color conversion.
+
+\subsection{Color Conversion}
+\label{sec:color}
+JPEG's lossy compression relies to a good extend on downsampling the chrominance of an image. This is done as human vision is less sensitive to color variations than to brightness variations, and will therefore not perceive the downsampling of colors as much, while saving a lot of space.
+To enable the chrominance downsampling, however, we first need to differentiate the luminance and chrominance parts of the images. This is done by converting RGB images to the YCbCr color space:
 \begin{equation}
-\begin{bmatrix} Y \\ Cb \\ Cr \end{bmatrix} = 
-\begin{bmatrix} 0.299 & 0.587 & 0.114 \\ -0.1687 & -0.3313 & 0.5 \\ 0.5 & -0.4187 & -0.0813 \end{bmatrix} \begin{bmatrix} R \\ G \\ B \end{bmatrix} + \begin{bmatrix} 0 \\ 128 \\ 128 \end{bmatrix}
+I_{\text{RGB}}(\bm{x}) = \begin{bmatrix} Y(\bm{x}) \\ Cb(\bm{x}) \\ Cr(\bm{x}) \end{bmatrix}
+\end{equation}
+\begin{equation}
+= \begin{bmatrix} 0.299 & 0.587 & 0.114 \\ -0.1687 & -0.3313 & 0.5 \\ 0.5 & -0.4187 & -0.0813 \end{bmatrix} \begin{bmatrix} R(\bm{x}) \\ G(\bm{x}) \\ B(\bm{x}) \end{bmatrix} + \begin{bmatrix} 0 \\ 128 \\ 128 \end{bmatrix}
 \end{equation}
 
-The Y (luma) channel captures intensity, while Cb and Cr represent chroma components. Configurable downsampling factors (e.g., 4:2:0, 4:2:2) are applied to the chroma channels via bilinear interpolation. Padding is used to ensure image dimensions are divisible by the block size.
+\subsection{Downsampling}
+To downsample the resulting YCbCr image, the chrominance channels are processed as follows depending on a downsampling factor  $d \in \mathbb{N}^+$. 
+If \(d > 1\), a running average is put into place for each of the two chrominance channels, only taking every \(d\)-th pixel in such a way that the dimensions of the resulting \(\tilde{Cb}\) and \(\tilde{Cr}\) are as follows. 
+\[
+(h_c, w_c) = \left( \left\lceil \frac{h}{d} \right\rceil, \left\lceil \frac{w}{d} \right\rceil \right)
+\]
+These are then rounded to integers and put in a python list together with the unchanged Y channel. It obviously doesn't make sense anymore to represent the image as a regular array, instead they are being treated as 3 arrays in a python list.
 
-\subsection{Block Division and DCT}
+If \(d = 1\), or in other words downsampling is not to be applied, it will just return the YCbCr channels in a list, to save computation time instead of doing an identity operation.
 
-Each channel is divided into non-overlapping square blocks (e.g., 8\,x\,8, configurable). The 2D DCT is applied to each block using the following formula:
+
+\subsection{Block Processing}
+To go from here, each channel is divided into usually square non-overlapping blocks using the block size parameter \(b \in \mathbb{N}^+\) (e.g. 8 is used in standard JPEG, ours is configurable). In cases where \(h \mod b \neq 0\) or \(w \mod b \neq 0\) for either the regular or the chrominance dimensions, the blocks will not be square, which is something that needs to be accounted for later. 
+
+\subsubsection{Discrete Cosine Transformation}
+First, the unsigned 8 bit integer blocks are converted to signed 8 bit integers, while getting centered to zero by subtracting 128.
+
+Then, an orthonormal type II 2D Discrete Cosine Transformation (DCT), which is a real-valued offshoot of the Discrete Fourier Transformation (DFT), is applied to each block using the following formula:
+
+THIS IS NOT THE CORRECT formula
 \begin{align}
   F(u, v) &= \frac{1}{4} C(u)C(v) \sum_{x=0}^{7} \sum_{y=0}^{7} f(x,y) \,
   \cos\left( \frac{(2x+1)u\pi}{16} \right) \nonumber \\
   &\hspace{3em} \cdot \cos\left( \frac{(2y+1)v\pi}{16} \right)
 \end{align}
-where $C(k) = \frac{1}{\sqrt{2}}$ if $k = 0$ and $C(k) = 1$ otherwise. This concentrates most of the image energy into the upper-left corner of the DCT block.
+where $C(k) = \frac{1}{\sqrt{2}}$ if $k = 0$ and $C(k) = 1$ otherwise. Here, most of the image energy is usually concentrated into the upper-left lower-frequency corner of the DCT block.
 
-Implementation leverages \texttt{scipy.fftpack.dct} for speed and numerical accuracy, applying DCT first along rows, then columns.
+Our implementation hereby leverages \texttt{scipy.fftpack.dct} for speed and numerical accuracy, applying DCT first along rows, then columns.
+\subsubsection{Quantization}
+Quantization now discards high-frequency DCT coefficients in each block, by dividing element-wise with a previously configured quantization matrix $Q \in \mathbb{N}^{b\times b}$. This is done to reduce the amount of less information carrying, nonzero components which makes Run-Length-Encoding later on much more effective. It should be noted that different quantization matrices are used for luminance and chrominance, with the latter usually receiving harsher quantization. Each coefficient $F(u,v)$ is divided by a quantization matrix $Q(u,v)$ and rounded:
 
-\subsection{Quantization}
+ %Skipping of higher-frequency basis functions often leads to so-called blocking artifacts, but also ringing is observed particularly in case of image edge structures.
 
-Quantization discards high-frequency DCT coefficients to reduce data size. Each coefficient $F(u,v)$ is divided by a quantization matrix $Q(u,v)$ and rounded:
 \begin{equation}
 F_Q(u,v) = \left\lfloor \frac{F(u,v)}{Q(u,v)} + 0.5 \right\rfloor
 \end{equation}
 
-We provide multiple quantization strategies, including:
+If the block dimensions do not match the dimensions of the quantization matrix, because of it being part of the lower or right border of the image with the image dimension not being divisible with \(b\), the block gets padded with zeros until it reaches them.
+
+The highest-frequency component is principally set to zero to avoid issues with the zigzagging algorithm later on.
+
+\begin{equation}
+	F_Q(b-1,b-1) = 0
+\end{equation}
+
+We generally provide multiple quantization strategies, including:
 \begin{itemize}
     \item \textbf{Baseline JPEG-style}: A scaled standard luminance matrix.
     \item \textbf{Gaussian-inspired}: Tighter control on high frequencies.
@@ -56,27 +107,122 @@ We provide multiple quantization strategies, including:
 
 Quality can be tuned directly or indirectly via configuration files in \texttt{compression\_configurations/\allowbreak quantization\_sweep/}.
 
-\subsection{Entropy Coding: Huffman Encoding}
+\subsection{Entropy Coding}
+The quantized channels are now transferred to the entropy coding method, where they are again broken up into blocks. If they are not \(\in \mathbb{N}^{b\times b}\), they again get padded with zeroes. They are then flattened to be \(z \in \mathbb{N}^{1\times b^2}\) 1D arrays using an algorithm called zigzag ordering, which utilizes following a previously initialized zigzag pattern, to rearrange the frequency values in such a way that bundles lower frequency values in the front as seen below.
 
-After quantization, 2D blocks are flattened using zigzag ordering and run-length encoded. We implemented our own Huffman encoder from scratch (see \texttt{src/huffman.py}). Symbol frequencies are derived from a training set and stored in \texttt{huffman\_tables\_comp.json}.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{zigzag.png}
+	\caption{Rearrangement of a \(8\times8\) block using zigzag pattern}
+	\label{fig:zigzag}
+\end{figure}
 
-Our encoder builds a binary tree, assigns codes, and encodes bitstreams block-by-block. The compressed output is saved alongside metadata to enable decompression.
+Then, as lower frequency values usually carry most information and energy, the so called DC component \(z_0 = F_Q(0,0)\) of each block is extracted and the difference is made with its predecessor from the block prior, in order to reduce the dynamic range of the DCT coefficients. This is called delta encoding, and the DC values are treated and even encoded differently from the remaining so called AC components. It is to be noted that luminance and chrominance values are separated here as elsewhere.
 
-\subsection{Decompression Pipeline}
+The AC components \(z_1,...,z_{b^2-1})\) are now forwarded to a method called run-length encoding, which for every value \(z_i \neq 0, i \in {1,...,b^2-1}\) returns a tuple as follows, given an array \(Z = [z_1, \ldots, z_{b^2-1}]\):
 
-Decompression reverses all previous stages:
+\begin{equation*}
+	\mathcal{R}(Z) = \begin{cases}
+		(z_i, c_i) & \text{for } a_i \neq 0 \text{ with } c_i \text{ preceding zeros} \\
+		(0,0) & \text{if only zeroes remaining in the block}
+	\end{cases}
+\end{equation*}
+
+
+\begin{algorithm}
+	\caption{Run-Length Encoding Algorithm}
+	\label{alg:jpeg-rle}
+	\begin{algorithmic}[1]
+		\Require $\text{zigzag\_array} = [z_1, \ldots, z_n]$
+		\Ensure List of $(value, zero\_count)$ tuples with EOB marker
+		
+		\State $\text{encoded} \gets \emptyset$
+		\State $\text{zero\_count} \gets 0$
+		\For{each element $a_i \in \text{zigzag\_array}$}
+		\If{$z_i = 0$}
+		\State $\text{zero\_count} \gets \text{zero\_count} + 1$
+		\Else
+		\State $\text{encoded.append}((a_i, \text{zero\_count}))$
+		\State $\text{zero\_count} \gets 0$ \Comment{Reset counter after non-zero value}
+		\EndIf
+		\EndFor
+		\State $\text{encoded.append}((0, 0))$ \Comment{Add End-of-Block (EOB) marker}
+		\State \Return $\text{encoded}$
+	\end{algorithmic}
+\end{algorithm}
+
+Since the number of zeroes is concentrated in the end after the zigzag ordering, the returned array contains only a few tuples, which however are enough to describe the whole block. Since \(F_Q(b-1,b-1) = 0\) earlier, we do not need to worry about the \((0,0)\) EOB potentially enlongating the block to be longer than its maximum size when decoding.
+
+
+\subsubsection{Huffman Encoding}
+Both the AC and the delta-encoded DC values of all blocks are finally forwarded, separated both by AC and DC as well as by luminance and chrominance, to the Huffman encoding algorithm. Here each symbol is counted and thus has its frequency determined. This frequency shall axiomatically serve as the probability of a symbol \(p(x_i)\) from now on.
+
+Huffman encoding is a widely used lossless data compression algorithm that assigns variable-length codewords to symbols based on their probabilities. The key idea is to use shorter codes for more frequent symbols and longer codes for less frequent ones, minimizing the average codeword length. To further understand Huffman encoding, we first need some basic concepts from information theory. 
+The information content of a symbol \( x_i \) with probability \( p(x_i) \) is defined as:
+\[
+I(x_i) = \log_2 \left( \frac{1}{p(x_i)} \right) = -\log_2 p(x_i).
+\]
+This measures how surprising or informative an event is: the less probable the symbol, the higher its information content.
+The entropy \( H(X) \) of an information source is the expected (average) information content:
+\[
+H(X) = -\sum_{i=1}^{n} p(x_i) \log_2 p(x_i).
+\]
+Entropy represents the minimum average number of bits required to represent each symbol from the source.
+From Shannon's Source Coding Theorem, the minimum expected codeword length \( L_{\text{min}} \) for a symbol \( x_i \) satisfies:
+\[
+H(X) \leq L_{\text{avg}} < H(X) + 1,
+\]
+where \( L_{\text{avg}} \) is the average length of the codewords. Huffman encoding achieves near-optimal compression, with \( L_{\text{avg}} \) very close to \( H(X) \).
+Huffman encoding does this by constructing a prefix-free binary code (no codeword is a prefix of another) ensuring unambiguous decoding, using the following steps:
 \begin{enumerate}
-    \item Huffman decoding and run-length decoding
-    \item Inverse quantization
-    \item Inverse DCT
-    \item Block merging and image reconstruction
-    \item Upsampling and RGB color space restoration
+	\item \textbf{Frequency Calculation:} Compute the frequency (or probability) of each symbol in the input.
+	\item \textbf{Priority Queue:} Build a min-heap where each node represents a symbol and its frequency.
+	\item \textbf{Tree Construction:}  
+	\begin{itemize}
+		\item Repeatedly extract the two nodes with the smallest frequencies.
+		\item Merge them into a new internal node with their combined frequency.
+		\item Assign '0' to the left branch and '1' to the right branch.
+		\item Reinsert the new node into the heap.
+	\end{itemize}
+	\item \textbf{Code Assignment:} Traverse the tree from the root to each leaf, recording the binary path to generate the Huffman code for each symbol.
 \end{enumerate}
 
-Padding added during compression is stripped out automatically. The decompression logic is implemented in \texttt{src/decompression.py}.
+After the codewords were assigned for each group of values (Lum DC, Lum DC, Chrom DC, Chrom AC) and thus the so-called Huffman tables are created, the channels are iteratively encoded using the respective Huffman table, resulting in a long bitstream, which contains the data of the image. This alongside the Huffman tables themselves is forwarded to file encoding.
 
+The benefit of using four different huffman tables instead of just one, is that the data often looks very different for each group, making it at least in most cases more efficient to use. However due to having multiple codewords for a recurring symbol, the header becomes larger.
+
+Standard JPEG actually uses fixed Huffman tables instead, which is less compression efficient but definitely faster to encode.
+
+Despite the fact that Huffman coding is basically optimal in terms of average word length, there are methods that provide even better compression such as arithmetic coding and asymmetric numeral systems (ANS). Arithmetic coding encodes data as a single fractional number, allowing symbols to occupy fractional bits and tightly approaching entropy limits. ANS improves on this by using integer-state transformations for similar compression gains while being computationally faster. Both methods excel where Huffman struggles, e.g. with highly skewed distributions (like 99 percent probable symbols), since they avoid Huffman's requirement of whole-bit codewords. Arithmetic coding is even used in JPEG XL, but due to patent issues in the 80s does not enjoy high popularity. For our project, we opted for Huffman coding, as it is not only easier, but because we believe that the focus of the work should lie on the lossy part of the compression and its impact on image classification.
+\subsection{File Encoding}
+The file encoding method handles the final stage of our image compression pipeline, packaging all compressed components into a proprietary binary file format using our initials (.rde). The process begins by preparing the compression metadata - it converts the Huffman code tables and quantization matrices into JSON-serializable formats while preserving the original settings. The actual compressed bitstream (previously generated through Huffman encoding) gets processed into a byte-aligned format, with padding bits added if needed to complete the final byte.
+
+The output file follows a specific structure: first a 4-byte header length indicator, followed by the JSON header containing all decompression parameters (quantization tables, Huffman dictionaries, image dimensions, and padding information), and finally the packed binary data representing the compressed image content. Alongside the binary file, the function generates comprehensive compression metrics including detailed size breakdowns (separating header overhead from actual image data), processing timings, and quality measurements like compression ratio and bits-per-pixel. These metrics get saved to a companion JSON file and can optionally be displayed in a formatted table, providing insights into the compression efficiency and the relative contributions of different components to the final file size. The implementation maintains careful byte-level control throughout the packaging process while handling all necessary data conversions between Python objects, JSON structures, and raw binary formats.
+\subsection{Decompression Pipeline}
+Decompression reverses all previous stages, while stripping the data of padded zeroes:
+\begin{enumerate}
+	\item \textbf{File Decoding}: Read binary data and extract header/metadata (quantization tables, Huffman codes, etc.) which are used in the later methods
+	\item \textbf{Entropy Decoding}:
+	\begin{itemize}
+		\item \textbf{Huffman Decoding}: Reconstruct DC/AC coefficients
+		\item \textbf{Run-Length Decoding}: Expand compressed AC coefficients
+		\item \textbf{Delta Decoding}: Reverse DC coefficient differences
+		\item \textbf{Inverse Zigzag}: Reshape 1D array to 2D frequency blocks
+	\end{itemize}
+	\item \textbf{Block Processing}:
+	\begin{itemize}
+		\item \textbf{Dequantization}: Multiply coefficients by quantization table values
+		\item \textbf{IDCT}: Convert frequency-domain blocks to spatial pixels
+	\end{itemize}
+	\item \textbf{Chrominance Upsampling}: Upsample Cb/Cr channels if downsampled
+	\item \textbf{Color Conversion}: Convert YCbCr back to RGB
+	\item \textbf{Image Finalization}: Clamp pixel values, save image
+\end{enumerate}
+The decompression logic is implemented in \texttt{src/decompression.py}. It was in many cases quite challenging to get the correct output; especially block placement was a point of contention at first.
+
+One point of interest here might be the handling of the upsampling. Before the colors can be converted back to RGB, the lower dimension chrominance channels need to be expanded accordingly. This can be done using any way of interpolation, we decided on nearest-neighbor for computation speed. However linear and other interpolation algorithms can be used to get better results.
 \subsection{Configuration Management}
-
+\label{sec:config_management}
 All compression parameters are stored in human-readable YAML files. These files are passed into the system via CLI (e.g., \texttt{results\_compression.py --config homemade\_compression\_jpeg\_like.yaml}).
 
 Sweeps are conducted using \texttt{test/parameter\_sweeps.py}, which iterates over YAML directories for block sizes, downsampling levels, and quantization schemes.
@@ -109,6 +255,6 @@ Key implementation goals included:
 While the initial division of work outlined in our February project proposal was tentative, the responsibilities naturally evolved during development. Although all team members collaborated conceptually, the division of work is outlined below:
 \begin{itemize}
   \item George Roudebush: compression pipeline, parameter sweeps, quantization table development, baseline JPEG comparison, image classification testing, utility methods, test image dataset curation, and configuration integration
-  \item Nicolas Drager: Huffman encoding/decoding, entropy coding, size estimation and compression metrics, block alignment handling, decompression, and zigzag module
+  \item Nicolas Drager: Entropy encoding, file coding, decompression pipeline, size estimation and compression metrics in file coding, bug fixes in all other compression methods, making it possible to switch between parameters, utility methods, huffman methods, testing methods, adapting the introduction in the report, implementation report up to \ref{sec:config_management}
   \item Muhammad Elarbi: decompression pipeline, padding error fixes, unit test development, raw image test dataset creation (CR2), output location handling, final-report drafting, documentation, and code cleanup
 \end{itemize}

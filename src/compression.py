@@ -479,23 +479,11 @@ class FlexibleJpeg(CompressImage):
                     end_j = min(j + self.block_size, channel.shape[1])
                     block = channel[i:end_i, j:end_j]
 
-                    #print(block.shape)
-
-
-                    #if block.shape[0] != self.block_size and channel_idx == 0:
-                        #print(block_index - 58*(87+1))
-                    #if block.shape[1] != self.block_size and channel_idx == 0:
-                        #print((block_index + 1) % 88)
-
                     if block.shape != (self.block_size, self.block_size):
                         padded_block = np.zeros((self.block_size, self.block_size), dtype=block.dtype)
                         padded_block[:block.shape[0], :block.shape[1]] = block
                         block = padded_block
-
-                    #block = self._get_padded_block(channel, i, j)
                     zigzagged = zigzag_order(block, self.zigzag_pattern)
-                    #if block_index == 0:
-                        #print(zigzagged)
 
                     # DC encoding (Y channel)
                     delta_dc = zigzagged[0] - prev_dc[channel_idx]
