@@ -44,7 +44,7 @@ Here each element of \( I(x, y) = (R(x,y), G(x,y), B(x,y)) \) contains three 8-b
 
 \subsection{Color Conversion}
 \label{sec:color}
-JPEG's lossy compression relies to a good extend on downsampling the chrominance of an image. This is done as human vision is less sensitive to color variations than to brightness variations, and will therefore not perceive the downsampling of colors as much, while saving a lot of space.
+JPEG's lossy compression relies to a good extent on downsampling the chrominance of an image. This is done as human vision is less sensitive to color variations than to brightness variations, and will therefore not perceive the downsampling of colors as much, while saving a lot of space.
 To enable the chrominance downsampling, however, we first need to differentiate the luminance and chrominance parts of the images. This is done by converting RGB images to the YCbCr color space:
 \begin{equation}
 I_{\text{RGB}}(\bm{x}) = \begin{bmatrix} Y(\bm{x}) \\ Cb(\bm{x}) \\ Cr(\bm{x}) \end{bmatrix}
