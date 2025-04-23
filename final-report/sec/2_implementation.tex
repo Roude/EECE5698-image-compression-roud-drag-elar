@@ -131,7 +131,7 @@ Then each element of the quantization matrix can be generated as shown in figure
 
 \subsubsection{LN-Norm}
 
-Gaussian distribution of quantization values gives us fine control over the structure of the quantization matrix, but in the spirit of exploration, we also implemented an LN-Norm function for generating the quantization matricies.
+Gaussian distribution of quantization values gives us fine control over the structure of the quantization matrix, but in the spirit of exploration, we also implemented an LN-Norm function for generating the quantization matrices.
 The LN-norm of two points is defined in equation \ref{eq:ln_norm}
 
 \begin{equation}
@@ -193,7 +193,7 @@ The AC components \(z_1,...,z_{b^2-1})\) are now forwarded to a method called ru
 	\end{algorithmic}
 \end{algorithm}
 
-Since the number of zeroes is concentrated in the end after the zigzag ordering, the returned array contains only a few tuples, which however are enough to describe the whole block. Since \(F_Q(b-1,b-1) = 0\) earlier, we do not need to worry about the \((0,0)\) EOB potentially enlongating the block to be longer than its maximum size when decoding.
+Since the number of zeroes is concentrated in the end after the zigzag ordering, the returned array contains only a few tuples, which however are enough to describe the whole block. Since \(F_Q(b-1,b-1) = 0\) earlier, we do not need to worry about the \((0,0)\) EOB potentially elongating the block to be longer than its maximum size when decoding.
 
 
 \subsubsection{Huffman Encoding}
