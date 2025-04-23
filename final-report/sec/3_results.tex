@@ -147,7 +147,7 @@ There also appears to be a loose correlation between PSNR and compression ratio 
 
 \subsubsection{Compression Quality Vs Quantization}
 
-Using our flexible compression framework, quantization is varried according to table \ref{tab:Quantization Parameters Table} and \ref{tab:Quantization-Parameters-LN-Norm}. These quantizations are applied to images with an additional 2x chrominance downsampling applied to them.
+Using our flexible compression framework, quantization is varied according to table \ref{tab:Quantization-Parameters-Table} and \ref{tab:Quantization-Parameters-LN-Norm}. These quantizations are applied to images with an additional 2x chrominance downsampling applied to them.
 
 Interestingly, when compraing compression ratio to PSRN, there is a clear bifurcation as the quantization rate increases. Some images experience a clear increase in PSNR as the compression rate is increased, consistent with the results from the JPEG baseline. However, many of the images see hardly any increase in PSRN as the compression ratio increases \ref{fig:gauss_quantization_vs_psnr}. Taking a closer look at these images, it appears that the images for which PSRN does not correlate to compression ratio are the high or very high quality images in the dataset, with dimensions on the order of \~ 6000 x 4500. Since for all quantizations, there is a chrominance downsample factor applied, for these large images, this is likley the cause of the degrated PSNR. For images with smaller starting dimensions, a 2x chromiance downsample factor does not remove as much information, so it's expected that the PSNR would not be as degraded.
 
@@ -159,7 +159,7 @@ Interestingly, when compraing compression ratio to PSRN, there is a clear bifurc
 
 \subsubsection{LN-Norm Quantization}
 
-Along with having the ability to fine-tune the exact quantization parameters, our flexible compression pipeline also gives the ability to generate quantization matricies with different structures. Here we evaluate if the relative quantization of mid-range frequences relative to high and low frequencies can help improve performance without resulting in additional file size. Unfortunately, there is little to no change in the relationship between PSNR and compression rate as the norm N is varried, or even comprared to the Gaussian Weight quantization, as shown in figure \ref{fig:LN-norm_quantization_performance}
+Along with having the ability to fine-tune the exact quantization parameters, our flexible compression pipeline also gives the ability to generate quantization matricies with different structures. Here we evaluate if the relative quantization of mid-range frequences relative to high and low frequencies can help improve performance without resulting in additional file size. Unfortunately, there is little to no change in the relationship between PSNR and compression rate as the norm N is varied, or even comprared to the Gaussian Weight quantization, as shown in figure \ref{fig:LN-norm_quantization_performance}
 
 \begin{figure}
     \includegraphics[width=0.5\textwidth]{assets/PSNR for LN Quantization with gaussian weights.png}
@@ -198,7 +198,7 @@ ImageNet and ResNet images are already JPEG images, and therefore have some (unk
 
 As a natural starting point of comparison for Semantic Preservation, we evaluate the semantic preservation of the JPEG compression standard.
 The JPEG standard only exposes a single compression parameter available for adjustment, the JPEG Quality Factor (QF) largly effects the quantization table values for each of the Descrete-Cosine-Transformed Blocks.
-Images are evaluated for semantic preservation using algorithm \ref{alg:Confidence Error Algorithm}.
+Images are evaluated for semantic preservation using algorithm \ref{fig:Annotated JPEG Baseline}.
 Results are then parameterized by compression rate and original image content (figure \ref{fig:Comp vs Ratio JPEG Baseline}). There appears to be an inflection point around compression ratios of 0.1 or less, where certain images loose nearly all of their semantic content. For certain images, even ratios of 0.01 do not increase confidence error.
 
 Taking a closer look at these images, images where the subject is large relative to the frame of the image have their semantic classifications more well preserved even with extremely agressive compression. However, When images contain other objects than the subject, or the subject of the image is small, the compression has a more dramatic impact on the classification. This trend is highlighted in figure \ref{fig:Annotated JPEG Baseline}
@@ -224,22 +224,22 @@ These can be generated using Gaussian of the bottom right distance or scaled min
 When Quantization is increased, more of the high-frequency information of the image is lost, so by sweeping through a set of quantization parameters, we can demonstrate the relative sensitivity of semantic information on high vs low frequency components.
 The flexible compression pipeline also enables setting of luminance and chrominance quantization seperately, so we can explore whether semantic information is more closely tied to Luminance, or Chrominance information.
 
-The parameters for Chrominance and Luminance quantization tested are listed in table \ref{tab:Quantization-Parameters-Table}. For sweeps with just Luminance or just Chrominance varried, the other quantization channel is processed with no Quantization.
+The parameters for Chrominance and Luminance quantization tested are listed in table \ref{tab:Quantization-Parameters-Table}. For sweeps with just Luminance or just Chrominance varied, the other quantization channel is processed with no Quantization.
 All experiments use a Chrominance downsample factor of 2.
 
 
 Similar to the JPEG baseline, Confidence Error increases sharply when the compression rate drops below 0.1, as shown in figure \ref{fig:Confidence vs Quantization}
-Interestingly however, when just the Chrominance or just the Luminance channels are varried, both the Confidence error and the compression ratio suffer. Shown in figure \ref{fig:just chroma or luma downsampling}
-
+Interestingly however, when just the Chrominance or just the Luminance channels are varied, both the Confidence error and the compression ratio suffer. Shown in figure \ref{fig:just chroma or luma downsampling}
 \begin{figure}
     \label{fig:Confidence vs Quantization}
     \includegraphics[width=0.5\textwidth]{assets/Quantization Sweep No Title Chrominance and Luminance.png}
-    \caption{Confidence Error vs Compression Ratio as the Quantization parameters are varried. Quantization has very little effect on Semantic information until the compression ratio gets below approximately 0.1.}
+    \caption{Confidence Error vs Compression Ratio as the Quantization parameters are varied. Quantization has very little effect on Semantic information until the compression ratio gets below approximately 0.1.}
+    \label{fig:Confidence vs Quantization}
 \end{figure}
 \begin{figure}
-    \label{fig:just chroma or luma downsampling}
     \includegraphics[width=0.5\textwidth]{assets/Chroma and Luma downsampling combined.png}
     \caption{Unlike in \ref{fig:Confidence vs Quantization}, if just one of the channel types is quantized, the semantic information is quickly lost, and the compression ratio is not improved.}
+    \label{fig:just chroma or luma downsampling}
 \end{figure}
 
 \subsubsection{Block Size}
@@ -249,9 +249,9 @@ Larger Blocks include a wider range of frequencies and more information being tr
 In this experiment, we test apply our compression to images while varrying block size.
 
 \begin{figure}
-    \label{fig:block_size_sweep}
     \includegraphics[width=0.5\textwidth]{assets/Confidence Err Vs Block Size.png}
     \caption{Confidence Error vs Compression Ratio for a variety of block sizes. The compression ratio }
+    \label{fig:block_size_sweep}
 \end{figure}
 \subsection{Runtime and Performance}
 % TODO: populate runtime benchmarks from .metrics.json
