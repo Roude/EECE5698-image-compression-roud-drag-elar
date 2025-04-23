@@ -305,6 +305,10 @@ When performing parameter sweeps across various compression parameters, we evalu
 
 In this way, the semantic content is systematically compared and evaluated for each of the test images.
 
+\subsubsection{Image Preprocessing for Resnet50}
+
+Resnet50 requires images to be passed in cropped to a size of 224x224, and normalized to a pixel value range per channel of approximately -1 to 1. In order to avoid unfavorable crops of images, each image scalled down to a height of 256, and then center-cropped to 224x224 pixels. This way, a large portion of the center of the image is passed into the classifier. It is worth noting that this resize and crop preprocessing is essentially a lossy compression before the semantic information is extracted. If the only purpose of an compression algorithm is to extract semantic information, and the visual quality is of no concern, likley the most effective way to compress that image would be to downsample the image uniformally to the required size and perform a lossless encoding from there. There are many cases however, where the aesthetic quality of the image is important, and for these, the full image resolution is needed.
+
 \subsection{Configuration Management}
 \label{sec:config_management}
 All compression parameters are stored in human-readable YAML files. These files are passed into the system via CLI (e.g., \texttt{results\_compression.py --config homemade\_compression\_jpeg\_like.yaml}).
