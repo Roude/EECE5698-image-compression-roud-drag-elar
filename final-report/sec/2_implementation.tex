@@ -1,7 +1,7 @@
 \section{Implementation}
 \label{sec:implementation}
 
-Our Python-based JPEG-like compression system is designed with modularity and experimentation in mind. It mirrors key stages of the classical JPEG pipeline while allowing for customized configurations through YAML files. In this section, we describe the architecture and underlying algorithms for each major component of our system, which include preprocessing, block-based DCT, quantization, entropy encoding, and full decompression support.
+Our Python-based JPEG-like compression system is designed with modularity and experimentation in mind. It mirrors key stages of the classical JPEG pipeline while allowing for customized configurations through YAML files. In this section, we describe the architecture and underlying algorithms for each major component of our system, which include preprocessing, block-based Descrete Cosine Transform, quantization, entropy encoding, and full decompression support.
 
 \subsection{Overall Compression Pipeline Structure}
 The compression process consists of the following sequential stages:
@@ -197,6 +197,8 @@ Since the number of zeroes is concentrated in the end after the zigzag ordering,
 
 
 \subsubsection{Huffman Encoding}
+
+\textbf{This Section Needs Citations}
 Both the AC and the delta-encoded DC values of all blocks are finally forwarded, separated both by AC and DC as well as by luminance and chrominance, to the Huffman encoding algorithm. Here each symbol is counted and thus has its frequency determined. This frequency shall axiomatically serve as the probability of a symbol \(p(x_i)\) from now on.
 
 Huffman encoding is a widely used lossless data compression algorithm that assigns variable-length codewords to symbols based on their probabilities. The key idea is to use shorter codes for more frequent symbols and longer codes for less frequent ones, minimizing the average codeword length. To further understand Huffman encoding, we first need some basic concepts from information theory. 
@@ -264,9 +266,13 @@ The decompression logic is implemented in \texttt{src/decompression.py}. It was 
 
 One point of interest here might be the handling of the upsampling. Before the colors can be converted back to RGB, the lower dimension chrominance channels need to be expanded accordingly. This can be done using any way of interpolation, we decided on nearest-neighbor for computation speed. However linear and other interpolation algorithms can be used to get better results.
 
+\subsection{Evaluating Compression Distortion}
+
+In order to evaluate compression distortion, two metrics are used: Structrual Similarity Index (SSIM) and PSNR (Peak Signal to Noise Ratio). These metrics are commonly used to compare "ground truth" images to processed images. \cite{wang2004image}\cite{psnr} The skimage package included as part of SciPy includes functions to calculate both SSIM and PSNR for a pair of images. These metrics are systematically evaluated across a sweep of images.
+
 \subsection{Evaluation of Semantic Information}
 
-While JPEG and other compression algorithms where designed largely with aesthetic quality preservation in mind, an important metric for modern compression algorithms is loss of semantic information. 
+While JPEG and other compression algorithms where designed largely with aesthetic quality preservation in mind, an important metric for modern compression algorithms is the preservation of semantic information. 
 Evaluating the Semantic Preservation of a compression algorithm is essentially asking \enquote {Does the compressed image produce the same classification result with the same model input parameters?}. A competing requirement for compression performance is compression ratio, or the fraction of image data the compressed encoded image takes up. As the compression ratio approaches zero, it's expected that the semantic content of the image would be lost. Therefore, understanding what compression parameters improve compression rate without degrading semantic content is the subject of exploration for this next section.
 
 We propose Confidence Error as a general summary metric for Semantic Preservation. Let $C_{err}$ represent our metric, the Confidence Error. Let $L_{max}$ be the highest probability label from and inference pass with Resnet50 on the uncompressed image. Let $P^{Lmax}_{uncompressed}$ be the probability of this label. Let $P^{Lmax}_{compressed}$ be the classification probability of label $L_{max}$ on the compressed image.
@@ -332,7 +338,7 @@ Key implementation goals included:
 
 While the initial division of work outlined in our February project proposal was tentative, the responsibilities naturally evolved during development. Although all team members collaborated conceptually, the division of work is outlined below:
 \begin{itemize}
-  \item George Roudebush: compression pipeline, parameter sweeps, quantization table and function development, baseline JPEG comparison, Semantic Preservation method development and testing, utility methods, test image dataset curation, and configuration integration.
+  \item George Roudebush: compression pipeline, parameter sweeps, quantization table and function development, baseline JPEG comparison, Semantic Preservation method development and testing, utility methods, test image dataset curation, and configuration integration, report results section, production of datasets for report and analysis of those datasets.
   \item Nicolas Drager: Entropy encoding, file coding, decompression pipeline, size estimation and compression metrics in file coding, bug fixes in all other compression methods, making it possible to switch between parameters, utility methods, huffman methods, testing methods, adapting the introduction in the report, implementation report up to \ref{sec:config_management}
   \item Muhammad Elarbi: decompression pipeline, padding error fixes, unit test development, raw image test dataset creation (CR2), output location handling, final-report drafting, documentation, and code cleanup
 \end{itemize}

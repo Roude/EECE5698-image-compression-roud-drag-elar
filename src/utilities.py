@@ -44,11 +44,6 @@ def parse_huffman_table(raw_huffman_tables):
 
     return fixed_tables
 
-
-import numpy as np
-import json
-
-
 def make_serializable_table(tables):
     serializable_tables = {}
     for table_name, table in tables.items():
@@ -151,8 +146,6 @@ def gaussian_matrix(shape, max_value, std_dev):
     gaussian *= max_value / gaussian[y0, x0]
 
     return gaussian
-
-import numpy as np
 
 def ln_norm(shape, max_value, min_value, norm_order):
     """

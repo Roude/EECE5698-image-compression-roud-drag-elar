@@ -6,7 +6,7 @@ This section presents an evaluation of our JPEG-like compression system across m
 \subsection{Overview of Evaluation Goals}
 Our evaluation focuses on the following:
 \begin{itemize}
-    \item \textbf{Visual Fidelity}: Comparison of output image quality under various compression settings
+    \item \textbf{Compression Quality}: Comparison of output image quality under various compression settings
     \item \textbf{Compression Ratio}: Size reduction achieved with each configuration
     \item \textbf{Semantic Preservation}: Classification consistency of compressed images using pre-trained models
     \item \textbf{Runtime Performance}: Timing analysis for compression and decompression operations
@@ -29,23 +29,170 @@ These additional sweeps were introduced after the initial draft to better isolat
 
 To assist with analysis and visualization, we created a dedicated Jupyter notebook (\texttt{notebooks/plot\_results.ipynb}) to plot trends in PSNR, SSIM, compression ratios, and runtime performance across different sweep parameters.
 
-\textit{Insert evaluation table or summary here when ready}
+\subsection{Parameter Sweeps}
+
+To test the sensitivity of our various metrics across a variety of compression parameters, the following parameter sweeps are performed:
+
+\begin{table}[h!]
+    \centering
+    \caption{Gaussian Quantization Weights Quantization Parameters Tested}
+    \begin{tabularx}{0.5\textwidth}{X c c c}
+        \toprule
+        \ & \textbf{Luma} & \textbf{Chroma} \\
+        \ & \textbf{Quantization} & \textbf{Quantization} \\
+        \ & \textbf{Max, $\sigma$} & \textbf{Max, $\sigma$} \\
+        \midrule
+        No Quantization & 1 , 1 & 1, 1 \\
+        High Quality & 10,3 & 20, 3 \\
+        Quality & 30, 5 & 40, 5 \\
+        Moderate Quality & 60, 6 & 75, 6 \\
+        Low Quality & 100, 8 & 125, 8 \\
+        Very Low Quality & 150, 10 & 200, 10 \\
+        \bottomrule
+    \end{tabularx}
+    \label{tab:Quantization-Parameters-Table}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \caption{LN-Norm Quantization Parameters Tested}
+    \begin{tabularx}{0.5\textwidth}{X c c c}
+        \toprule
+        \ & \textbf{Luma} & \textbf{Chroma} \\
+        \ & \textbf{Quantization} & \textbf{Quantization} \\
+        \ & \textbf{Max, Min} & \textbf{Max, Min} \\
+        \midrule
+        No Quantization & 1 , 1 & 1, 1 \\
+        L1.5 HQ & 10, 5 & 20, 10 \\
+        L1.5 Q & 40, 20 & 50, 30 \\
+        L1.5 M Quality & 50, 20 & 60, 30 \\
+        L1.5 LQ & 100, 30 & 125, 40 \\
+        L1.5 VLQ & 200, 80 & 150, 60 \\
+        L2 HQ & 10, 5 & 20, 10 \\
+        L2 Q & 40, 20 & 50, 30 \\
+        L2 M Quality & 50, 20 & 60, 30 \\
+        L2 LQ & 100, 30 & 125, 40 \\
+        L2 VLQ & 200, 80 & 150, 60 \\
+        L3 HQ & 10, 5 & 20, 10 \\
+        L3 Q & 40, 20 & 50, 30 \\
+        L3 M Quality & 50, 20 & 60, 30 \\
+        L3 LQ & 100, 30 & 125, 40 \\
+        L3 VLQ & 200, 80 & 150, 60 \\
+        \bottomrule
+    \end{tabularx}
+    \label{tab:Quantization-Parameters-LN-Norm}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \caption{Downsample Rates Tested, No further quantization}
+    \begin{tabularx}{0.5\textwidth}{X c c c}
+        \toprule
+        \ & \textbf{Downsample Rate} \\
+        \midrule
+        No Quantization & 1 \\
+        High Quality & 2 \\
+        Quality & 4 \\
+        Moderate Quality & 6 \\
+        Low Quality & 8 \\
+        Very Low Quality & 12 \\
+        \bottomrule
+    \end{tabularx}
+    \label{tab:Downsample Parameters}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \caption{Block sizes tested, Gaussian Weight Quantization, max 50, $\sigma = $ block size/2}
+    \begin{tabularx}{0.5\textwidth}{X c c c}
+        \toprule
+        \ & \textbf{Block Size} \\
+        \midrule
+        High Quality & 4 \\
+        Quality & 8 \\
+        Moderate Quality & 16 \\
+        Low Quality & 24 \\
+        Very Low Quality & 48 \\
+        \bottomrule
+    \end{tabularx}
+    \label{tab:Block Size Sweep}
+\end{table}
 
 \subsection{Compression Quality}
-% TODO: add PSNR/SSIM charts, or image quality metrics.
-Placeholder: Figures will be added here comparing PSNR and/or SSIM across sweep configurations. Add compression ratio graphs (original vs compressed file size).
+
+By comparing SSIM and PSNR to Compression Ratio allows us to determine which compression parameters can be modified to reduce image size while maintaining image quality.
+
+\subsubsection{JPEG Baseline}
+
+As a starting point of comparison, JPEG baseline images are evaluated across a range of quality factors. As expected, both quality metrics look better with higher quality factors, shown by figure \ref{fig:psnr_jpeg} and figure \ref{fig:ssim_jpeg}.
+There also appears to be a loose correlation between PSNR and compression ratio shown in figure \ref{fig:psnr_vs_compression_ratio}. Generally for any given image as the compression ratio decreases, so does the PSNR. However, when looking at a wide variety of images, the quotent of the PSRN to the compression rate can be very different image to image.
+
+\begin{figure}
+    \includegraphics[width=0.5\textwidth]{assets/JPEG Quality Factor and PSNR.png}
+    \caption{Quality factor vs PSNR}
+    \label{fig:psnr_jpeg}
+\end{figure}
+
+\begin{figure}
+    \includegraphics[width=0.5\textwidth]{assets/JPEG Quality factor and SSIM Score.png}
+    \caption{Quality Factor vs SSIM}
+    \label{fig:ssim_jpeg}
+\end{figure}
+
+\begin{figure}
+    \includegraphics[width=0.5\textwidth]{assets/JPEG Compression Ratio Vs PSNR.png}
+    \caption{PSNR Vs Compression Rate for a variety of Quality Factors}
+    \label{fig:psnr_vs_compression_ratio}
+\end{figure}
+
+\subsubsection{Compression Quality Vs Quantization}
+
+Using our flexible compression framework, quantization is varried according to table \ref{tab:Quantization Parameters Table} and \ref{tab:Quantization-Parameters-LN-Norm}. These quantizations are applied to images with an additional 2x chrominance downsampling applied to them.
+
+Interestingly, when compraing compression ratio to PSRN, there is a clear bifurcation as the quantization rate increases. Some images experience a clear increase in PSNR as the compression rate is increased, consistent with the results from the JPEG baseline. However, many of the images see hardly any increase in PSRN as the compression ratio increases \ref{fig:gauss_quantization_vs_psnr}. Taking a closer look at these images, it appears that the images for which PSRN does not correlate to compression ratio are the high or very high quality images in the dataset, with dimensions on the order of \~ 6000 x 4500. Since for all quantizations, there is a chrominance downsample factor applied, for these large images, this is likley the cause of the degrated PSNR. For images with smaller starting dimensions, a 2x chromiance downsample factor does not remove as much information, so it's expected that the PSNR would not be as degraded.
+
+\begin{figure}
+    \includegraphics[width=0.5\textwidth]{assets/Quantization Sweep Compression Ratio vs PSRN.png}
+    \caption{PSRN vs Compression Ratio across a sweep of quantizations defined in table \ref{tab:Quantization-Parameters-Table}. Clear bifurcation shows that images with larger starting dimensions suffer more from even a modest 2x chrominance downsample factor}
+    \label{fig:gauss_quantization_vs_psnr}
+\end{figure}
+
+\subsubsection{LN-Norm Quantization}
+
+Along with having the ability to fine-tune the exact quantization parameters, our flexible compression pipeline also gives the ability to generate quantization matricies with different structures. Here we evaluate if the relative quantization of mid-range frequences relative to high and low frequencies can help improve performance without resulting in additional file size. Unfortunately, there is little to no change in the relationship between PSNR and compression rate as the norm N is varried, or even comprared to the Gaussian Weight quantization, as shown in figure \ref{fig:LN-norm_quantization_performance}
+
+\begin{figure}
+    \includegraphics[width=0.5\textwidth]{assets/PSNR for LN Quantization with gaussian weights.png}
+    \caption{PSRN vs compression ratio for a variety of quantization weights. Changing the relative rates of quantization for mid-range frequencies has no impact on the relationship between the image PSNR and the compression rate.}
+    \label{fig:LN-norm_quantization_performance}
+\end{figure}
+
+\subsubsection{Downsampling}
+
+\subsubsection{Block Size}
+
+\subsubsection{Compression Quality Discussion}
+
+%TODO: Provide a summary of these results
 
 \subsection{Semantic Preservation}
 Images were evaluated using a pre-trained classification model (e.g., ResNet50) to test whether compression degrades semantic content. This was done using \texttt{test/classification\_tests.py}.
 
-\subsubsection{Semantic Preservation Metric}
+\textbf{TODO: Replace charts in this section with ones that have clearer labels and axis titles.}
 
+\subsubsection{Test Images for Semantic Preservation}
 
-\subsubsection{Test Images}
+In order to evaluate our compression pipeline, a set of test images with a variety of objects for classification was chosen. 
+Resnet50 is a model largely for objects and non-human subjects, so images with a clear subject well centered in the image, spanning range of sizes relative to the size of the image. 
+Additionally, some images were deliberately chosen because they contain multiple subjects or subjects where the classification is somewhat ambiguous, to see if these are more adversely effected by the compression than clear images, see figure \ref{fig:test_images} for the continum of subjects tested. 
+All test images are evaluated against all compression configurations. A set of novel images for classification are chosen for benchmarking rather than ImageNet or ResNet training set images to avoid compounding effects of muliple lossy compressions on the image. 
+ImageNet and ResNet images are already JPEG images, and therefore have some (unknown) level of compression already applied to them. The test set images are either raw formats or lossless image formats (such as .png, and .webp).
 
-In order to evaluate our compression pipeline, a set of test images with a variety of objects for classification was chosen. Resnet50 is a model largely for objects and non-human subjects, so images with a clear subject well centered in the image, spanning range of sizes relative to the size of the image. Additionally, some images were deliberately chosen because they contain multiple subjects or subjects where the classification is somewhat ambiguous, to see if these are more adversely effected by the compression than clear images. All test images are evaluated against all compression configurations. A set of novel images for classification are chosen for benchmarking rather than ImageNet or ResNet training set images to avoid compounding effects of muliple lossy compressions on the image. ImageNet and ResNet images are already JPEG images, and therefore have some (unknown) level of compression already applied to them. The test set images are either raw formats or lossless image formats (such as .png, and .webp).
-
-% TODO: Incude table with the test images used for semantic preservation testing.
+\begin{figure}
+    \includegraphics{assets/Classification Sweep.png}
+    \caption{Images are chosen for classification with a variety of subjects and easy of classification.}
+    \label{fig:test_images}
+\end{figure}
 
 \subsubsection{JPEG Compression as a baseline for Semantic Preservation}
 
@@ -57,15 +204,15 @@ Results are then parameterized by compression rate and original image content (f
 Taking a closer look at these images, images where the subject is large relative to the frame of the image have their semantic classifications more well preserved even with extremely agressive compression. However, When images contain other objects than the subject, or the subject of the image is small, the compression has a more dramatic impact on the classification. This trend is highlighted in figure \ref{fig:Annotated JPEG Baseline}
 
 \begin{figure}
-    \label{fig:Comp vs Ratio JPEG Baseline}
     \includegraphics[width=0.5\textwidth]{assets/Baseline JPEG Confidence vs Comp Ratio.png}
     \caption{Confidence Error vs Compression Ratio for JPEG Compression. Smaller Values on the X axis correspond to smaller compressed images, while higher values on the Y axis correspond to a higher classification error rate. It appears that compression rates have little to no effect on semantic content until the compression ratio dips below 0.1.}
+    \label{fig:Comp vs Ratio JPEG Baseline}
 \end{figure}
 
 \begin{figure}
-    \label{fig:Annotated JPEG Baseline}
     \includegraphics[width=0.5\textwidth]{assets/JPEG Baseline Compression with Examples}
     \caption{Certain Images have their semantic content preserved even with extremely agressive compression parameters where images are reduced to 0.6\% of their original size. Other images suffer from a sharp decline preserved semantic information. Intuitively, the higher the percentage of pixels in the image that represent the subject of classificatoin (as in the case of the jellyfish and the racecar), the better semantic preservation through compression.}
+    \label{fig:Annotated JPEG Baseline}
 \end{figure}
 
 The results for JPEG compression on these test images can serve as a baseline for other compression parameters evaluated.
@@ -77,26 +224,9 @@ These can be generated using Gaussian of the bottom right distance or scaled min
 When Quantization is increased, more of the high-frequency information of the image is lost, so by sweeping through a set of quantization parameters, we can demonstrate the relative sensitivity of semantic information on high vs low frequency components.
 The flexible compression pipeline also enables setting of luminance and chrominance quantization seperately, so we can explore whether semantic information is more closely tied to Luminance, or Chrominance information.
 
-The parameters for Chrominance and Luminance quantization tested are listed in table \ref{tab:Quantization Parameters Table}. For sweeps with just Luminance or just Chrominance varried, the other quantization channel is processed with no Quantization.
+The parameters for Chrominance and Luminance quantization tested are listed in table \ref{tab:Quantization-Parameters-Table}. For sweeps with just Luminance or just Chrominance varried, the other quantization channel is processed with no Quantization.
 All experiments use a Chrominance downsample factor of 2.
 
-\begin{table}[h!]
-\centering
-\caption{Sample Table Caption}
-\label{tab:Quantization Parameters Table}
-\begin{tabular}{c|c|c|c|c}
-\toprule
-\textbf{Parameter Summary} & \textbf{Max Luma Quant} & \textbf{Luminance $\sigma$} & \textbf{Max Chroma Quant} & \textbf{Chrominance $\sigma$} \\
-\midrule
-No Quantization & 1 & 1 & 1 & 1 \\
-High Quality & 10 & 3 & 20 & 3 \\
-Quality & 30 & 5 & 40 & 5 \\
-Moderate Quality & 60 & 6 & 75 & 6 \\
-Low Quality & 100 & 8 & 125 & 8 \\
-Very Low Quality & 150 & 10 & 200 & 10 \\
-\bottomrule
-\end{tabular}
-\end{table}
 
 Similar to the JPEG baseline, Confidence Error increases sharply when the compression rate drops below 0.1, as shown in figure \ref{fig:Confidence vs Quantization}
 Interestingly however, when just the Chrominance or just the Luminance channels are varried, both the Confidence error and the compression ratio suffer. Shown in figure \ref{fig:just chroma or luma downsampling}
@@ -133,12 +263,3 @@ Execution time for both compression and decompression is measured and stored dur
 This subsection will summarize observed trends from the plots once all data is collected.
 
 \textit{Pending: Discuss how image quality trades off with size reduction, runtime trends, and what configurations offered best balance}
-
-% Note to team:
-\textbf{NOTE TO TEAM:} Feel free to add figures using the `figure' environment, or tables using `table'. If any scripts output LaTeX-ready tables/plots, drop them in here. If results are still being generated, you can drop bullet points or markdown-style notes and we will convert them later.
-
-\begin{itemize}
-    \item \texttt{Use \textbackslash includegraphics\{filename\}} for figures stored in the same folder
-    \item Comment clearly where plots/data are pending so we can track what still needs work
-    \item Mention which script produced a plot to help trace reproducibility
-\end{itemize}
