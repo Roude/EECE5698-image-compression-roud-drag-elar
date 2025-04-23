@@ -1,0 +1,386 @@
+,Image Name,Compression Name,Quality Factor,Compression Rate (uncompressed image size / compressed file size),SSIM Score,PSNR,Uncompressed Reference Index,Uncompressed Reference Label,Reference Probability,Compressed Probability of Reference Label,Confidence Drift
+0,20220422-20220424-elarbi-coachella-4B5A8619.CR2,baseline_jpeg_q1.yaml,1,0.006,0.809,25.174,981,ballplayer,0.16,0.0,0.98
+1,20220422-20220424-elarbi-coachella-4B5A8887.CR2,baseline_jpeg_q1.yaml,1,0.006,0.692,23.78,541,drum,0.59,0.28,0.527
+2,20220930-elarbi-ner-4B5A2550.CR2,baseline_jpeg_q1.yaml,1,0.006,0.575,25.948,573,go-kart,0.82,0.25,0.7
+3,20230501-elarbi-neugradphotos-4B5A7958.CR2,baseline_jpeg_q1.yaml,1,0.006,0.64,23.989,557,flagpole,0.88,0.92,0.048
+4,20230501-elarbi-neugradphotos-4B5A7992.CR2,baseline_jpeg_q1.yaml,1,0.006,0.78,24.159,999,toilet tissue,0.13,0.07,0.44
+5,20230501-elarbi-neugradphotos-4B5A8009.CR2,baseline_jpeg_q1.yaml,1,0.007,0.518,20.639,683,oboe,0.18,0.02,0.881
+6,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,baseline_jpeg_q1.yaml,1,0.005,0.875,24.097,818,spotlight,0.15,0.0,0.998
+7,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,baseline_jpeg_q1.yaml,1,0.006,0.576,24.915,841,sweatshirt,0.17,0.01,0.964
+8,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,baseline_jpeg_q1.yaml,1,0.006,0.595,24.553,489,chainlink fence,0.93,0.97,0.034
+9,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,baseline_jpeg_q1.yaml,1,0.006,0.79,25.395,643,mask,0.35,0.56,0.598
+10,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,baseline_jpeg_q1.yaml,1,0.006,0.592,23.931,796,ski mask,0.23,0.47,1.081
+11,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,baseline_jpeg_q1.yaml,1,0.005,0.664,24.776,585,hair spray,0.27,0.03,0.869
+12,20241017-elarbi-bladeeNYC-4B5A2464.CR2,baseline_jpeg_q1.yaml,1,0.006,0.832,23.88,819,stage,0.69,0.19,0.719
+13,20241017-elarbi-bladeeNYC-4B5A2603.CR2,baseline_jpeg_q1.yaml,1,0.006,0.572,27.709,650,microphone,0.22,0.02,0.899
+14,20241111-elarbi-thehellpNYC-4B5A4361.CR2,baseline_jpeg_q1.yaml,1,0.006,0.623,25.211,860,tobacco shop,0.33,0.22,0.342
+15,20241113-elarbi-thehellpBOS-4B5A4416.CR2,baseline_jpeg_q1.yaml,1,0.006,0.687,23.118,526,desk,0.66,0.74,0.122
+16,20241113-elarbi-thehellpBOS-4B5A4417.CR2,baseline_jpeg_q1.yaml,1,0.005,0.809,25.319,784,screwdriver,0.37,0.02,0.934
+17,20241113-elarbi-thehellpBOS-4B5A4438.CR2,baseline_jpeg_q1.yaml,1,0.006,0.669,23.903,819,stage,0.64,0.73,0.139
+18,20241113-elarbi-thehellpBOS-4B5A4452.CR2,baseline_jpeg_q1.yaml,1,0.006,0.852,24.915,793,shower cap,0.37,0.0,0.998
+19,20250222-elarbi-redbullBOS-4B5A4586.CR2,baseline_jpeg_q1.yaml,1,0.006,0.642,24.554,450,bobsled,0.3,0.19,0.359
+20,Artistic_portrait.avif,baseline_jpeg_q1.yaml,1,0.006,0.77,27.102,107,jellyfish,0.42,0.26,0.379
+21,Bright_red_portrait.avif,baseline_jpeg_q1.yaml,1,0.006,0.672,23.524,684,ocarina,0.75,0.02,0.975
+22,Brooklyn_bridge.webp,baseline_jpeg_q1.yaml,1,0.008,0.619,21.025,718,pier,0.88,0.08,0.913
+23,Brush_ends.webp,baseline_jpeg_q1.yaml,1,0.006,0.543,21.849,696,paintbrush,0.96,0.01,0.992
+24,bunny.CR2,baseline_jpeg_q1.yaml,1,0.007,0.55,21.978,330,wood rabbit,0.5,0.79,0.574
+25,Colorful_patern_portrait.webp,baseline_jpeg_q1.yaml,1,0.006,0.617,21.952,836,sunglass,0.55,0.59,0.085
+26,Colorful_portrait.webp,baseline_jpeg_q1.yaml,1,0.006,0.58,23.454,552,feather boa,1.0,0.0,0.999
+27,el_capitain_with_night_sky.webp,baseline_jpeg_q1.yaml,1,0.005,0.675,25.281,972,cliff,0.45,0.01,0.973
+28,green_wheat_field.webp,baseline_jpeg_q1.yaml,1,0.006,0.57,22.202,984,rapeseed,1.0,0.05,0.946
+29,landscape.png,baseline_jpeg_q1.yaml,1,0.006,0.612,21.959,984,rapeseed,0.25,0.02,0.917
+30,man_holding_camera.webp,baseline_jpeg_q1.yaml,1,0.007,0.565,21.923,763,revolver,0.06,0.0,0.999
+31,Polar_bear_over_water.webp,baseline_jpeg_q1.yaml,1,0.007,0.498,22.067,296,ice bear,0.17,0.0,0.998
+32,Portrate_with_greenery_background.webp,baseline_jpeg_q1.yaml,1,0.006,0.726,23.669,610,jersey,0.31,0.01,0.972
+33,Threads_up_close.webp,baseline_jpeg_q1.yaml,1,0.006,0.659,25.82,490,chain mail,0.28,0.0,0.995
+34,wheat_field.webp,baseline_jpeg_q1.yaml,1,0.007,0.582,21.405,998,ear,0.27,0.0,0.989
+35,20220422-20220424-elarbi-coachella-4B5A8619.CR2,baseline_jpeg_q10.yaml,10,0.007,0.896,32.818,981,ballplayer,0.16,0.11,0.292
+36,20220422-20220424-elarbi-coachella-4B5A8887.CR2,baseline_jpeg_q10.yaml,10,0.009,0.873,30.502,541,drum,0.59,0.4,0.322
+37,20220930-elarbi-ner-4B5A2550.CR2,baseline_jpeg_q10.yaml,10,0.007,0.887,33.037,573,go-kart,0.82,0.85,0.032
+38,20230501-elarbi-neugradphotos-4B5A7958.CR2,baseline_jpeg_q10.yaml,10,0.011,0.859,29.517,557,flagpole,0.88,0.98,0.114
+39,20230501-elarbi-neugradphotos-4B5A7992.CR2,baseline_jpeg_q10.yaml,10,0.008,0.903,31.47,999,toilet tissue,0.13,0.13,0.011
+40,20230501-elarbi-neugradphotos-4B5A8009.CR2,baseline_jpeg_q10.yaml,10,0.017,0.818,26.731,683,oboe,0.18,0.03,0.851
+41,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,baseline_jpeg_q10.yaml,10,0.005,0.941,33.697,818,spotlight,0.15,0.11,0.262
+42,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,baseline_jpeg_q10.yaml,10,0.008,0.85,32.031,841,sweatshirt,0.17,0.34,1.037
+43,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,baseline_jpeg_q10.yaml,10,0.011,0.851,30.825,489,chainlink fence,0.93,0.91,0.027
+44,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,baseline_jpeg_q10.yaml,10,0.007,0.898,32.724,643,mask,0.35,0.29,0.19
+45,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,baseline_jpeg_q10.yaml,10,0.01,0.878,30.024,796,ski mask,0.23,0.73,2.213
+46,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,baseline_jpeg_q10.yaml,10,0.006,0.855,33.213,585,hair spray,0.27,0.08,0.7
+47,20241017-elarbi-bladeeNYC-4B5A2464.CR2,baseline_jpeg_q10.yaml,10,0.007,0.911,32.288,819,stage,0.69,0.54,0.224
+48,20241017-elarbi-bladeeNYC-4B5A2603.CR2,baseline_jpeg_q10.yaml,10,0.007,0.837,33.296,650,microphone,0.22,0.11,0.467
+49,20241111-elarbi-thehellpNYC-4B5A4361.CR2,baseline_jpeg_q10.yaml,10,0.009,0.828,31.114,860,tobacco shop,0.33,0.2,0.386
+50,20241113-elarbi-thehellpBOS-4B5A4416.CR2,baseline_jpeg_q10.yaml,10,0.012,0.884,29.099,526,desk,0.66,0.82,0.252
+51,20241113-elarbi-thehellpBOS-4B5A4417.CR2,baseline_jpeg_q10.yaml,10,0.007,0.907,33.025,784,screwdriver,0.37,0.31,0.142
+52,20241113-elarbi-thehellpBOS-4B5A4438.CR2,baseline_jpeg_q10.yaml,10,0.01,0.822,30.189,819,stage,0.64,0.72,0.133
+53,20241113-elarbi-thehellpBOS-4B5A4452.CR2,baseline_jpeg_q10.yaml,10,0.007,0.916,32.191,793,shower cap,0.37,0.19,0.492
+54,20250222-elarbi-redbullBOS-4B5A4586.CR2,baseline_jpeg_q10.yaml,10,0.007,0.826,32.032,450,bobsled,0.3,0.19,0.363
+55,Artistic_portrait.avif,baseline_jpeg_q10.yaml,10,0.007,0.682,34.013,107,jellyfish,0.42,0.26,0.369
+56,Bright_red_portrait.avif,baseline_jpeg_q10.yaml,10,0.009,0.799,29.761,684,ocarina,0.75,0.42,0.437
+57,Brooklyn_bridge.webp,baseline_jpeg_q10.yaml,10,0.015,0.789,25.166,718,pier,0.88,0.6,0.313
+58,Brush_ends.webp,baseline_jpeg_q10.yaml,10,0.01,0.798,30.037,696,paintbrush,0.96,0.85,0.108
+59,bunny.CR2,baseline_jpeg_q10.yaml,10,0.013,0.82,28.499,330,wood rabbit,0.5,0.55,0.095
+60,Colorful_patern_portrait.webp,baseline_jpeg_q10.yaml,10,0.009,0.785,28.025,836,sunglass,0.55,0.52,0.043
+61,Colorful_portrait.webp,baseline_jpeg_q10.yaml,10,0.008,0.731,29.76,552,feather boa,1.0,0.24,0.764
+62,el_capitain_with_night_sky.webp,baseline_jpeg_q10.yaml,10,0.007,0.811,30.774,972,cliff,0.45,0.46,0.035
+63,green_wheat_field.webp,baseline_jpeg_q10.yaml,10,0.01,0.724,27.187,984,rapeseed,1.0,0.99,0.009
+64,landscape.png,baseline_jpeg_q10.yaml,10,0.01,0.742,25.999,984,rapeseed,0.25,0.15,0.375
+65,man_holding_camera.webp,baseline_jpeg_q10.yaml,10,0.012,0.79,28.051,763,revolver,0.06,0.03,0.562
+66,Polar_bear_over_water.webp,baseline_jpeg_q10.yaml,10,0.014,0.756,26.866,296,ice bear,0.17,0.01,0.956
+67,Portrate_with_greenery_background.webp,baseline_jpeg_q10.yaml,10,0.008,0.86,30.904,610,jersey,0.31,0.28,0.113
+68,Threads_up_close.webp,baseline_jpeg_q10.yaml,10,0.01,0.829,30.624,490,chain mail,0.28,0.11,0.62
+69,wheat_field.webp,baseline_jpeg_q10.yaml,10,0.013,0.82,27.165,998,ear,0.27,0.02,0.941
+70,20220422-20220424-elarbi-coachella-4B5A8619.CR2,baseline_jpeg_q100.yaml,100,0.084,0.997,54.276,981,ballplayer,0.16,0.16,0.012
+71,20220422-20220424-elarbi-coachella-4B5A8887.CR2,baseline_jpeg_q100.yaml,100,0.116,0.997,48.463,541,drum,0.59,0.59,0.003
+72,20220930-elarbi-ner-4B5A2550.CR2,baseline_jpeg_q100.yaml,100,0.1,0.999,53.937,573,go-kart,0.82,0.82,0.001
+73,20230501-elarbi-neugradphotos-4B5A7958.CR2,baseline_jpeg_q100.yaml,100,0.128,0.998,50.544,557,flagpole,0.88,0.87,0.003
+74,20230501-elarbi-neugradphotos-4B5A7992.CR2,baseline_jpeg_q100.yaml,100,0.09,0.998,51.426,999,toilet tissue,0.13,0.13,0.012
+75,20230501-elarbi-neugradphotos-4B5A8009.CR2,baseline_jpeg_q100.yaml,100,0.207,0.997,45.731,683,oboe,0.18,0.18,0.038
+76,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,baseline_jpeg_q100.yaml,100,0.068,0.999,58.043,818,spotlight,0.15,0.16,0.078
+77,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,baseline_jpeg_q100.yaml,100,0.108,0.998,54.372,841,sweatshirt,0.17,0.17,0.004
+78,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,baseline_jpeg_q100.yaml,100,0.128,0.998,53.398,489,chainlink fence,0.93,0.94,0.0
+79,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,baseline_jpeg_q100.yaml,100,0.098,0.997,51.591,643,mask,0.35,0.35,0.002
+80,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,baseline_jpeg_q100.yaml,100,0.117,0.996,46.346,796,ski mask,0.23,0.22,0.033
+81,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,baseline_jpeg_q100.yaml,100,0.096,0.998,55.159,585,hair spray,0.27,0.26,0.032
+82,20241017-elarbi-bladeeNYC-4B5A2464.CR2,baseline_jpeg_q100.yaml,100,0.091,0.997,52.072,819,stage,0.69,0.7,0.011
+83,20241017-elarbi-bladeeNYC-4B5A2603.CR2,baseline_jpeg_q100.yaml,100,0.098,0.999,56.601,650,microphone,0.22,0.22,0.017
+84,20241111-elarbi-thehellpNYC-4B5A4361.CR2,baseline_jpeg_q100.yaml,100,0.126,0.999,55.439,860,tobacco shop,0.33,0.33,0.003
+85,20241113-elarbi-thehellpBOS-4B5A4416.CR2,baseline_jpeg_q100.yaml,100,0.138,0.999,53.898,526,desk,0.66,0.66,0.004
+86,20241113-elarbi-thehellpBOS-4B5A4417.CR2,baseline_jpeg_q100.yaml,100,0.082,0.998,54.692,784,screwdriver,0.37,0.37,0.016
+87,20241113-elarbi-thehellpBOS-4B5A4438.CR2,baseline_jpeg_q100.yaml,100,0.143,0.998,51.626,819,stage,0.64,0.64,0.001
+88,20241113-elarbi-thehellpBOS-4B5A4452.CR2,baseline_jpeg_q100.yaml,100,0.084,0.997,52.598,793,shower cap,0.37,0.38,0.022
+89,20250222-elarbi-redbullBOS-4B5A4586.CR2,baseline_jpeg_q100.yaml,100,0.116,0.998,52.944,450,bobsled,0.3,0.31,0.014
+90,Artistic_portrait.avif,baseline_jpeg_q100.yaml,100,0.065,0.999,56.161,107,jellyfish,0.42,0.42,0.0
+91,Bright_red_portrait.avif,baseline_jpeg_q100.yaml,100,0.148,0.992,47.02,684,ocarina,0.75,0.75,0.005
+92,Brooklyn_bridge.webp,baseline_jpeg_q100.yaml,100,0.24,0.998,47.447,718,pier,0.88,0.88,0.001
+93,Brush_ends.webp,baseline_jpeg_q100.yaml,100,0.19,0.995,49.156,696,paintbrush,0.96,0.96,0.003
+94,bunny.CR2,baseline_jpeg_q100.yaml,100,0.177,0.995,47.513,330,wood rabbit,0.5,0.5,0.014
+95,Colorful_patern_portrait.webp,baseline_jpeg_q100.yaml,100,0.166,0.992,44.526,836,sunglass,0.55,0.54,0.008
+96,Colorful_portrait.webp,baseline_jpeg_q100.yaml,100,0.19,0.991,47.901,552,feather boa,1.0,1.0,0.0
+97,el_capitain_with_night_sky.webp,baseline_jpeg_q100.yaml,100,0.144,0.996,50.54,972,cliff,0.45,0.45,0.003
+98,green_wheat_field.webp,baseline_jpeg_q100.yaml,100,0.213,0.99,44.204,984,rapeseed,1.0,1.0,0.0
+99,landscape.png,baseline_jpeg_q100.yaml,100,0.267,0.968,37.553,984,rapeseed,0.25,0.22,0.107
+100,man_holding_camera.webp,baseline_jpeg_q100.yaml,100,0.228,0.994,47.504,763,revolver,0.06,0.05,0.116
+101,Polar_bear_over_water.webp,baseline_jpeg_q100.yaml,100,0.246,0.995,47.356,296,ice bear,0.17,0.2,0.137
+102,Portrate_with_greenery_background.webp,baseline_jpeg_q100.yaml,100,0.13,0.996,51.118,610,jersey,0.31,0.31,0.002
+103,Threads_up_close.webp,baseline_jpeg_q100.yaml,100,0.134,0.998,53.64,490,chain mail,0.28,0.3,0.05
+104,wheat_field.webp,baseline_jpeg_q100.yaml,100,0.225,0.996,44.867,998,ear,0.27,0.24,0.094
+105,20220422-20220424-elarbi-coachella-4B5A8619.CR2,baseline_jpeg_q2.yaml,2,0.006,0.809,25.175,981,ballplayer,0.16,0.0,0.981
+106,20220422-20220424-elarbi-coachella-4B5A8887.CR2,baseline_jpeg_q2.yaml,2,0.006,0.692,23.782,541,drum,0.59,0.28,0.529
+107,20220930-elarbi-ner-4B5A2550.CR2,baseline_jpeg_q2.yaml,2,0.006,0.575,25.949,573,go-kart,0.82,0.25,0.701
+108,20230501-elarbi-neugradphotos-4B5A7958.CR2,baseline_jpeg_q2.yaml,2,0.006,0.64,23.991,557,flagpole,0.88,0.92,0.048
+109,20230501-elarbi-neugradphotos-4B5A7992.CR2,baseline_jpeg_q2.yaml,2,0.006,0.78,24.161,999,toilet tissue,0.13,0.07,0.436
+110,20230501-elarbi-neugradphotos-4B5A8009.CR2,baseline_jpeg_q2.yaml,2,0.007,0.518,20.642,683,oboe,0.18,0.02,0.881
+111,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,baseline_jpeg_q2.yaml,2,0.005,0.875,24.097,818,spotlight,0.15,0.0,0.998
+112,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,baseline_jpeg_q2.yaml,2,0.006,0.576,24.916,841,sweatshirt,0.17,0.01,0.965
+113,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,baseline_jpeg_q2.yaml,2,0.006,0.595,24.56,489,chainlink fence,0.93,0.97,0.034
+114,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,baseline_jpeg_q2.yaml,2,0.006,0.79,25.396,643,mask,0.35,0.56,0.602
+115,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,baseline_jpeg_q2.yaml,2,0.006,0.592,23.934,796,ski mask,0.23,0.47,1.08
+116,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,baseline_jpeg_q2.yaml,2,0.005,0.664,24.776,585,hair spray,0.27,0.03,0.869
+117,20241017-elarbi-bladeeNYC-4B5A2464.CR2,baseline_jpeg_q2.yaml,2,0.006,0.832,23.881,819,stage,0.69,0.2,0.718
+118,20241017-elarbi-bladeeNYC-4B5A2603.CR2,baseline_jpeg_q2.yaml,2,0.006,0.572,27.711,650,microphone,0.22,0.02,0.899
+119,20241111-elarbi-thehellpNYC-4B5A4361.CR2,baseline_jpeg_q2.yaml,2,0.006,0.623,25.212,860,tobacco shop,0.33,0.22,0.342
+120,20241113-elarbi-thehellpBOS-4B5A4416.CR2,baseline_jpeg_q2.yaml,2,0.006,0.687,23.121,526,desk,0.66,0.74,0.121
+121,20241113-elarbi-thehellpBOS-4B5A4417.CR2,baseline_jpeg_q2.yaml,2,0.005,0.809,25.319,784,screwdriver,0.37,0.02,0.934
+122,20241113-elarbi-thehellpBOS-4B5A4438.CR2,baseline_jpeg_q2.yaml,2,0.006,0.669,23.905,819,stage,0.64,0.73,0.141
+123,20241113-elarbi-thehellpBOS-4B5A4452.CR2,baseline_jpeg_q2.yaml,2,0.006,0.852,24.916,793,shower cap,0.37,0.0,0.998
+124,20250222-elarbi-redbullBOS-4B5A4586.CR2,baseline_jpeg_q2.yaml,2,0.006,0.642,24.555,450,bobsled,0.3,0.19,0.36
+125,Artistic_portrait.avif,baseline_jpeg_q2.yaml,2,0.006,0.77,27.103,107,jellyfish,0.42,0.26,0.371
+126,Bright_red_portrait.avif,baseline_jpeg_q2.yaml,2,0.006,0.672,23.525,684,ocarina,0.75,0.02,0.974
+127,Brooklyn_bridge.webp,baseline_jpeg_q2.yaml,2,0.008,0.62,21.029,718,pier,0.88,0.07,0.918
+128,Brush_ends.webp,baseline_jpeg_q2.yaml,2,0.006,0.543,21.849,696,paintbrush,0.96,0.01,0.992
+129,bunny.CR2,baseline_jpeg_q2.yaml,2,0.007,0.55,21.981,330,wood rabbit,0.5,0.79,0.576
+130,Colorful_patern_portrait.webp,baseline_jpeg_q2.yaml,2,0.006,0.617,21.953,836,sunglass,0.55,0.59,0.086
+131,Colorful_portrait.webp,baseline_jpeg_q2.yaml,2,0.006,0.58,23.454,552,feather boa,1.0,0.0,0.999
+132,el_capitain_with_night_sky.webp,baseline_jpeg_q2.yaml,2,0.005,0.675,25.281,972,cliff,0.45,0.01,0.973
+133,green_wheat_field.webp,baseline_jpeg_q2.yaml,2,0.006,0.57,22.202,984,rapeseed,1.0,0.05,0.946
+134,landscape.png,baseline_jpeg_q2.yaml,2,0.006,0.612,21.959,984,rapeseed,0.25,0.02,0.918
+135,man_holding_camera.webp,baseline_jpeg_q2.yaml,2,0.007,0.565,21.925,763,revolver,0.06,0.0,0.999
+136,Polar_bear_over_water.webp,baseline_jpeg_q2.yaml,2,0.007,0.499,22.068,296,ice bear,0.17,0.0,0.998
+137,Portrate_with_greenery_background.webp,baseline_jpeg_q2.yaml,2,0.006,0.726,23.67,610,jersey,0.31,0.01,0.972
+138,Threads_up_close.webp,baseline_jpeg_q2.yaml,2,0.006,0.659,25.822,490,chain mail,0.28,0.0,0.995
+139,wheat_field.webp,baseline_jpeg_q2.yaml,2,0.007,0.582,21.406,998,ear,0.27,0.0,0.989
+140,20220422-20220424-elarbi-coachella-4B5A8619.CR2,baseline_jpeg_q20.yaml,20,0.008,0.941,37.177,981,ballplayer,0.16,0.16,0.017
+141,20220422-20220424-elarbi-coachella-4B5A8887.CR2,baseline_jpeg_q20.yaml,20,0.012,0.925,33.924,541,drum,0.59,0.55,0.074
+142,20220930-elarbi-ner-4B5A2550.CR2,baseline_jpeg_q20.yaml,20,0.009,0.927,36.226,573,go-kart,0.82,0.83,0.004
+143,20230501-elarbi-neugradphotos-4B5A7958.CR2,baseline_jpeg_q20.yaml,20,0.016,0.92,33.033,557,flagpole,0.88,0.9,0.028
+144,20230501-elarbi-neugradphotos-4B5A7992.CR2,baseline_jpeg_q20.yaml,20,0.011,0.944,34.931,999,toilet tissue,0.13,0.14,0.08
+145,20230501-elarbi-neugradphotos-4B5A8009.CR2,baseline_jpeg_q20.yaml,20,0.026,0.895,29.841,683,oboe,0.18,0.22,0.188
+146,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,baseline_jpeg_q20.yaml,20,0.006,0.96,38.382,818,spotlight,0.15,0.19,0.26
+147,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,baseline_jpeg_q20.yaml,20,0.01,0.911,35.611,841,sweatshirt,0.17,0.2,0.207
+148,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,baseline_jpeg_q20.yaml,20,0.015,0.913,34.229,489,chainlink fence,0.93,0.93,0.004
+149,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,baseline_jpeg_q20.yaml,20,0.01,0.937,35.972,643,mask,0.35,0.28,0.218
+150,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,baseline_jpeg_q20.yaml,20,0.013,0.922,32.905,796,ski mask,0.23,0.47,1.053
+151,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,baseline_jpeg_q20.yaml,20,0.008,0.912,36.932,585,hair spray,0.27,0.23,0.142
+152,20241017-elarbi-bladeeNYC-4B5A2464.CR2,baseline_jpeg_q20.yaml,20,0.008,0.943,36.46,819,stage,0.69,0.54,0.223
+153,20241017-elarbi-bladeeNYC-4B5A2603.CR2,baseline_jpeg_q20.yaml,20,0.009,0.915,36.63,650,microphone,0.22,0.24,0.125
+154,20241111-elarbi-thehellpNYC-4B5A4361.CR2,baseline_jpeg_q20.yaml,20,0.013,0.89,34.215,860,tobacco shop,0.33,0.37,0.133
+155,20241113-elarbi-thehellpBOS-4B5A4416.CR2,baseline_jpeg_q20.yaml,20,0.017,0.931,32.187,526,desk,0.66,0.67,0.017
+156,20241113-elarbi-thehellpBOS-4B5A4417.CR2,baseline_jpeg_q20.yaml,20,0.008,0.943,36.966,784,screwdriver,0.37,0.33,0.099
+157,20241113-elarbi-thehellpBOS-4B5A4438.CR2,baseline_jpeg_q20.yaml,20,0.014,0.89,33.021,819,stage,0.64,0.72,0.135
+158,20241113-elarbi-thehellpBOS-4B5A4452.CR2,baseline_jpeg_q20.yaml,20,0.009,0.947,35.578,793,shower cap,0.37,0.28,0.247
+159,20250222-elarbi-redbullBOS-4B5A4586.CR2,baseline_jpeg_q20.yaml,20,0.009,0.889,35.474,450,bobsled,0.3,0.29,0.06
+160,Artistic_portrait.avif,baseline_jpeg_q20.yaml,20,0.009,0.934,38.279,107,jellyfish,0.42,0.36,0.137
+161,Bright_red_portrait.avif,baseline_jpeg_q20.yaml,20,0.012,0.872,33.079,684,ocarina,0.75,0.76,0.016
+162,Brooklyn_bridge.webp,baseline_jpeg_q20.yaml,20,0.023,0.864,27.592,718,pier,0.88,0.83,0.053
+163,Brush_ends.webp,baseline_jpeg_q20.yaml,20,0.014,0.881,32.962,696,paintbrush,0.96,0.82,0.147
+164,bunny.CR2,baseline_jpeg_q20.yaml,20,0.02,0.892,31.58,330,wood rabbit,0.5,0.43,0.144
+165,Colorful_patern_portrait.webp,baseline_jpeg_q20.yaml,20,0.013,0.866,31.225,836,sunglass,0.55,0.54,0.012
+166,Colorful_portrait.webp,baseline_jpeg_q20.yaml,20,0.011,0.818,32.573,552,feather boa,1.0,0.98,0.017
+167,el_capitain_with_night_sky.webp,baseline_jpeg_q20.yaml,20,0.01,0.889,34.663,972,cliff,0.45,0.45,0.001
+168,green_wheat_field.webp,baseline_jpeg_q20.yaml,20,0.015,0.821,29.406,984,rapeseed,1.0,1.0,0.0
+169,landscape.png,baseline_jpeg_q20.yaml,20,0.015,0.792,27.424,984,rapeseed,0.25,0.09,0.626
+170,man_holding_camera.webp,baseline_jpeg_q20.yaml,20,0.018,0.871,31.186,763,revolver,0.06,0.04,0.404
+171,Polar_bear_over_water.webp,baseline_jpeg_q20.yaml,20,0.021,0.852,29.534,296,ice bear,0.17,0.02,0.903
+172,Portrate_with_greenery_background.webp,baseline_jpeg_q20.yaml,20,0.011,0.924,34.881,610,jersey,0.31,0.28,0.113
+173,Threads_up_close.webp,baseline_jpeg_q20.yaml,20,0.013,0.909,32.973,490,chain mail,0.28,0.27,0.048
+174,wheat_field.webp,baseline_jpeg_q20.yaml,20,0.019,0.887,29.546,998,ear,0.27,0.03,0.904
+175,20220422-20220424-elarbi-coachella-4B5A8619.CR2,baseline_jpeg_q3.yaml,3,0.006,0.812,25.244,981,ballplayer,0.16,0.0,0.98
+176,20220422-20220424-elarbi-coachella-4B5A8887.CR2,baseline_jpeg_q3.yaml,3,0.006,0.706,24.051,541,drum,0.59,0.3,0.504
+177,20220930-elarbi-ner-4B5A2550.CR2,baseline_jpeg_q3.yaml,3,0.006,0.582,26.144,573,go-kart,0.82,0.25,0.695
+178,20230501-elarbi-neugradphotos-4B5A7958.CR2,baseline_jpeg_q3.yaml,3,0.006,0.656,24.244,557,flagpole,0.88,0.91,0.036
+179,20230501-elarbi-neugradphotos-4B5A7992.CR2,baseline_jpeg_q3.yaml,3,0.006,0.791,24.371,999,toilet tissue,0.13,0.07,0.453
+180,20230501-elarbi-neugradphotos-4B5A8009.CR2,baseline_jpeg_q3.yaml,3,0.008,0.559,21.096,683,oboe,0.18,0.02,0.879
+181,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,baseline_jpeg_q3.yaml,3,0.005,0.875,24.1,818,spotlight,0.15,0.0,0.998
+182,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,baseline_jpeg_q3.yaml,3,0.006,0.582,25.068,841,sweatshirt,0.17,0.01,0.968
+183,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,baseline_jpeg_q3.yaml,3,0.007,0.615,25.063,489,chainlink fence,0.93,0.98,0.044
+184,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,baseline_jpeg_q3.yaml,3,0.006,0.798,25.589,643,mask,0.35,0.58,0.635
+185,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,baseline_jpeg_q3.yaml,3,0.007,0.601,24.244,796,ski mask,0.23,0.48,1.085
+186,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,baseline_jpeg_q3.yaml,3,0.006,0.668,24.837,585,hair spray,0.27,0.04,0.866
+187,20241017-elarbi-bladeeNYC-4B5A2464.CR2,baseline_jpeg_q3.yaml,3,0.006,0.835,23.974,819,stage,0.69,0.2,0.713
+188,20241017-elarbi-bladeeNYC-4B5A2603.CR2,baseline_jpeg_q3.yaml,3,0.006,0.58,28.06,650,microphone,0.22,0.02,0.907
+189,20241111-elarbi-thehellpNYC-4B5A4361.CR2,baseline_jpeg_q3.yaml,3,0.006,0.634,25.473,860,tobacco shop,0.33,0.2,0.394
+190,20241113-elarbi-thehellpBOS-4B5A4416.CR2,baseline_jpeg_q3.yaml,3,0.007,0.717,23.519,526,desk,0.66,0.73,0.11
+191,20241113-elarbi-thehellpBOS-4B5A4417.CR2,baseline_jpeg_q3.yaml,3,0.006,0.813,25.405,784,screwdriver,0.37,0.02,0.934
+192,20241113-elarbi-thehellpBOS-4B5A4438.CR2,baseline_jpeg_q3.yaml,3,0.006,0.683,24.141,819,stage,0.64,0.72,0.123
+193,20241113-elarbi-thehellpBOS-4B5A4452.CR2,baseline_jpeg_q3.yaml,3,0.006,0.858,25.074,793,shower cap,0.37,0.0,0.997
+194,20250222-elarbi-redbullBOS-4B5A4586.CR2,baseline_jpeg_q3.yaml,3,0.006,0.648,24.669,450,bobsled,0.3,0.19,0.362
+195,Artistic_portrait.avif,baseline_jpeg_q3.yaml,3,0.006,0.777,27.295,107,jellyfish,0.42,0.25,0.391
+196,Bright_red_portrait.avif,baseline_jpeg_q3.yaml,3,0.007,0.678,23.671,684,ocarina,0.75,0.02,0.978
+197,Brooklyn_bridge.webp,baseline_jpeg_q3.yaml,3,0.008,0.638,21.32,718,pier,0.88,0.07,0.917
+198,Brush_ends.webp,baseline_jpeg_q3.yaml,3,0.007,0.562,21.989,696,paintbrush,0.96,0.02,0.983
+199,bunny.CR2,baseline_jpeg_q3.yaml,3,0.007,0.583,22.348,330,wood rabbit,0.5,0.79,0.576
+200,Colorful_patern_portrait.webp,baseline_jpeg_q3.yaml,3,0.006,0.62,22.009,836,sunglass,0.55,0.6,0.099
+201,Colorful_portrait.webp,baseline_jpeg_q3.yaml,3,0.006,0.582,23.489,552,feather boa,1.0,0.0,1.0
+202,el_capitain_with_night_sky.webp,baseline_jpeg_q3.yaml,3,0.006,0.679,25.33,972,cliff,0.45,0.02,0.965
+203,green_wheat_field.webp,baseline_jpeg_q3.yaml,3,0.006,0.579,22.272,984,rapeseed,1.0,0.06,0.936
+204,landscape.png,baseline_jpeg_q3.yaml,3,0.006,0.622,22.017,984,rapeseed,0.25,0.02,0.915
+205,man_holding_camera.webp,baseline_jpeg_q3.yaml,3,0.007,0.585,22.155,763,revolver,0.06,0.0,0.999
+206,Polar_bear_over_water.webp,baseline_jpeg_q3.yaml,3,0.007,0.534,22.336,296,ice bear,0.17,0.0,0.997
+207,Portrate_with_greenery_background.webp,baseline_jpeg_q3.yaml,3,0.006,0.738,23.821,610,jersey,0.31,0.01,0.977
+208,Threads_up_close.webp,baseline_jpeg_q3.yaml,3,0.006,0.679,26.183,490,chain mail,0.28,0.0,0.991
+209,wheat_field.webp,baseline_jpeg_q3.yaml,3,0.007,0.614,21.65,998,ear,0.27,0.0,0.988
+210,20220422-20220424-elarbi-coachella-4B5A8619.CR2,baseline_jpeg_q4.yaml,4,0.006,0.837,26.418,981,ballplayer,0.16,0.01,0.967
+211,20220422-20220424-elarbi-coachella-4B5A8887.CR2,baseline_jpeg_q4.yaml,4,0.007,0.768,25.446,541,drum,0.59,0.44,0.26
+212,20220930-elarbi-ner-4B5A2550.CR2,baseline_jpeg_q4.yaml,4,0.006,0.704,27.635,573,go-kart,0.82,0.29,0.643
+213,20230501-elarbi-neugradphotos-4B5A7958.CR2,baseline_jpeg_q4.yaml,4,0.007,0.71,24.954,557,flagpole,0.88,0.82,0.066
+214,20230501-elarbi-neugradphotos-4B5A7992.CR2,baseline_jpeg_q4.yaml,4,0.006,0.824,26.063,999,toilet tissue,0.13,0.08,0.38
+215,20230501-elarbi-neugradphotos-4B5A8009.CR2,baseline_jpeg_q4.yaml,4,0.01,0.642,22.356,683,oboe,0.18,0.03,0.861
+216,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,baseline_jpeg_q4.yaml,4,0.005,0.889,25.554,818,spotlight,0.15,0.0,0.993
+217,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,baseline_jpeg_q4.yaml,4,0.006,0.684,26.526,841,sweatshirt,0.17,0.0,0.976
+218,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,baseline_jpeg_q4.yaml,4,0.007,0.712,26.525,489,chainlink fence,0.93,0.96,0.031
+219,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,baseline_jpeg_q4.yaml,4,0.006,0.822,27.178,643,mask,0.35,0.21,0.416
+220,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,baseline_jpeg_q4.yaml,4,0.007,0.723,25.575,796,ski mask,0.23,0.26,0.128
+221,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,baseline_jpeg_q4.yaml,4,0.006,0.778,26.718,585,hair spray,0.27,0.09,0.673
+222,20241017-elarbi-bladeeNYC-4B5A2464.CR2,baseline_jpeg_q4.yaml,4,0.006,0.842,25.034,819,stage,0.69,0.49,0.293
+223,20241017-elarbi-bladeeNYC-4B5A2603.CR2,baseline_jpeg_q4.yaml,4,0.006,0.783,29.527,650,microphone,0.22,0.01,0.961
+224,20241111-elarbi-thehellpNYC-4B5A4361.CR2,baseline_jpeg_q4.yaml,4,0.006,0.7,26.868,860,tobacco shop,0.33,0.14,0.562
+225,20241113-elarbi-thehellpBOS-4B5A4416.CR2,baseline_jpeg_q4.yaml,4,0.008,0.772,24.788,526,desk,0.66,0.6,0.085
+226,20241113-elarbi-thehellpBOS-4B5A4417.CR2,baseline_jpeg_q4.yaml,4,0.006,0.855,27.01,784,screwdriver,0.37,0.06,0.848
+227,20241113-elarbi-thehellpBOS-4B5A4438.CR2,baseline_jpeg_q4.yaml,4,0.007,0.712,25.382,819,stage,0.64,0.69,0.083
+228,20241113-elarbi-thehellpBOS-4B5A4452.CR2,baseline_jpeg_q4.yaml,4,0.006,0.872,26.716,793,shower cap,0.37,0.01,0.982
+229,20250222-elarbi-redbullBOS-4B5A4586.CR2,baseline_jpeg_q4.yaml,4,0.006,0.722,25.913,450,bobsled,0.3,0.35,0.151
+230,Artistic_portrait.avif,baseline_jpeg_q4.yaml,4,0.006,0.841,28.9,107,jellyfish,0.42,0.01,0.986
+231,Bright_red_portrait.avif,baseline_jpeg_q4.yaml,4,0.007,0.729,25.855,684,ocarina,0.75,0.22,0.708
+232,Brooklyn_bridge.webp,baseline_jpeg_q4.yaml,4,0.009,0.675,22.143,718,pier,0.88,0.21,0.759
+233,Brush_ends.webp,baseline_jpeg_q4.yaml,4,0.007,0.62,23.536,696,paintbrush,0.96,0.06,0.942
+234,bunny.CR2,baseline_jpeg_q4.yaml,4,0.008,0.627,23.746,330,wood rabbit,0.5,0.74,0.474
+235,Colorful_patern_portrait.webp,baseline_jpeg_q4.yaml,4,0.007,0.644,23.014,836,sunglass,0.55,0.62,0.131
+236,Colorful_portrait.webp,baseline_jpeg_q4.yaml,4,0.006,0.611,24.942,552,feather boa,1.0,0.0,0.999
+237,el_capitain_with_night_sky.webp,baseline_jpeg_q4.yaml,4,0.006,0.716,26.186,972,cliff,0.45,0.05,0.894
+238,green_wheat_field.webp,baseline_jpeg_q4.yaml,4,0.007,0.616,23.393,984,rapeseed,1.0,0.08,0.918
+239,landscape.png,baseline_jpeg_q4.yaml,4,0.006,0.635,22.848,984,rapeseed,0.25,0.01,0.948
+240,man_holding_camera.webp,baseline_jpeg_q4.yaml,4,0.008,0.636,23.426,763,revolver,0.06,0.0,0.987
+241,Polar_bear_over_water.webp,baseline_jpeg_q4.yaml,4,0.008,0.595,23.157,296,ice bear,0.17,0.0,0.998
+242,Portrate_with_greenery_background.webp,baseline_jpeg_q4.yaml,4,0.006,0.763,25.101,610,jersey,0.31,0.01,0.976
+243,Threads_up_close.webp,baseline_jpeg_q4.yaml,4,0.007,0.746,27.148,490,chain mail,0.28,0.0,0.991
+244,wheat_field.webp,baseline_jpeg_q4.yaml,4,0.008,0.667,23.042,998,ear,0.27,0.0,0.989
+245,20220422-20220424-elarbi-coachella-4B5A8619.CR2,baseline_jpeg_q40.yaml,40,0.01,0.967,40.864,981,ballplayer,0.16,0.14,0.144
+246,20220422-20220424-elarbi-coachella-4B5A8887.CR2,baseline_jpeg_q40.yaml,40,0.018,0.956,37.106,541,drum,0.59,0.58,0.021
+247,20220930-elarbi-ner-4B5A2550.CR2,baseline_jpeg_q40.yaml,40,0.013,0.954,39.216,573,go-kart,0.82,0.81,0.02
+248,20230501-elarbi-neugradphotos-4B5A7958.CR2,baseline_jpeg_q40.yaml,40,0.023,0.957,36.384,557,flagpole,0.88,0.88,0.002
+249,20230501-elarbi-neugradphotos-4B5A7992.CR2,baseline_jpeg_q40.yaml,40,0.016,0.968,38.339,999,toilet tissue,0.13,0.13,0.009
+250,20230501-elarbi-neugradphotos-4B5A8009.CR2,baseline_jpeg_q40.yaml,40,0.039,0.941,32.952,683,oboe,0.18,0.18,0.03
+251,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,baseline_jpeg_q40.yaml,40,0.006,0.971,42.533,818,spotlight,0.15,0.16,0.105
+252,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,baseline_jpeg_q40.yaml,40,0.015,0.949,38.716,841,sweatshirt,0.17,0.17,0.001
+253,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,baseline_jpeg_q40.yaml,40,0.022,0.95,37.255,489,chainlink fence,0.93,0.93,0.004
+254,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,baseline_jpeg_q40.yaml,40,0.013,0.961,39.226,643,mask,0.35,0.33,0.06
+255,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,baseline_jpeg_q40.yaml,40,0.019,0.95,35.594,796,ski mask,0.23,0.23,0.0
+256,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,baseline_jpeg_q40.yaml,40,0.011,0.942,39.89,585,hair spray,0.27,0.2,0.24
+257,20241017-elarbi-bladeeNYC-4B5A2464.CR2,baseline_jpeg_q40.yaml,40,0.01,0.963,39.882,819,stage,0.69,0.68,0.016
+258,20241017-elarbi-bladeeNYC-4B5A2603.CR2,baseline_jpeg_q40.yaml,40,0.013,0.945,39.418,650,microphone,0.22,0.23,0.051
+259,20241111-elarbi-thehellpNYC-4B5A4361.CR2,baseline_jpeg_q40.yaml,40,0.02,0.937,37.426,860,tobacco shop,0.33,0.3,0.075
+260,20241113-elarbi-thehellpBOS-4B5A4416.CR2,baseline_jpeg_q40.yaml,40,0.025,0.962,35.74,526,desk,0.66,0.61,0.068
+261,20241113-elarbi-thehellpBOS-4B5A4417.CR2,baseline_jpeg_q40.yaml,40,0.011,0.965,40.366,784,screwdriver,0.37,0.35,0.031
+262,20241113-elarbi-thehellpBOS-4B5A4438.CR2,baseline_jpeg_q40.yaml,40,0.023,0.938,36.113,819,stage,0.64,0.68,0.065
+263,20241113-elarbi-thehellpBOS-4B5A4452.CR2,baseline_jpeg_q40.yaml,40,0.013,0.968,38.904,793,shower cap,0.37,0.43,0.142
+264,20250222-elarbi-redbullBOS-4B5A4586.CR2,baseline_jpeg_q40.yaml,40,0.015,0.933,38.532,450,bobsled,0.3,0.28,0.094
+265,Artistic_portrait.avif,baseline_jpeg_q40.yaml,40,0.011,0.956,41.55,107,jellyfish,0.42,0.37,0.109
+266,Bright_red_portrait.avif,baseline_jpeg_q40.yaml,40,0.018,0.917,35.81,684,ocarina,0.75,0.76,0.014
+267,Brooklyn_bridge.webp,baseline_jpeg_q40.yaml,40,0.036,0.916,30.112,718,pier,0.88,0.86,0.021
+268,Brush_ends.webp,baseline_jpeg_q40.yaml,40,0.021,0.927,35.51,696,paintbrush,0.96,0.92,0.043
+269,bunny.CR2,baseline_jpeg_q40.yaml,40,0.03,0.938,34.693,330,wood rabbit,0.5,0.51,0.009
+270,Colorful_patern_portrait.webp,baseline_jpeg_q40.yaml,40,0.018,0.916,33.916,836,sunglass,0.55,0.53,0.026
+271,Colorful_portrait.webp,baseline_jpeg_q40.yaml,40,0.018,0.877,34.946,552,feather boa,1.0,1.0,0.0
+272,el_capitain_with_night_sky.webp,baseline_jpeg_q40.yaml,40,0.016,0.936,37.82,972,cliff,0.45,0.4,0.103
+273,green_wheat_field.webp,baseline_jpeg_q40.yaml,40,0.024,0.89,31.819,984,rapeseed,1.0,1.0,0.0
+274,landscape.png,baseline_jpeg_q40.yaml,40,0.024,0.848,28.928,984,rapeseed,0.25,0.24,0.026
+275,man_holding_camera.webp,baseline_jpeg_q40.yaml,40,0.027,0.924,34.199,763,revolver,0.06,0.04,0.325
+276,Polar_bear_over_water.webp,baseline_jpeg_q40.yaml,40,0.032,0.909,31.865,296,ice bear,0.17,0.13,0.227
+277,Portrate_with_greenery_background.webp,baseline_jpeg_q40.yaml,40,0.016,0.96,38.011,610,jersey,0.31,0.34,0.099
+278,Threads_up_close.webp,baseline_jpeg_q40.yaml,40,0.019,0.949,35.385,490,chain mail,0.28,0.32,0.144
+279,wheat_field.webp,baseline_jpeg_q40.yaml,40,0.029,0.929,31.845,998,ear,0.27,0.17,0.351
+280,20220422-20220424-elarbi-coachella-4B5A8619.CR2,baseline_jpeg_q5.yaml,5,0.006,0.852,27.821,981,ballplayer,0.16,0.01,0.911
+281,20220422-20220424-elarbi-coachella-4B5A8887.CR2,baseline_jpeg_q5.yaml,5,0.007,0.812,26.992,541,drum,0.59,0.43,0.278
+282,20220930-elarbi-ner-4B5A2550.CR2,baseline_jpeg_q5.yaml,5,0.006,0.836,29.393,573,go-kart,0.82,0.91,0.104
+283,20230501-elarbi-neugradphotos-4B5A7958.CR2,baseline_jpeg_q5.yaml,5,0.007,0.759,25.698,557,flagpole,0.88,0.87,0.013
+284,20230501-elarbi-neugradphotos-4B5A7992.CR2,baseline_jpeg_q5.yaml,5,0.007,0.854,27.464,999,toilet tissue,0.13,0.05,0.65
+285,20230501-elarbi-neugradphotos-4B5A8009.CR2,baseline_jpeg_q5.yaml,5,0.011,0.703,23.459,683,oboe,0.18,0.05,0.702
+286,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,baseline_jpeg_q5.yaml,5,0.005,0.921,27.449,818,spotlight,0.15,0.0,0.991
+287,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,baseline_jpeg_q5.yaml,5,0.006,0.77,28.119,841,sweatshirt,0.17,0.03,0.814
+288,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,baseline_jpeg_q5.yaml,5,0.008,0.767,27.718,489,chainlink fence,0.93,0.97,0.033
+289,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,baseline_jpeg_q5.yaml,5,0.006,0.846,28.649,643,mask,0.35,0.09,0.74
+290,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,baseline_jpeg_q5.yaml,5,0.008,0.824,26.854,796,ski mask,0.23,0.37,0.639
+291,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,baseline_jpeg_q5.yaml,5,0.006,0.807,28.772,585,hair spray,0.27,0.05,0.8
+292,20241017-elarbi-bladeeNYC-4B5A2464.CR2,baseline_jpeg_q5.yaml,5,0.006,0.864,26.878,819,stage,0.69,0.14,0.801
+293,20241017-elarbi-bladeeNYC-4B5A2603.CR2,baseline_jpeg_q5.yaml,5,0.006,0.804,30.332,650,microphone,0.22,0.02,0.894
+294,20241111-elarbi-thehellpNYC-4B5A4361.CR2,baseline_jpeg_q5.yaml,5,0.007,0.752,28.065,860,tobacco shop,0.33,0.34,0.033
+295,20241113-elarbi-thehellpBOS-4B5A4416.CR2,baseline_jpeg_q5.yaml,5,0.008,0.808,25.917,526,desk,0.66,0.65,0.01
+296,20241113-elarbi-thehellpBOS-4B5A4417.CR2,baseline_jpeg_q5.yaml,5,0.006,0.866,28.415,784,screwdriver,0.37,0.18,0.516
+297,20241113-elarbi-thehellpBOS-4B5A4438.CR2,baseline_jpeg_q5.yaml,5,0.007,0.736,26.466,819,stage,0.64,0.73,0.146
+298,20241113-elarbi-thehellpBOS-4B5A4452.CR2,baseline_jpeg_q5.yaml,5,0.006,0.888,28.164,793,shower cap,0.37,0.1,0.725
+299,20250222-elarbi-redbullBOS-4B5A4586.CR2,baseline_jpeg_q5.yaml,5,0.006,0.761,27.665,450,bobsled,0.3,0.23,0.231
+300,Artistic_portrait.avif,baseline_jpeg_q5.yaml,5,0.006,0.61,29.167,107,jellyfish,0.42,0.01,0.966
+301,Bright_red_portrait.avif,baseline_jpeg_q5.yaml,5,0.007,0.707,26.307,684,ocarina,0.75,0.19,0.75
+302,Brooklyn_bridge.webp,baseline_jpeg_q5.yaml,5,0.01,0.706,22.901,718,pier,0.88,0.34,0.616
+303,Brush_ends.webp,baseline_jpeg_q5.yaml,5,0.008,0.653,25.583,696,paintbrush,0.96,0.03,0.966
+304,bunny.CR2,baseline_jpeg_q5.yaml,5,0.009,0.689,25.277,330,wood rabbit,0.5,0.53,0.056
+305,Colorful_patern_portrait.webp,baseline_jpeg_q5.yaml,5,0.007,0.678,24.321,836,sunglass,0.55,0.58,0.061
+306,Colorful_portrait.webp,baseline_jpeg_q5.yaml,5,0.006,0.626,25.968,552,feather boa,1.0,0.0,0.999
+307,el_capitain_with_night_sky.webp,baseline_jpeg_q5.yaml,5,0.006,0.744,27.283,972,cliff,0.45,0.1,0.78
+308,green_wheat_field.webp,baseline_jpeg_q5.yaml,5,0.007,0.64,24.573,984,rapeseed,1.0,0.25,0.748
+309,landscape.png,baseline_jpeg_q5.yaml,5,0.007,0.648,23.607,984,rapeseed,0.25,0.09,0.654
+310,man_holding_camera.webp,baseline_jpeg_q5.yaml,5,0.009,0.672,24.531,763,revolver,0.06,0.01,0.905
+311,Polar_bear_over_water.webp,baseline_jpeg_q5.yaml,5,0.009,0.629,23.856,296,ice bear,0.17,0.0,0.998
+312,Portrate_with_greenery_background.webp,baseline_jpeg_q5.yaml,5,0.006,0.786,26.483,610,jersey,0.31,0.06,0.815
+313,Threads_up_close.webp,baseline_jpeg_q5.yaml,5,0.007,0.718,27.976,490,chain mail,0.28,0.0,0.99
+314,wheat_field.webp,baseline_jpeg_q5.yaml,5,0.009,0.705,23.78,998,ear,0.27,0.01,0.98
+315,20220422-20220424-elarbi-coachella-4B5A8619.CR2,baseline_jpeg_q60.yaml,60,0.013,0.975,42.491,981,ballplayer,0.16,0.16,0.003
+316,20220422-20220424-elarbi-coachella-4B5A8887.CR2,baseline_jpeg_q60.yaml,60,0.025,0.967,38.729,541,drum,0.59,0.57,0.036
+317,20220930-elarbi-ner-4B5A2550.CR2,baseline_jpeg_q60.yaml,60,0.02,0.964,40.307,573,go-kart,0.82,0.81,0.017
+318,20230501-elarbi-neugradphotos-4B5A7958.CR2,baseline_jpeg_q60.yaml,60,0.031,0.969,37.849,557,flagpole,0.88,0.87,0.01
+319,20230501-elarbi-neugradphotos-4B5A7992.CR2,baseline_jpeg_q60.yaml,60,0.021,0.979,40.376,999,toilet tissue,0.13,0.14,0.041
+320,20230501-elarbi-neugradphotos-4B5A8009.CR2,baseline_jpeg_q60.yaml,60,0.053,0.958,34.504,683,oboe,0.18,0.15,0.187
+321,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,baseline_jpeg_q60.yaml,60,0.009,0.978,44.214,818,spotlight,0.15,0.13,0.126
+322,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,baseline_jpeg_q60.yaml,60,0.021,0.964,40.348,841,sweatshirt,0.17,0.16,0.051
+323,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,baseline_jpeg_q60.yaml,60,0.03,0.966,39.148,489,chainlink fence,0.93,0.93,0.005
+324,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,baseline_jpeg_q60.yaml,60,0.019,0.971,40.651,643,mask,0.35,0.28,0.218
+325,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,baseline_jpeg_q60.yaml,60,0.025,0.959,36.845,796,ski mask,0.23,0.17,0.267
+326,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,baseline_jpeg_q60.yaml,60,0.018,0.955,41.395,585,hair spray,0.27,0.21,0.212
+327,20241017-elarbi-bladeeNYC-4B5A2464.CR2,baseline_jpeg_q60.yaml,60,0.015,0.972,41.495,819,stage,0.69,0.68,0.025
+328,20241017-elarbi-bladeeNYC-4B5A2603.CR2,baseline_jpeg_q60.yaml,60,0.02,0.946,40.512,650,microphone,0.22,0.24,0.11
+329,20241111-elarbi-thehellpNYC-4B5A4361.CR2,baseline_jpeg_q60.yaml,60,0.031,0.956,38.831,860,tobacco shop,0.33,0.31,0.038
+330,20241113-elarbi-thehellpBOS-4B5A4416.CR2,baseline_jpeg_q60.yaml,60,0.034,0.972,37.043,526,desk,0.66,0.68,0.034
+331,20241113-elarbi-thehellpBOS-4B5A4417.CR2,baseline_jpeg_q60.yaml,60,0.015,0.972,41.833,784,screwdriver,0.37,0.36,0.015
+332,20241113-elarbi-thehellpBOS-4B5A4438.CR2,baseline_jpeg_q60.yaml,60,0.033,0.956,37.517,819,stage,0.64,0.63,0.018
+333,20241113-elarbi-thehellpBOS-4B5A4452.CR2,baseline_jpeg_q60.yaml,60,0.017,0.976,40.326,793,shower cap,0.37,0.43,0.152
+334,20250222-elarbi-redbullBOS-4B5A4586.CR2,baseline_jpeg_q60.yaml,60,0.024,0.953,40.054,450,bobsled,0.3,0.3,0.014
+335,Artistic_portrait.avif,baseline_jpeg_q60.yaml,60,0.014,0.943,43.377,107,jellyfish,0.42,0.5,0.192
+336,Bright_red_portrait.avif,baseline_jpeg_q60.yaml,60,0.023,0.941,37.588,684,ocarina,0.75,0.74,0.011
+337,Brooklyn_bridge.webp,baseline_jpeg_q60.yaml,60,0.046,0.94,31.874,718,pier,0.88,0.85,0.037
+338,Brush_ends.webp,baseline_jpeg_q60.yaml,60,0.027,0.947,37.003,696,paintbrush,0.96,0.96,0.006
+339,bunny.CR2,baseline_jpeg_q60.yaml,60,0.041,0.957,36.324,330,wood rabbit,0.5,0.49,0.034
+340,Colorful_patern_portrait.webp,baseline_jpeg_q60.yaml,60,0.024,0.938,35.544,836,sunglass,0.55,0.53,0.036
+341,Colorful_portrait.webp,baseline_jpeg_q60.yaml,60,0.025,0.909,36.4,552,feather boa,1.0,1.0,0.001
+342,el_capitain_with_night_sky.webp,baseline_jpeg_q60.yaml,60,0.021,0.958,39.757,972,cliff,0.45,0.6,0.345
+343,green_wheat_field.webp,baseline_jpeg_q60.yaml,60,0.032,0.922,33.466,984,rapeseed,1.0,1.0,0.0
+344,landscape.png,baseline_jpeg_q60.yaml,60,0.033,0.877,30.243,984,rapeseed,0.25,0.25,0.025
+345,man_holding_camera.webp,baseline_jpeg_q60.yaml,60,0.035,0.945,36.015,763,revolver,0.06,0.03,0.411
+346,Polar_bear_over_water.webp,baseline_jpeg_q60.yaml,60,0.042,0.936,33.345,296,ice bear,0.17,0.08,0.518
+347,Portrate_with_greenery_background.webp,baseline_jpeg_q60.yaml,60,0.02,0.972,39.649,610,jersey,0.31,0.3,0.035
+348,Threads_up_close.webp,baseline_jpeg_q60.yaml,60,0.024,0.964,36.907,490,chain mail,0.28,0.18,0.353
+349,wheat_field.webp,baseline_jpeg_q60.yaml,60,0.037,0.948,33.156,998,ear,0.27,0.22,0.181
+350,20220422-20220424-elarbi-coachella-4B5A8619.CR2,baseline_jpeg_q80.yaml,80,0.019,0.99,47.375,981,ballplayer,0.16,0.16,0.003
+351,20220422-20220424-elarbi-coachella-4B5A8887.CR2,baseline_jpeg_q80.yaml,80,0.034,0.988,43.259,541,drum,0.59,0.57,0.039
+352,20220930-elarbi-ner-4B5A2550.CR2,baseline_jpeg_q80.yaml,80,0.029,0.993,47.502,573,go-kart,0.82,0.83,0.001
+353,20230501-elarbi-neugradphotos-4B5A7958.CR2,baseline_jpeg_q80.yaml,80,0.042,0.992,44.694,557,flagpole,0.88,0.87,0.004
+354,20230501-elarbi-neugradphotos-4B5A7992.CR2,baseline_jpeg_q80.yaml,80,0.029,0.991,44.911,999,toilet tissue,0.13,0.13,0.012
+355,20230501-elarbi-neugradphotos-4B5A8009.CR2,baseline_jpeg_q80.yaml,80,0.07,0.986,40.007,683,oboe,0.18,0.16,0.106
+356,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,baseline_jpeg_q80.yaml,80,0.016,0.993,49.886,818,spotlight,0.15,0.15,0.013
+357,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,baseline_jpeg_q80.yaml,80,0.031,0.987,45.979,841,sweatshirt,0.17,0.17,0.027
+358,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,baseline_jpeg_q80.yaml,80,0.041,0.989,44.903,489,chainlink fence,0.93,0.94,0.001
+359,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,baseline_jpeg_q80.yaml,80,0.027,0.99,45.723,643,mask,0.35,0.34,0.03
+360,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,baseline_jpeg_q80.yaml,80,0.035,0.986,41.661,796,ski mask,0.23,0.22,0.041
+361,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,baseline_jpeg_q80.yaml,80,0.027,0.993,48.482,585,hair spray,0.27,0.25,0.059
+362,20241017-elarbi-bladeeNYC-4B5A2464.CR2,baseline_jpeg_q80.yaml,80,0.023,0.99,46.126,819,stage,0.69,0.68,0.016
+363,20241017-elarbi-bladeeNYC-4B5A2603.CR2,baseline_jpeg_q80.yaml,80,0.029,0.995,49.593,650,microphone,0.22,0.22,0.004
+364,20241111-elarbi-thehellpNYC-4B5A4361.CR2,baseline_jpeg_q80.yaml,80,0.043,0.995,48.336,860,tobacco shop,0.33,0.33,0.001
+365,20241113-elarbi-thehellpBOS-4B5A4416.CR2,baseline_jpeg_q80.yaml,80,0.047,0.995,46.796,526,desk,0.66,0.63,0.034
+366,20241113-elarbi-thehellpBOS-4B5A4417.CR2,baseline_jpeg_q80.yaml,80,0.021,0.993,48.142,784,screwdriver,0.37,0.34,0.064
+367,20241113-elarbi-thehellpBOS-4B5A4438.CR2,baseline_jpeg_q80.yaml,80,0.045,0.991,45.212,819,stage,0.64,0.64,0.004
+368,20241113-elarbi-thehellpBOS-4B5A4452.CR2,baseline_jpeg_q80.yaml,80,0.024,0.992,46.535,793,shower cap,0.37,0.4,0.065
+369,20250222-elarbi-redbullBOS-4B5A4586.CR2,baseline_jpeg_q80.yaml,80,0.035,0.991,46.977,450,bobsled,0.3,0.32,0.039
+370,Artistic_portrait.avif,baseline_jpeg_q80.yaml,80,0.018,0.993,47.687,107,jellyfish,0.42,0.4,0.039
+371,Bright_red_portrait.avif,baseline_jpeg_q80.yaml,80,0.033,0.967,40.429,684,ocarina,0.75,0.75,0.008
+372,Brooklyn_bridge.webp,baseline_jpeg_q80.yaml,80,0.068,0.966,35.101,718,pier,0.88,0.88,0.004
+373,Brush_ends.webp,baseline_jpeg_q80.yaml,80,0.04,0.965,39.28,696,paintbrush,0.96,0.95,0.008
+374,bunny.CR2,baseline_jpeg_q80.yaml,80,0.056,0.983,41.777,330,wood rabbit,0.5,0.5,0.008
+375,Colorful_patern_portrait.webp,baseline_jpeg_q80.yaml,80,0.034,0.961,38.14,836,sunglass,0.55,0.54,0.018
+376,Colorful_portrait.webp,baseline_jpeg_q80.yaml,80,0.039,0.95,39.393,552,feather boa,1.0,1.0,0.0
+377,el_capitain_with_night_sky.webp,baseline_jpeg_q80.yaml,80,0.031,0.978,42.905,972,cliff,0.45,0.47,0.055
+378,green_wheat_field.webp,baseline_jpeg_q80.yaml,80,0.049,0.952,36.13,984,rapeseed,1.0,1.0,0.0
+379,landscape.png,baseline_jpeg_q80.yaml,80,0.052,0.913,32.924,984,rapeseed,0.25,0.21,0.143
+380,man_holding_camera.webp,baseline_jpeg_q80.yaml,80,0.052,0.966,38.642,763,revolver,0.06,0.05,0.079
+381,Polar_bear_over_water.webp,baseline_jpeg_q80.yaml,80,0.063,0.963,35.917,296,ice bear,0.17,0.13,0.268
+382,Portrate_with_greenery_background.webp,baseline_jpeg_q80.yaml,80,0.028,0.983,42.418,610,jersey,0.31,0.31,0.009
+383,Threads_up_close.webp,baseline_jpeg_q80.yaml,80,0.035,0.98,40.018,490,chain mail,0.28,0.26,0.068
+384,wheat_field.webp,baseline_jpeg_q80.yaml,80,0.055,0.968,35.527,998,ear,0.27,0.27,0.003

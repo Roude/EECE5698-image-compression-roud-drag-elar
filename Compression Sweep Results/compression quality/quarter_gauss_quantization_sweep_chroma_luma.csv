@@ -1,0 +1,211 @@
+,Image Name,Compression Config,Chromiance Downsample Factor,Block Size,Luma Quantization Max,Norm N,Luma Quantization Stdv,Chroma Quantization Max,Chroma Quantization Stdv,Encoded Image Data Size,Huffman Table Size (kB),Header Info Size (kB),Compression Ratio,Compression Preprocessing Time (mS),Image Compression Time (mS),Entropy Encoding Time (mS),File Encoding Time (mS),Decompression Preprocessing Time (mS),Decompression Entropy Decoding Time (mS),Decompression Block Processing time (mS),SSIM Score,PSNR,Uncompressed Reference Index,Uncompressed Reference Label,Reference Probability,Compressed Probability of Reference Label,Confidence Drift
+0,20220422-20220424-elarbi-coachella-4B5A8619.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,255.891,4.838,6.228,0.003,4293,11682,19268,60,3,18373,12676,0.812,15.475,981,ballplayer,0.16,0.01,0.941
+1,20220422-20220424-elarbi-coachella-4B5A8887.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,347.186,5.635,7.024,0.004,4075,10532,19911,77,4,19852,12517,0.587,13.519,541,drum,0.59,0.12,0.805
+2,20220930-elarbi-ner-4B5A2550.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,284.69,5.644,7.033,0.003,4292,11006,19862,73,5,18478,12848,0.701,15.025,573,go-kart,0.82,0.77,0.065
+3,20230501-elarbi-neugradphotos-4B5A7958.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,342.678,6.137,7.526,0.004,4954,9982,19548,78,4,19108,12341,0.518,13.833,557,flagpole,0.88,0.99,0.125
+4,20230501-elarbi-neugradphotos-4B5A7992.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,277.046,4.027,5.417,0.003,4554,10709,20181,67,3,18410,13371,0.591,9.622,999,toilet tissue,0.13,0,0.996
+5,20230501-elarbi-neugradphotos-4B5A8009.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,482.272,5.022,6.412,0.005,4144,11306,19297,112,5,20574,12634,0.287,14.471,683,oboe,0.18,0.1,0.446
+6,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,189.818,1.733,3.123,0.002,4441,10794,19920,45,11,16126,13317,0.665,8.628,818,spotlight,0.15,0.21,0.419
+7,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,327.449,4.409,5.799,0.004,4980,10278,19808,78,4,19110,12540,0.47,10.475,841,sweatshirt,0.17,0.23,0.338
+8,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,435.797,5.029,6.419,0.005,4410,10435,19949,97,4,21040,12619,0.329,8.868,489,chainlink fence,0.93,0.98,0.048
+9,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,273.222,5.564,6.954,0.003,4188,10642,19900,60,5,17665,12722,0.655,12.46,643,mask,0.35,0.06,0.835
+10,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,439.306,8.531,9.921,0.005,4128,11728,19442,96,5,21541,12436,0.65,14.125,796,ski mask,0.23,0.06,0.742
+11,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,252.533,4.277,5.667,0.003,4242,10428,19368,59,3,18117,12216,0.727,15.526,585,hair spray,0.27,0.07,0.754
+12,20241017-elarbi-bladeeNYC-4B5A2464.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,273.021,5.475,6.864,0.003,4499,9907,19368,65,5,17973,13117,0.734,14.543,819,stage,0.69,0.31,0.552
+13,20241017-elarbi-bladeeNYC-4B5A2603.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,314.334,4.816,6.206,0.004,4242,10935,20661,94,4,19180,12507,0.708,16.524,650,microphone,0.22,0.38,0.77
+14,20241111-elarbi-thehellpNYC-4B5A4361.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,310.964,5.77,7.159,0.004,4599,10621,19996,70,7,18601,13379,0.553,14.315,860,tobacco shop,0.33,0.06,0.813
+15,20241113-elarbi-thehellpBOS-4B5A4416.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,378.914,5.724,7.113,0.004,4196,12434,27071,84,4,19836,13132,0.552,16.178,526,desk,0.66,0.66,0.002
+16,20241113-elarbi-thehellpBOS-4B5A4417.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,240.055,4.178,5.567,0.003,4180,11406,19453,91,3,18215,12712,0.752,12.724,784,screwdriver,0.37,0.34,0.064
+17,20241113-elarbi-thehellpBOS-4B5A4438.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,362.222,6.581,7.971,0.004,4212,10527,20122,82,5,19619,13483,0.49,11.034,819,stage,0.64,0.76,0.187
+18,20241113-elarbi-thehellpBOS-4B5A4452.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,316.691,4.393,5.782,0.004,4538,11043,19778,76,3,19547,12705,0.699,12.722,793,shower cap,0.37,0.23,0.395
+19,20250222-elarbi-redbullBOS-4B5A4586.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,334.71,5.958,7.348,0.004,4617,9489,20124,91,6,20362,12472,0.599,19.074,450,bobsled,0.3,0.06,0.788
+20,Artistic_portrait.avif,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,27.9,3.594,4.983,0.004,119,1214,1843,10,1,2689,1183,0.835,32.521,107,jellyfish,0.42,0.31,0.261
+21,Bright_red_portrait.avif,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,8.81,4.63,6.018,0.009,48,264,384,4,2,387,241,0.752,27.672,684,ocarina,0.75,0.52,0.311
+22,Brooklyn_bridge.webp,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,33.434,6.74,8.129,0.013,94,378,700,8,2,889,464,0.756,24.704,718,pier,0.88,0.78,0.115
+23,Brush_ends.webp,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,6.771,2.496,3.884,0.007,48,234,546,4,1,318,210,0.75,28.174,696,paintbrush,0.96,0.85,0.116
+24,bunny.CR2,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,764.085,6.515,7.904,0.009,4660,10151,20470,167,4,24588,12474,0.215,12.022,330,wood rabbit,0.5,0.28,0.453
+25,Colorful_patern_portrait.webp,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,34.414,5.316,6.706,0.007,153,1220,1453,9,2,1364,845,0.759,26.192,836,sunglass,0.55,0.54,0.003
+26,Colorful_portrait.webp,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,6.42,1.9,3.289,0.006,55,252,383,2,0,314,277,0.692,28.2,552,feather boa,1,0,0.996
+27,el_capitain_with_night_sky.webp,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,17.164,1.678,3.067,0.004,127,652,1371,7,1,1078,752,0.792,29.789,972,cliff,0.45,0.14,0.69
+28,green_wheat_field.webp,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,9.77,4.753,6.141,0.008,58,267,400,4,1,424,263,0.714,26.445,984,rapeseed,1,0.98,0.02
+29,landscape.png,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,68.85,5.944,7.334,0.005,264,2342,3216,16,2,2999,1900,0.714,25.458,984,rapeseed,0.25,0.08,0.674
+30,man_holding_camera.webp,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,13.194,4.24,5.629,0.01,60,335,435,4,2,449,291,0.757,26.356,763,revolver,0.06,0.02,0.607
+31,Polar_bear_over_water.webp,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,6.726,3.081,4.469,0.012,43,483,415,3,1,249,133,0.627,25.31,296,ice bear,0.17,0,0.981
+32,Portrate_with_greenery_background.webp,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,146.969,5.392,6.781,0.004,554,3791,7890,34,3,9022,4889,0.837,28.933,610,jersey,0.31,0.32,0.038
+33,Threads_up_close.webp,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,6.798,3.116,4.504,0.007,45,243,332,3,2,339,207,0.79,29.537,490,chain mail,0.28,0.09,0.663
+34,wheat_field.webp,gauss_quantization_agressive.yaml,2,8,100,gauss,8,125,8,9.325,2.738,4.126,0.009,49,258,350,4,2,370,208,0.747,25.38,998,ear,0.27,0.02,0.912
+35,20220422-20220424-elarbi-coachella-4B5A8619.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,6605.795,150.186,151.434,0.076,4116,10909,24309,1552,47,86260,13068,0.823,15.144,981,ballplayer,0.16,0.02,0.848
+36,20220422-20220424-elarbi-coachella-4B5A8887.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,7979.636,193.458,194.706,0.092,4003,11201,24790,1721,50,107157,12440,0.55,13.288,541,drum,0.59,0.36,0.403
+37,20220930-elarbi-ner-4B5A2550.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,15344.898,172.938,174.186,0.174,4106,10625,29627,3137,64,180008,12000,0.466,14.547,573,go-kart,0.82,0.52,0.364
+38,20230501-elarbi-neugradphotos-4B5A7958.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,9616.145,209.762,211.01,0.11,4242,10377,26158,1992,67,126638,12599,0.475,13.577,557,flagpole,0.88,0.97,0.102
+39,20230501-elarbi-neugradphotos-4B5A7992.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,7388.487,172.333,173.581,0.085,4765,10566,24456,1691,63,98554,11984,0.571,9.457,999,toilet tissue,0.13,0,0.994
+40,20230501-elarbi-neugradphotos-4B5A8009.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,12646.32,176.666,177.914,0.144,4063,11289,27158,3199,65,141436,13034,0.261,14.055,683,oboe,0.18,0.23,0.246
+41,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,8442.762,82.348,83.596,0.096,4660,10766,28051,1760,40,101016,12379,0.614,8.47,818,spotlight,0.15,0.24,0.622
+42,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,12222.186,168.565,169.813,0.139,4438,10517,27632,2650,59,148908,12398,0.421,10.35,841,sweatshirt,0.17,0.1,0.43
+43,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,10686.876,157.406,158.654,0.122,4687,9704,26671,2247,52,135016,13116,0.299,8.678,489,chainlink fence,0.93,0.96,0.03
+44,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,7587.979,164.612,165.86,0.087,3985,10860,24752,1598,45,99813,12286,0.618,12.11,643,mask,0.35,0.04,0.89
+45,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,10306.669,246.261,247.509,0.119,4521,9426,26487,2235,73,133423,12575,0.598,13.838,796,ski mask,0.23,0.02,0.906
+46,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,15021.441,124.405,125.653,0.17,4603,10167,28677,3797,71,173723,12494,0.524,15.04,585,hair spray,0.27,0.08,0.71
+47,20241017-elarbi-bladeeNYC-4B5A2464.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,8849.379,203.738,204.986,0.102,4108,9807,26770,1798,59,111473,12910,0.693,14.363,819,stage,0.69,0.56,0.196
+48,20241017-elarbi-bladeeNYC-4B5A2603.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,15571.828,170.961,172.209,0.177,4203,10671,29755,3257,99,185681,13385,0.534,16.113,650,microphone,0.22,0.41,0.917
+49,20241111-elarbi-thehellpNYC-4B5A4361.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,17828.294,188.136,189.384,0.203,4243,10777,30065,3791,95,171969,12430,0.339,13.706,860,tobacco shop,0.33,0.03,0.896
+50,20241113-elarbi-thehellpBOS-4B5A4416.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,13601.857,172.704,173.952,0.155,4263,10851,28506,2849,74,169651,13358,0.509,15.482,526,desk,0.66,0.57,0.134
+51,20241113-elarbi-thehellpBOS-4B5A4417.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,8721.591,132.916,134.164,0.1,4464,11468,27291,1769,51,107269,12909,0.696,12.429,784,screwdriver,0.37,0.26,0.285
+52,20241113-elarbi-thehellpBOS-4B5A4438.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,12113.102,187.765,189.013,0.138,4588,10323,27573,2758,62,152126,12060,0.437,10.839,819,stage,0.64,0.77,0.205
+53,20241113-elarbi-thehellpBOS-4B5A4452.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,10733.193,155.693,156.941,0.122,4366,10388,26818,2207,59,129859,12074,0.642,12.63,793,shower cap,0.37,0.4,0.065
+54,20250222-elarbi-redbullBOS-4B5A4586.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,21894.604,181.899,183.147,0.248,4250,10863,32105,4520,109,211623,12211,0.256,18.296,450,bobsled,0.3,0.04,0.861
+55,Artistic_portrait.avif,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,307.493,87.69,88.938,0.047,116,943,2015,69,16,5264,1164,0.995,48.343,107,jellyfish,0.42,0.4,0.032
+56,Bright_red_portrait.avif,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,126.155,97.781,99.027,0.129,39,263,463,32,17,1780,911,0.97,40.657,684,ocarina,0.75,0.74,0.008
+57,Brooklyn_bridge.webp,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,489.335,121.181,122.428,0.193,101,432,961,108,22,5896,430,0.991,40.687,718,pier,0.88,0.88,0.001
+58,Brush_ends.webp,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,168.724,60.624,61.87,0.152,47,267,462,37,15,1936,207,0.979,42.547,696,paintbrush,0.96,0.92,0.043
+59,bunny.CR2,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,17412.378,169.271,170.519,0.198,4584,9816,28906,3721,71,175123,12476,0.197,12.099,330,wood rabbit,0.5,0.33,0.353
+60,Colorful_patern_portrait.webp,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,542.635,132.569,133.817,0.111,163,720,1933,117,22,6360,913,0.973,37.579,836,sunglass,0.55,0.54,0.014
+61,Colorful_portrait.webp,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,169.955,56.075,57.322,0.139,56,244,462,37,15,2736,219,0.97,41.392,552,feather boa,1,1,0
+62,el_capitain_with_night_sky.webp,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,458.04,52.372,53.62,0.091,125,666,1487,103,12,5836,776,0.988,44.412,972,cliff,0.45,0.45,0.017
+63,green_wheat_field.webp,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,239.308,67.952,69.198,0.165,56,265,545,52,14,3667,264,0.978,40.293,984,rapeseed,1,1,0
+64,landscape.png,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,2125.111,104.156,105.404,0.16,238,1770,4119,443,27,24001,1870,0.951,36.31,984,rapeseed,0.25,0.21,0.135
+65,man_holding_camera.webp,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,241.021,90.25,91.497,0.185,58,259,562,56,15,2653,247,0.984,40.426,763,revolver,0.06,0.06,0.045
+66,Polar_bear_over_water.webp,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,145.342,61.747,62.993,0.218,31,190,315,34,12,1846,640,0.987,40.78,296,ice bear,0.17,0.18,0.035
+67,Portrate_with_greenery_background.webp,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,2671.184,109.037,110.285,0.078,543,3858,9354,991,27,33067,5121,0.989,44.613,610,jersey,0.31,0.32,0.022
+68,Threads_up_close.webp,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,126.86,48.177,49.423,0.116,31,244,438,30,10,1597,224,0.985,44.007,490,chain mail,0.28,0.37,0.296
+69,wheat_field.webp,gauss_quantization_high_quality.yaml,2,8,10,gauss,3,20,3,197.773,69.107,70.354,0.188,46,230,439,44,13,2190,210,0.988,39.501,998,ear,0.27,0.3,0.122
+70,20220422-20220424-elarbi-coachella-4B5A8619.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,425.604,13.475,14.832,0.005,4026,10455,18862,98,5,19899,12748,0.83,15.274,981,ballplayer,0.16,0.02,0.875
+71,20220422-20220424-elarbi-coachella-4B5A8887.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,668.746,16.816,18.174,0.008,4112,10350,19617,141,7,24187,12552,0.58,13.391,541,drum,0.59,0.28,0.534
+72,20220930-elarbi-ner-4B5A2550.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,532.015,15.54,16.897,0.006,4276,11681,19419,116,6,21999,12328,0.67,14.76,573,go-kart,0.82,0.58,0.3
+73,20230501-elarbi-neugradphotos-4B5A7958.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,751.162,18.021,19.378,0.009,4049,10703,20332,161,8,25787,12522,0.501,13.692,557,flagpole,0.88,0.97,0.108
+74,20230501-elarbi-neugradphotos-4B5A7992.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,511.907,12.954,14.312,0.006,4399,10773,19983,111,4,22056,12635,0.588,9.52,999,toilet tissue,0.13,0,0.993
+75,20230501-elarbi-neugradphotos-4B5A8009.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,1194.888,15.097,16.454,0.014,4155,10531,20498,253,7,28252,13505,0.284,14.246,683,oboe,0.18,0.24,0.296
+76,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,222.751,5.924,7.281,0.003,4504,10751,20045,56,5,17438,13246,0.66,8.533,818,spotlight,0.15,0.22,0.521
+77,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,702.659,13.371,14.729,0.008,5339,9917,19607,158,8,25200,13511,0.466,10.407,841,sweatshirt,0.17,0.1,0.377
+78,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,842.237,14.158,15.516,0.01,4481,11638,19943,183,9,26351,12238,0.327,8.75,489,chainlink fence,0.93,0.96,0.03
+79,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,470.396,15.746,17.104,0.005,4005,10323,19743,104,7,21578,12457,0.647,12.256,643,mask,0.35,0.06,0.837
+80,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,856.847,22.621,23.979,0.01,4441,10642,20210,186,11,27004,13025,0.645,13.968,796,ski mask,0.23,0.02,0.895
+81,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,434.103,11.808,13.165,0.005,5005,10090,19642,102,7,20912,12426,0.723,15.246,585,hair spray,0.27,0.08,0.702
+82,20241017-elarbi-bladeeNYC-4B5A2464.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,443.535,16.474,17.831,0.005,4130,11080,19925,100,7,20886,12741,0.728,14.456,819,stage,0.69,0.51,0.265
+83,20241017-elarbi-bladeeNYC-4B5A2603.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,576.172,14.537,15.895,0.007,4301,10477,20346,127,6,22391,13402,0.722,16.33,650,microphone,0.22,0.37,0.719
+84,20241111-elarbi-thehellpNYC-4B5A4361.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,714.143,17.432,18.789,0.008,4462,10707,20170,155,6,24827,13013,0.529,13.974,860,tobacco shop,0.33,0.05,0.853
+85,20241113-elarbi-thehellpBOS-4B5A4416.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,931.245,16.023,17.381,0.011,4719,11035,19604,199,7,25680,12756,0.556,15.754,526,desk,0.66,0.56,0.141
+86,20241113-elarbi-thehellpBOS-4B5A4417.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,395.979,12.324,13.682,0.005,4382,10783,19357,93,5,20307,12564,0.749,12.529,784,screwdriver,0.37,0.28,0.238
+87,20241113-elarbi-thehellpBOS-4B5A4438.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,771.952,18.507,19.864,0.009,4761,9918,20536,166,8,26318,12920,0.48,10.925,819,stage,0.64,0.79,0.244
+88,20241113-elarbi-thehellpBOS-4B5A4452.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,652.529,13.899,15.257,0.008,4308,10841,20826,155,6,23540,12310,0.696,12.692,793,shower cap,0.37,0.41,0.088
+89,20250222-elarbi-redbullBOS-4B5A4586.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,1034.899,18.894,20.251,0.012,4263,10640,20541,223,8,29584,12521,0.542,19.049,450,bobsled,0.3,0.06,0.796
+90,Artistic_portrait.avif,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,50.666,9.372,10.729,0.007,156,1117,2082,12,3,2228,1276,0.956,38.394,107,jellyfish,0.42,0.39,0.075
+91,Bright_red_portrait.avif,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,17.871,12.054,13.409,0.018,42,265,402,7,3,535,249,0.88,32.71,684,ocarina,0.75,0.7,0.065
+92,Brooklyn_bridge.webp,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,77.513,15.531,16.888,0.03,102,404,738,19,4,1421,918,0.875,28.662,718,pier,0.88,0.88,0.001
+93,Brush_ends.webp,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,17.062,7.051,8.406,0.017,52,259,341,5,3,484,215,0.887,33.012,696,paintbrush,0.96,0.78,0.189
+94,bunny.CR2,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,1721.989,16.885,18.242,0.02,4083,11626,20777,397,11,36245,13095,0.221,12.136,330,wood rabbit,0.5,0.29,0.433
+95,Colorful_patern_portrait.webp,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,71.784,13.459,14.816,0.014,162,692,1354,17,4,1887,838,0.874,30.898,836,sunglass,0.55,0.55,0.006
+96,Colorful_portrait.webp,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,14.197,6.266,7.622,0.013,56,254,353,5,1,404,230,0.819,32.337,552,feather boa,1,0.66,0.339
+97,el_capitain_with_night_sky.webp,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,40.083,4.983,6.341,0.008,144,949,2120,11,2,1476,804,0.887,34.764,972,cliff,0.45,0.21,0.525
+98,green_wheat_field.webp,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,26.719,10.965,12.32,0.021,56,271,422,7,3,604,257,0.842,30.378,984,rapeseed,1,1,0.001
+99,landscape.png,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,211.37,14.99,16.348,0.016,231,1501,3174,46,5,6237,2009,0.82,28.497,984,rapeseed,0.25,0.28,0.15
+100,man_holding_camera.webp,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,28.77,11.094,12.45,0.023,55,262,468,9,3,602,246,0.872,30.887,763,revolver,0.06,0.03,0.454
+101,Polar_bear_over_water.webp,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,17.969,8.108,9.464,0.029,35,194,229,6,2,354,132,0.83,29.288,296,ice bear,0.17,0.14,0.19
+102,Portrate_with_greenery_background.webp,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,307.011,13.063,14.421,0.009,552,4937,8029,67,5,10273,5116,0.928,35.103,610,jersey,0.31,0.34,0.076
+103,Threads_up_close.webp,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,16.791,6.643,7.998,0.016,41,238,400,6,3,550,322,0.914,33.262,490,chain mail,0.28,0.28,0.022
+104,wheat_field.webp,gauss_quantization_moderate.yaml,2,8,60,gauss,6,75,6,24.031,7.202,8.558,0.023,50,246,341,8,2,502,200,0.877,29.233,998,ear,0.27,0.08,0.708
+105,20220422-20220424-elarbi-coachella-4B5A8619.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,210.916,2.354,3.838,0.002,4101,10798,19958,51,2,16924,12743,0.791,15.621,981,ballplayer,0.16,0,0.972
+106,20220422-20220424-elarbi-coachella-4B5A8887.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,252.072,2.656,4.14,0.003,4079,10518,19999,58,3,18554,12975,0.585,13.696,541,drum,0.59,0.01,0.98
+107,20220930-elarbi-ner-4B5A2550.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,221.366,2.605,4.089,0.003,4897,10002,20366,51,2,17333,13322,0.706,15.299,573,go-kart,0.82,0.96,0.164
+108,20230501-elarbi-neugradphotos-4B5A7958.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,243.408,2.918,4.401,0.003,4076,11287,19343,56,3,17807,12260,0.523,14.019,557,flagpole,0.88,0.86,0.017
+109,20230501-elarbi-neugradphotos-4B5A7992.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,217.428,1.867,3.351,0.002,4512,10925,19822,54,3,17764,13321,0.591,9.767,999,toilet tissue,0.13,0,0.996
+110,20230501-elarbi-neugradphotos-4B5A8009.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,293.45,2.322,3.806,0.003,4932,9813,19767,84,2,19571,12944,0.278,14.646,683,oboe,0.18,0.02,0.891
+111,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,181.349,0.684,2.167,0.002,4466,10990,20157,42,3,16545,13595,0.67,8.714,818,spotlight,0.15,0.01,0.927
+112,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,243.009,1.903,3.387,0.003,4516,10841,20344,58,2,17640,13166,0.465,10.489,841,sweatshirt,0.17,0.22,0.28
+113,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,303.598,2.253,3.736,0.003,4508,11432,19565,75,3,19418,12533,0.332,9.012,489,chainlink fence,0.93,0.95,0.02
+114,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,219.053,2.507,3.99,0.003,4788,9549,20213,52,4,17430,13126,0.661,12.716,643,mask,0.35,0.29,0.187
+115,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,301.436,3.96,5.443,0.003,4441,10753,19481,69,4,19008,12887,0.631,14.267,796,ski mask,0.23,0.16,0.29
+116,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,206.354,2.13,3.613,0.002,4215,10600,19907,50,3,17548,13140,0.675,15.801,585,hair spray,0.27,0.04,0.846
+117,20241017-elarbi-bladeeNYC-4B5A2464.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,223.204,2.473,3.956,0.003,4984,10103,20319,72,4,17591,12646,0.725,14.523,819,stage,0.69,0.21,0.693
+118,20241017-elarbi-bladeeNYC-4B5A2603.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,233.419,2.381,3.864,0.003,4263,11515,19993,55,3,18467,13674,0.585,16.668,650,microphone,0.22,0.18,0.172
+119,20241111-elarbi-thehellpNYC-4B5A4361.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,230.252,2.498,3.981,0.003,4319,10700,19989,55,3,17347,13573,0.554,14.681,860,tobacco shop,0.33,0.12,0.647
+120,20241113-elarbi-thehellpBOS-4B5A4416.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,239.311,2.594,4.077,0.003,4252,11311,19683,57,4,18358,13654,0.551,16.588,526,desk,0.66,0.84,0.284
+121,20241113-elarbi-thehellpBOS-4B5A4417.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,202.478,1.859,3.343,0.002,4628,9773,20411,47,2,17776,12663,0.732,12.901,784,screwdriver,0.37,0.24,0.346
+122,20241113-elarbi-thehellpBOS-4B5A4438.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,258.639,3.263,4.746,0.003,4688,10826,20462,92,5,18267,13249,0.495,11.156,819,stage,0.64,0.77,0.202
+123,20241113-elarbi-thehellpBOS-4B5A4452.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,233.938,2.033,3.517,0.003,4412,11297,19491,55,6,18114,12815,0.692,12.72,793,shower cap,0.37,0.04,0.896
+124,20250222-elarbi-redbullBOS-4B5A4586.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,246.019,2.545,4.028,0.003,4229,10232,19937,58,4,18191,13089,0.567,18.638,450,bobsled,0.3,0.07,0.761
+125,Artistic_portrait.avif,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,18.518,1.63,3.113,0.003,113,963,1801,6,1,2286,1383,0.49,25.883,107,jellyfish,0.42,0.19,0.556
+126,Bright_red_portrait.avif,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,5.998,2.655,4.137,0.006,49,264,380,3,1,338,239,0.659,23.4,684,ocarina,0.75,0.15,0.802
+127,Brooklyn_bridge.webp,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,17.249,3.723,5.205,0.007,110,521,968,7,3,742,549,0.657,22.156,718,pier,0.88,0.52,0.402
+128,Brush_ends.webp,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,3.882,1.111,2.593,0.004,51,266,349,2,1,297,216,0.603,23.302,696,paintbrush,0.96,0.07,0.928
+129,bunny.CR2,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,429.087,3.081,4.564,0.005,4569,10141,20445,96,4,20021,13574,0.209,11.795,330,wood rabbit,0.5,0.14,0.731
+130,Colorful_patern_portrait.webp,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,21.404,2.57,4.054,0.004,159,769,1304,7,2,1180,879,0.653,22.205,836,sunglass,0.55,0.6,0.092
+131,Colorful_portrait.webp,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,4.505,0.795,2.277,0.004,57,466,1042,3,1,387,406,0.609,24.58,552,feather boa,1,0,0.999
+132,el_capitain_with_night_sky.webp,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,11.095,0.773,2.257,0.002,135,736,1360,5,0,1019,799,0.733,26.547,972,cliff,0.45,0.04,0.915
+133,green_wheat_field.webp,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,5.447,2.066,3.548,0.005,59,275,397,3,1,353,253,0.624,23.055,984,rapeseed,1,0.5,0.504
+134,landscape.png,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,36.498,2.249,3.732,0.003,234,1680,3069,13,1,3491,1952,0.622,22.235,984,rapeseed,0.25,0.07,0.698
+135,man_holding_camera.webp,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,7.925,2.012,3.494,0.006,56,271,384,4,1,368,271,0.656,22.823,763,revolver,0.06,0,0.979
+136,Polar_bear_over_water.webp,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,3.575,1.406,2.888,0.007,40,187,208,2,0,202,133,0.496,22.484,296,ice bear,0.17,0,0.988
+137,Portrate_with_greenery_background.webp,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,98.646,2.646,4.129,0.003,553,4711,8348,26,2,7611,4894,0.76,24.36,610,jersey,0.31,0.19,0.404
+138,Threads_up_close.webp,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,3.59,1.655,3.137,0.004,73,213,375,3,3,946,387,0.655,26.599,490,chain mail,0.28,0,0.988
+139,wheat_field.webp,gauss_quantization_most_agressive.yaml,2,8,150,gauss,10,200,10,4.99,1.377,2.858,0.006,48,237,322,3,0,278,231,0.641,22.406,998,ear,0.27,0,0.989
+140,20220422-20220424-elarbi-coachella-4B5A8619.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,9442.152,149.878,151.108,0.108,4251,11211,26746,1974,48,114702,12540,0.819,15.143,981,ballplayer,0.16,0.03,0.845
+141,20220422-20220424-elarbi-coachella-4B5A8887.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,10912.36,191.755,192.985,0.125,4078,10567,26669,2428,64,139871,13296,0.548,13.287,541,drum,0.59,0.36,0.402
+142,20220930-elarbi-ner-4B5A2550.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,21958.942,170.528,171.759,0.249,4507,9827,34847,4599,86,247259,12974,0.445,14.537,573,go-kart,0.82,0.53,0.36
+143,20230501-elarbi-neugradphotos-4B5A7958.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,13211.616,205.284,206.515,0.151,4166,10903,28777,2757,77,168598,12592,0.472,13.575,557,flagpole,0.88,0.97,0.103
+144,20230501-elarbi-neugradphotos-4B5A7992.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,10233.635,170.685,171.915,0.117,4959,9843,27637,2139,55,132307,12956,0.569,9.457,999,toilet tissue,0.13,0,0.994
+145,20230501-elarbi-neugradphotos-4B5A8009.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,17246.309,176.889,178.119,0.196,4233,10724,30947,3775,88,216350,12887,0.26,14.052,683,oboe,0.18,0.23,0.248
+146,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,12921.496,81.78,83.011,0.146,4428,10879,29655,2675,49,140527,12660,0.603,8.469,818,spotlight,0.15,0.23,0.558
+147,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,17689.443,167.31,168.54,0.201,4439,10996,32216,3749,72,206129,12355,0.414,10.349,841,sweatshirt,0.17,0.1,0.408
+148,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,15100.827,157.932,159.162,0.172,4576,10309,29872,3359,83,183627,13115,0.296,8.678,489,chainlink fence,0.93,0.96,0.031
+149,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,10822.601,164.75,165.98,0.124,4155,10708,27242,2238,73,132103,13313,0.615,12.11,643,mask,0.35,0.04,0.893
+150,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,14674.605,239.867,241.098,0.168,4281,11113,30513,3370,77,185026,12883,0.593,13.835,796,ski mask,0.23,0.02,0.907
+151,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,21602.683,124.262,125.492,0.244,4919,10234,34612,4661,77,242869,13206,0.501,15.028,585,hair spray,0.27,0.08,0.71
+152,20241017-elarbi-bladeeNYC-4B5A2464.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,13093.843,196.945,198.176,0.149,4726,10431,29152,3013,70,156259,12738,0.685,14.36,819,stage,0.69,0.54,0.215
+153,20241017-elarbi-bladeeNYC-4B5A2603.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,22201.855,170.838,172.068,0.252,4920,10737,34400,4986,84,252570,13619,0.513,16.096,650,microphone,0.22,0.41,0.884
+154,20241111-elarbi-thehellpNYC-4B5A4361.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,24637.986,185.301,186.531,0.279,5017,9715,35723,5193,99,226749,12736,0.322,13.692,860,tobacco shop,0.33,0.03,0.897
+155,20241113-elarbi-thehellpBOS-4B5A4416.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,19553.95,173.771,175.001,0.222,4681,10035,32961,4537,82,233727,12741,0.498,15.476,526,desk,0.66,0.57,0.13
+156,20241113-elarbi-thehellpBOS-4B5A4417.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,12889.605,130.879,132.109,0.146,4335,11302,28786,3081,57,151033,12709,0.687,12.428,784,screwdriver,0.37,0.27,0.274
+157,20241113-elarbi-thehellpBOS-4B5A4438.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,17291.048,183.837,185.067,0.196,4898,10274,31310,3783,78,208482,12397,0.432,10.838,819,stage,0.64,0.77,0.208
+158,20241113-elarbi-thehellpBOS-4B5A4452.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,15205.579,155.536,156.767,0.173,4584,10938,31069,3137,69,187018,12651,0.635,12.629,793,shower cap,0.37,0.39,0.034
+159,20250222-elarbi-redbullBOS-4B5A4586.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,28818.89,182.503,183.733,0.326,4867,10079,38068,6890,108,276228,13251,0.238,18.209,450,bobsled,0.3,0.04,0.853
+160,Artistic_portrait.avif,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,330.621,89.83,91.061,0.05,133,1137,2234,74,18,7091,1401,0.995,48.471,107,jellyfish,0.42,0.4,0.042
+161,Bright_red_portrait.avif,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,140.589,100.159,101.388,0.139,44,268,485,34,20,2003,241,0.971,40.825,684,ocarina,0.75,0.73,0.018
+162,Brooklyn_bridge.webp,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,595.38,121.039,122.269,0.227,111,417,1024,129,23,7204,448,0.994,42.173,718,pier,0.88,0.88,0.002
+163,Brush_ends.webp,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,206.596,60.382,61.61,0.177,53,254,466,54,14,2347,217,0.983,43.424,696,paintbrush,0.96,0.92,0.036
+164,bunny.CR2,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,24245.355,164.643,165.873,0.274,4699,10647,34348,5134,98,253386,13030,0.191,12.092,330,wood rabbit,0.5,0.32,0.37
+165,Colorful_patern_portrait.webp,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,651.088,133.34,134.57,0.129,163,726,1745,169,33,8365,848,0.975,37.84,836,sunglass,0.55,0.54,0.008
+166,Colorful_portrait.webp,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,209.226,58.472,59.701,0.164,55,237,485,47,12,2227,225,0.973,41.948,552,feather boa,1,1,0.001
+167,el_capitain_with_night_sky.webp,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,554.889,53.889,55.119,0.108,132,642,1558,116,12,7229,767,0.99,44.937,972,cliff,0.45,0.45,0.006
+168,green_wheat_field.webp,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,290.616,67.364,68.593,0.192,59,292,578,64,14,3245,329,0.981,41.082,984,rapeseed,1,1,0
+169,landscape.png,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,2932.185,102.362,103.593,0.218,247,2670,4730,688,39,32952,1925,0.963,37.136,984,rapeseed,0.25,0.22,0.094
+170,man_holding_camera.webp,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,295.688,90.705,91.935,0.216,60,476,1361,72,17,3165,252,0.987,40.898,763,revolver,0.06,0.06,0.065
+171,Polar_bear_over_water.webp,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,177.691,63.242,64.471,0.253,35,179,336,49,12,1941,143,0.989,42.096,296,ice bear,0.17,0.18,0.048
+172,Portrate_with_greenery_background.webp,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,3065.062,110.302,111.532,0.089,572,3944,10503,648,37,37859,5049,0.99,45.083,610,jersey,0.31,0.32,0.014
+173,Threads_up_close.webp,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,149.938,49.326,50.555,0.132,54,367,573,65,22,1867,212,0.986,45.023,490,chain mail,0.28,0.36,0.285
+174,wheat_field.webp,gauss_quantization_no_quant.yaml,2,8,1,gauss,1,1,1,247.821,69.099,70.327,0.223,43,239,475,54,15,2844,202,0.991,40.753,998,ear,0.27,0.29,0.09
+175,20220422-20220424-elarbi-coachella-4B5A8619.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,882.451,40.895,42.234,0.01,4150,10889,20295,197,11,26448,12526,0.837,15.205,981,ballplayer,0.16,0.02,0.864
+176,20220422-20220424-elarbi-coachella-4B5A8887.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,1467.344,50.571,51.911,0.017,4929,10117,21812,324,15,35410,12760,0.569,13.331,541,drum,0.59,0.35,0.414
+177,20220930-elarbi-ner-4B5A2550.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,1891.696,49.823,51.163,0.022,4315,10424,21740,408,18,40620,12995,0.592,14.629,573,go-kart,0.82,0.53,0.353
+178,20230501-elarbi-neugradphotos-4B5A7958.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,1816.339,54.248,55.588,0.021,4295,11599,21199,399,18,41185,13289,0.489,13.631,557,flagpole,0.88,0.97,0.108
+179,20230501-elarbi-neugradphotos-4B5A7992.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,1191.348,42.833,44.173,0.014,4798,11322,20567,260,12,32218,14087,0.583,9.484,999,toilet tissue,0.13,0,0.994
+180,20230501-elarbi-neugradphotos-4B5A8009.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,2898.971,44.915,46.255,0.033,4387,11519,22972,675,24,48622,12873,0.273,14.122,683,oboe,0.18,0.24,0.315
+181,20240420-elarbi-hauntedmoundCHI-4B5A1283.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,384.546,21.766,23.105,0.005,4633,11742,20636,90,6,20388,13192,0.654,8.493,818,spotlight,0.15,0.26,0.789
+182,20240420-elarbi-hauntedmoundCHI-4B5A2628.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,1785.542,43.152,44.492,0.021,4660,11422,22101,387,15,38955,12857,0.455,10.372,841,sweatshirt,0.17,0.09,0.446
+183,20240420-elarbi-hauntedmoundCHI-4B5A2629.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,1860.891,42.925,44.265,0.021,5168,10313,21328,412,14,39391,14104,0.316,8.7,489,chainlink fence,0.93,0.96,0.029
+184,20241014-elarbi-yunggravyBOS-4B5A0014.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,1021.426,45.951,47.291,0.012,4278,11438,20163,224,13,30701,13466,0.638,12.172,643,mask,0.35,0.04,0.874
+185,20241014-elarbi-yunggravyBOS-4B5A0116.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,1851.504,65.717,67.057,0.022,4443,11766,21875,576,29,43265,12899,0.634,13.89,796,ski mask,0.23,0.02,0.911
+186,20241014-elarbi-yunggravyBOS-4B5A9992.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,1739.704,34.661,36.001,0.02,4881,9930,21556,372,12,38477,13479,0.654,15.126,585,hair spray,0.27,0.07,0.741
+187,20241017-elarbi-bladeeNYC-4B5A2464.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,917.979,50.865,52.205,0.011,4434,11072,20925,208,15,28696,13812,0.722,14.416,819,stage,0.69,0.56,0.194
+188,20241017-elarbi-bladeeNYC-4B5A2603.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,2131.743,45.063,46.403,0.024,5310,10341,21990,602,18,43534,12762,0.657,16.21,650,microphone,0.22,0.42,0.929
+189,20241111-elarbi-thehellpNYC-4B5A4361.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,2966.552,57.857,59.197,0.034,4385,11406,23495,644,20,50933,13138,0.449,13.808,860,tobacco shop,0.33,0.04,0.885
+190,20241113-elarbi-thehellpBOS-4B5A4416.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,2231.465,48.022,49.362,0.026,4383,10886,21665,487,16,40115,12737,0.551,15.59,526,desk,0.66,0.58,0.114
+191,20241113-elarbi-thehellpBOS-4B5A4417.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,881.156,36.545,37.885,0.01,4325,10996,21135,194,11,28561,13660,0.733,12.477,784,screwdriver,0.37,0.27,0.25
+192,20241113-elarbi-thehellpBOS-4B5A4438.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,2037.876,54.465,55.805,0.024,4654,11181,22626,491,19,44287,13032,0.466,10.872,819,stage,0.64,0.79,0.233
+193,20241113-elarbi-thehellpBOS-4B5A4452.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,1681.068,41.784,43.124,0.019,4983,10950,21361,371,16,37137,14260,0.679,12.666,793,shower cap,0.37,0.38,0.011
+194,20250222-elarbi-redbullBOS-4B5A4586.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,4941.485,55.059,56.398,0.056,4584,12331,24363,1179,34,68510,13243,0.384,18.738,450,bobsled,0.3,0.04,0.853
+195,Artistic_portrait.avif,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,103.357,25.776,27.116,0.015,130,945,1942,27,5,3266,1249,0.987,43.785,107,jellyfish,0.42,0.36,0.128
+196,Bright_red_portrait.avif,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,39.646,29.394,30.731,0.04,46,277,415,11,6,759,244,0.944,36.808,684,ocarina,0.75,0.78,0.043
+197,Brooklyn_bridge.webp,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,168.977,40.227,41.565,0.067,106,414,1189,50,33,3069,740,0.951,33.343,718,pier,0.88,0.87,0.008
+198,Brush_ends.webp,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,40.841,18.671,20.009,0.04,52,352,470,11,5,690,211,0.948,37.158,696,paintbrush,0.96,0.85,0.109
+199,bunny.CR2,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,3923.353,47.253,48.593,0.045,4417,10930,22710,835,27,59997,13486,0.218,12.133,330,wood rabbit,0.5,0.32,0.359
+200,Colorful_patern_portrait.webp,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,150.35,35.921,37.261,0.031,164,690,1434,37,8,2854,852,0.939,34.605,836,sunglass,0.55,0.55,0.012
+201,Colorful_portrait.webp,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,39.57,15.907,17.246,0.035,56,284,1123,22,6,800,231,0.912,36.243,552,feather boa,1,0.99,0.006
+202,el_capitain_with_night_sky.webp,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,110.451,13.722,15.062,0.022,136,650,1295,24,2,2255,787,0.956,39.399,972,cliff,0.45,0.37,0.182
+203,green_wheat_field.webp,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,66.364,23.986,25.324,0.049,62,325,599,18,6,1247,262,0.93,34.485,984,rapeseed,1,1,0
+204,landscape.png,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,547.938,33.724,35.063,0.042,262,1533,4235,122,9,8508,1963,0.897,32.157,984,rapeseed,0.25,0.25,0.017
+205,man_holding_camera.webp,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,63.279,28.688,30.027,0.052,58,265,458,15,5,933,265,0.942,35.317,763,revolver,0.06,0.04,0.298
+206,Polar_bear_over_water.webp,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,44.172,19.104,20.442,0.067,38,191,256,10,4,629,137,0.944,33.729,296,ice bear,0.17,0.13,0.233
+207,Portrate_with_greenery_background.webp,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,698.446,33.429,34.769,0.021,565,4131,9749,157,13,15557,5171,0.974,39.853,610,jersey,0.31,0.32,0.023
+208,Threads_up_close.webp,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,37.718,15.374,16.712,0.036,47,249,365,10,5,698,466,0.969,37.692,490,chain mail,0.28,0.4,0.422
+209,wheat_field.webp,gauss_quantization_quality.yaml,2,8,30,gauss,5,40,5,57.951,19.167,20.505,0.055,49,252,372,17,5,877,205,0.95,33.363,998,ear,0.27,0.26,0.012
