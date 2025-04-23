@@ -167,6 +167,14 @@ Along with having the ability to fine-tune the exact quantization parameters, ou
     \label{fig:LN-norm_quantization_performance}
 \end{figure}
 
+In addition to there being very little change in the compression ratio, LN-normalized images look visible more degraded, as shown in figure \ref{fig:quantization_function_comparison}
+
+\begin{figure}
+    \includegraphics{assets/Quantization Function Comparison.png}
+    \caption{LN-norm quantization results compared to Gaussian Quantization weights}
+    \label{fig:quantization_function_comparison}
+\end{figure}
+
 \subsubsection{Chrominance Downsampling}
 
 JPEG leverages a YCbCr colorspace in order to distinguish between Luminance and Chrominance information in the image.
@@ -203,7 +211,7 @@ For this experiment we vary the block size according to table \ref{tab:Block Siz
 
 \subsubsection{Compression Quality Discussion}
 
-%TODO: Provide a summary of these results
+By far the most effective way to reduce image file size while maintaining high image quality metrics is to apply a moderately agressive quantization on relativly small blocks. In order for this quantization to be successful, high frequencies need to be heavily attenuated while low frequencies are maintained. Other modifications or factors swept either resulted in a very fast degradation of image quality with little change in compression ratio, or did not siginificantly effect either metric while introducing undesireable visual artifacts.
 
 \subsection{Semantic Preservation}
 Images were evaluated using a pre-trained classification model (e.g., ResNet50) to test whether compression degrades semantic content. This was done using \texttt{test/classification\_tests.py}.
@@ -257,7 +265,6 @@ The flexible compression pipeline also enables setting of luminance and chromina
 The parameters for Chrominance and Luminance quantization tested are listed in table \ref{tab:Quantization-Parameters-Table}. For sweeps with just Luminance or just Chrominance varied, the other quantization channel is processed with no Quantization.
 All experiments use a Chrominance downsample factor of 2.
 
-
 Similar to the JPEG baseline, Confidence Error increases sharply when the compression rate drops below 0.1, as shown in figure \ref{fig:Confidence vs Quantization}
 Interestingly however, when just the Chrominance or just the Luminance channels are varied, both the Confidence error and the compression ratio suffer. Shown in figure \ref{fig:just chroma or luma downsampling}
 \begin{figure}
@@ -280,11 +287,15 @@ In this experiment, we test apply our compression to images while varrying block
 
 \begin{figure}
     \includegraphics[width=0.5\textwidth]{assets/Confidence Err Vs Block Size.png}
-    \caption{Confidence Error vs Compression Ratio for a variety of block sizes. The compression ratio }
+    \caption{Confidence Error vs Compression Ratio for a variety of block sizes. As with other swept parameters, compression ratio and confidence error are inversely related.}
     \label{fig:block_size_sweep}
 \end{figure}
+
+\subsubsection{Discussion}
+
+Similar to Compression Quality, Quantization is by far the most effective way to reduce image file size while preserving semantic information. However, some other interesting trends arrise. If quantization is applied to only one of the channels, even if that is the chromiance chaannel only, the Confidence Error increases significantly over relativly modest Compression Ratios. This suggests that there is Semantic meaning encoded in color information in a different color space the YCbCr color. Future work could include applying different color transformations to the image before quantizing.
+
 \subsection{Runtime and Performance}
-% TODO: populate runtime benchmarks from .metrics.json
 Execution time for both compression and decompression is measured and stored during sweeps. Aggregate runtime plots can be shown here.
 
 One main difference between our compression pipeline JPEG compression is that the huffman tables are not pre-computed. Through our tests we note that this accounts for a significant portion of the computational load for compression and decompression \ref{fig:runtimes}. It is important to note that these runtimes are not comparable to well established codex standards, as most machines have dedicated hardware for performing these computations. The computed runtimes are only comparable to other internal results. 
@@ -295,7 +306,3 @@ One main difference between our compression pipeline JPEG compression is that th
     \label{fig:runtimes}
 \end{figure}
 
-\subsection{Discussion}
-This subsection will summarize observed trends from the plots once all data is collected.
-
-\textit{Pending: Discuss how image quality trades off with size reduction, runtime trends, and what configurations offered best balance}
