@@ -35,7 +35,7 @@ To test the sensitivity of our various metrics across a variety of compression p
 
 \begin{table}[h!]
     \centering
-    \caption{Gaussian Quantization Weights Quantization Parameters Tested}
+    \caption{Gaussian Quantization Weights Quantization Parameters Tested: Quantization Parameters for Gaussian Quantization Sweeps. Max is the quantization value in the bottom left entry of the quantization matrix, and sigma is the width parameter for the gaussian curve which defines the rest of the entries in the matrix. See \ref{fig:gaussian_quant} for more detail.}
     \begin{tabularx}{0.5\textwidth}{X c c c}
         \toprule
         \ & \textbf{Luma} & \textbf{Chroma} \\
@@ -80,7 +80,6 @@ To test the sensitivity of our various metrics across a variety of compression p
         L3 Very Low Quality & 200, 80 & 150, 60 \\
         \bottomrule
     \end{tabularx}
-    \caption{Quantization Parameters for Gaussian Quantization Sweeps. Max is the quantization value in the bottom left entry of the quantization matrix, and sigma is the width parameter for the gaussian curve which defines the rest of the entries in the matrix. See \ref{fig:gaussian_quant} for more detail.}
     \label{tab:Quantization-Parameters-LN-Norm}
 \end{table}
 
@@ -128,7 +127,7 @@ By comparing SSIM and PSNR to Compression Ratio allows us to determine which com
 As a starting point of comparison, JPEG baseline images are evaluated across a range of quality factors. As expected, both quality metrics look better with higher quality factors, shown by figure \ref{fig:psnr_jpeg} and figure \ref{fig:ssim_jpeg}.
 There also appears to be a loose correlation between PSNR and compression ratio shown in figure \ref{fig:psnr_vs_compression_ratio}. Generally for any given image as the compression ratio decreases, so does the PSNR. However, when looking at a wide variety of images, the quotent of the PSRN to the compression rate can be very different image to image.
 
-\begin{figure}
+\begin{figure}[H]
     \includegraphics[width=0.5\textwidth]{assets/JPEG Quality Factor and PSNR.png}
     \caption{Quality factor vs PSNR}
     \label{fig:psnr_jpeg}
@@ -152,7 +151,7 @@ Using our flexible compression framework, quantization is varied according to ta
 
 Interestingly, when compraing compression ratio to PSRN, there is a clear bifurcation as the quantization rate increases. Some images experience a clear increase in PSNR as the compression rate is increased, consistent with the results from the JPEG baseline. However, many of the images see hardly any increase in PSRN as the compression ratio increases \ref{fig:gauss_quantization_vs_psnr}. Taking a closer look at these images, it appears that the images for which PSRN does not correlate to compression ratio are the high or very high quality images in the dataset, with dimensions on the order of \~ 6000 x 4500. Since for all quantizations, there is a chrominance downsample factor applied, for these large images, this is likley the cause of the degrated PSNR. For images with smaller starting dimensions, a 2x chromiance downsample factor does not remove as much information, so it's expected that the PSNR would not be as degraded.
 
-\begin{figure}
+\begin{figure}[H]
     \includegraphics[width=0.5\textwidth]{assets/Quantization Sweep Compression Ratio vs PSRN.png}
     \caption{PSRN vs Compression Ratio across a sweep of quantizations defined in table \ref{tab:Quantization-Parameters-Table}. Clear bifurcation shows that images with larger starting dimensions suffer more from even a modest 2x chrominance downsample factor}
     \label{fig:gauss_quantization_vs_psnr}
@@ -217,8 +216,6 @@ By far the most effective way to reduce image file size while maintaining high i
 \subsection{Semantic Preservation}
 Images were evaluated using a pre-trained classification model (e.g., ResNet50) to test whether compression degrades semantic content. This was done using \texttt{test/classification\_tests.py}.
 
-\textbf{TODO: Replace charts in this section with ones that have clearer labels and axis titles.}
-
 \subsubsection{Test Images for Semantic Preservation}
 
 In order to evaluate our compression pipeline, a set of test images with a variety of objects for classification was chosen. 
@@ -227,7 +224,7 @@ Additionally, some images were deliberately chosen because they contain multiple
 All test images are evaluated against all compression configurations. A set of novel images for classification are chosen for benchmarking rather than ImageNet or ResNet training set images to avoid compounding effects of muliple lossy compressions on the image. 
 ImageNet and ResNet images are already JPEG images, and therefore have some (unknown) level of compression already applied to them. The test set images are either raw formats or lossless image formats (such as .png, and .webp).
 
-\begin{figure}
+\begin{figure}[H]
     \includegraphics{assets/Classification Sweep.png}
     \caption{Images are chosen for classification with a variety of subjects and easy of classification.}
     \label{fig:test_images}
@@ -242,13 +239,13 @@ Results are then parameterized by compression rate and original image content (f
 
 Taking a closer look at these images, images where the subject is large relative to the frame of the image have their semantic classifications more well preserved even with extremely agressive compression. However, When images contain other objects than the subject, or the subject of the image is small, the compression has a more dramatic impact on the classification. This trend is highlighted in figure \ref{fig:Annotated JPEG Baseline}
 
-\begin{figure}
+\begin{figure}[H]
     \includegraphics[width=0.5\textwidth]{assets/Baseline JPEG Confidence vs Comp Ratio.png}
     \caption{Confidence Error vs Compression Ratio for JPEG Compression. Smaller Values on the X axis correspond to smaller compressed images, while higher values on the Y axis correspond to a higher classification error rate. It appears that compression rates have little to no effect on semantic content until the compression ratio dips below 0.1.}
     \label{fig:Comp vs Ratio JPEG Baseline}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[H]
     \includegraphics[width=0.5\textwidth]{assets/JPEG Baseline Compression with Examples}
     \caption{Certain Images have their semantic content preserved even with extremely agressive compression parameters where images are reduced to 0.6\% of their original size. Other images suffer from a sharp decline preserved semantic information. Intuitively, the higher the percentage of pixels in the image that represent the subject of classificatoin (as in the case of the jellyfish and the racecar), the better semantic preservation through compression.}
     \label{fig:Annotated JPEG Baseline}
@@ -268,13 +265,13 @@ All experiments use a Chrominance downsample factor of 2.
 
 Similar to the JPEG baseline, Confidence Error increases sharply when the compression rate drops below 0.1, as shown in figure \ref{fig:Confidence vs Quantization}
 Interestingly however, when just the Chrominance or just the Luminance channels are varied, both the Confidence error and the compression ratio suffer. Shown in figure \ref{fig:just chroma or luma downsampling}
-\begin{figure}
+\begin{figure}[H]
     \label{fig:Confidence vs Quantization}
     \includegraphics[width=0.5\textwidth]{assets/Quantization Sweep No Title Chrominance and Luminance.png}
     \caption{Confidence Error vs Compression Ratio as the Quantization parameters are varied. Quantization has very little effect on Semantic information until the compression ratio gets below approximately 0.1.}
     \label{fig:Confidence vs Quantization}
 \end{figure}
-\begin{figure}
+\begin{figure}[H]
     \includegraphics[width=0.5\textwidth]{assets/Chroma and Luma downsampling combined.png}
     \caption{Unlike in \ref{fig:Confidence vs Quantization}, if just one of the channel types is quantized, the semantic information is quickly lost, and the compression ratio is not improved.}
     \label{fig:just chroma or luma downsampling}
@@ -286,7 +283,7 @@ Block size affects the compressed result by changing pixel block base unit the D
 Larger Blocks include a wider range of frequencies and more information being transformed each time, while smaller blocks allow for discontinuities at block edges to potentially go unnoticed.
 In this experiment, we test apply our compression to images while varrying block size.
 
-\begin{figure}
+\begin{figure}[H]
     \includegraphics[width=0.5\textwidth]{assets/Confidence Err Vs Block Size.png}
     \caption{Confidence Error vs Compression Ratio for a variety of block sizes. As with other swept parameters, compression ratio and confidence error are inversely related.}
     \label{fig:block_size_sweep}
@@ -301,7 +298,7 @@ Execution time for both compression and decompression is measured and stored dur
 
 One main difference between our compression pipeline and JPEG compression is that the huffman tables are not pre-computed. Through our tests we note that this accounts for a significant portion of the computational load for compression and decompression \ref{fig:runtimes}. It is important to note that these runtimes are not comparable to well established codex standards, as most machines have dedicated hardware for performing these computations. The computed runtimes are only comparable to other internal results. 
 
-\begin{figure}
+\begin{figure}[H]
     \includegraphics[width=0.5\textwidth]{assets/Runtimes Summary.png}
     \caption{Sets of sampled runtimes for the most computationally intensive parts of the our flexible compressoin pipeline.}
     \label{fig:runtimes}

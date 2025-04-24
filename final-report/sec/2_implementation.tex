@@ -76,7 +76,7 @@ First, the unsigned 8 bit integer blocks are converted to signed 16 bit integers
 Then, an orthonormal type II 2D Discrete Cosine Transform (DCT), which is a real-valued offshoot of the Discrete Fourier Transform (DFT), is applied to each block using the following formula:
 
 \begin{align}
-  &F(u, v) = \frac{2}{\sqrt{N*M}} C(u)C(v) \\ \sum_{x=0}^{N-1} \sum_{y=0}^{M-1} f(x,y)
+  &F(u, v) = \frac{2}{\sqrt{N \, M}} C(u)C(v) \\ \sum_{x=0}^{N-1} \sum_{y=0}^{M-1} f(x,y)
   &\cos\left( \frac{(2x+1)u\pi}{2N} \right) \cdot \cos\left( \frac{(2y+1)v\pi}{2M} \right)
 \end{align}
 
@@ -202,7 +202,7 @@ Since the number of zeroes is concentrated in the end after the zigzag ordering,
 Both the AC and the delta-encoded DC values of all blocks are finally forwarded, separated both by AC and DC as well as by luminance and chrominance, to the Huffman encoding algorithm. Here each symbol is counted and thus has its frequency determined. This frequency shall axiomatically serve as the probability of a symbol \(p(x_i)\) from now on.
 
 Huffman encoding is a widely used lossless data compression algorithm that assigns variable-length codewords to symbols based on their probabilities. The key idea is to use shorter codes for more frequent symbols and longer codes for less frequent ones, minimizing the average codeword length. To further understand Huffman encoding, we first need some basic concepts from information theory. 
-The information content\cite{sha48} of a symbol \( x_i \) with probability \( p(x_i) \) is defined as:
+The information content\cite{sha48}\cite{Riley} of a symbol \( x_i \) with probability \( p(x_i) \) is defined as:
 \[
 I(x_i) = \log_2 \left( \frac{1}{p(x_i)} \right) = -\log_2 p(x_i).
 \]
@@ -237,7 +237,7 @@ The benefit of using four different huffman tables instead of just one, is that 
 
 Standard JPEG actually uses fixed Huffman tables instead, which is less compression efficient but definitely faster to encode.
 
-Despite the fact that Huffman coding is basically optimal in terms of average word length, there are methods that provide even better compression such as arithmetic coding and asymmetric numeral systems (ANS). Arithmetic coding encodes data as a single fractional number, allowing symbols to occupy fractional bits and tightly approaching entropy limits. ANS improves on this by using integer-state transformations for similar compression gains while being computationally faster. Both methods excel where Huffman struggles, e.g. with highly skewed distributions (like 99 percent probable symbols), since they avoid Huffman's requirement of whole-bit codewords. Arithmetic coding is even used in JPEG XL, but due to patent issues in the 80s does not enjoy high popularity. For our project, we opted for Huffman coding, as it is not only easier, but because we believe that the focus of the work should lie on the lossy part of the compression and its impact on image classification.
+Despite the fact that Huffman coding is quite optimal in terms of average word length, there are methods that provide even better compression such as arithmetic coding and asymmetric numeral systems (ANS). Arithmetic coding encodes data as a single fractional number, allowing symbols to occupy fractional bits and tightly approaching entropy limits. ANS improves on this by using integer-state transformations for similar compression gains while being computationally faster. Both methods excel where Huffman struggles, e.g. with highly skewed distributions (like 99 percent probable symbols), since they avoid Huffman's requirement of whole-bit codewords. Arithmetic coding is even used in JPEG XL, but due to patent issues in and around the 80s does not enjoy high popularity. For our project, we opted for Huffman coding, as it is not only easier, but because we believe that the focus of the work should lie on the lossy part of the compression and its impact on image classification. \cite{wiegand_source}
 \subsection{File Encoding}
 The file encoding method handles the final stage of our image compression pipeline, packaging all compressed components into a proprietary binary file format using our initials (.rde). The process begins by preparing the compression metadata - it converts the Huffman code tables and quantization matrices into JSON-serializable formats while preserving the original settings. The actual compressed bitstream (previously generated through Huffman encoding) gets processed into a byte-aligned format, with padding bits added if needed to complete the final byte.
 
@@ -301,8 +301,6 @@ When performing parameter sweeps across various compression parameters, we evalu
 	\end{algorithmic}
 \end{algorithm}
 
-%TODO: Add Description of preprocessing and classification for ResNet50 to Implementation Section.
-
 In this way, the semantic content is systematically compared and evaluated for each of the test images.
 
 \subsubsection{Image Preprocessing for ResNet50}
@@ -343,6 +341,6 @@ Key implementation goals included:
 While the initial division of work outlined in our February project proposal was tentative, the responsibilities naturally evolved during development. Although all team members collaborated conceptually, the division of work is outlined below:
 \begin{itemize}
   \item George Roudebush: compression pipeline, parameter sweeps, quantization table and function development, baseline JPEG comparison, Semantic Preservation method development and testing, utility methods, test image dataset curation, and configuration integration, report results section, production of datasets for report and analysis of those datasets.
-  \item Nicolas Drager: Entropy encoding, file coding, decompression pipeline, size estimation and compression metrics in file coding, bug fixes in all other compression methods, making it possible to switch between parameters, utility methods, huffman methods, testing methods, adapting the introduction in the report, implementation report up to \ref{sec:config_management}
+  \item Nicolas Drager: Entropy encoding, file coding, decompression pipeline, size estimation and compression metrics in file coding, bug fixes in all other compression methods, introducing raw image support, making it possible to switch between parameters, utility methods, huffman methods, testing methods, adapting the introduction in the report, implementation report up to \ref{sec:config_management}
   \item Muhammad Elarbi: decompression pipeline, padding error fixes, unit test development, raw image test dataset creation (CR2), output location handling, final-report drafting, documentation, and code cleanup
 \end{itemize}
