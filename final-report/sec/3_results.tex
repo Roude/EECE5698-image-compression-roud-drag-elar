@@ -294,7 +294,7 @@ In this experiment, we test apply our compression to images while varrying block
 
 \subsubsection{Discussion}
 
-Similar to Compression Quality, Quantization is by far the most effective way to reduce image file size while preserving semantic information. However, some other interesting trends arrise. If quantization is applied to only one of the channels, even if that is the chromiance chaannel only, the Confidence Error increases significantly over relativly modest Compression Ratios. This suggests that there is Semantic meaning encoded in color information in a different color space the YCbCr color. Future work could include applying different color transformations to the image before quantizing.
+Similar to compression quality, among all tested parameters, quantization proved the most effective in reducing image file size while preserving semantic information. However, some other interesting trends arrise. If quantization is applied to only one of the channels, even if that is the chromiance chaannel only, the Confidence Error increases significantly over relativly modest Compression Ratios. This suggests that there is Semantic meaning encoded in color information in a different color space the YCbCr color. Future work could include applying different color transformations to the image before quantizing.
 
 \subsection{Runtime and Performance}
 Execution time for both compression and decompression is measured and stored during sweeps. Aggregate runtime plots can be shown here.

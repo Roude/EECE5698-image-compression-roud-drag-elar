@@ -1,7 +1,7 @@
 \section{Implementation}
 \label{sec:implementation}
 
-Our Python-based JPEG-like compression system is designed with modularity and experimentation in mind. It mirrors key stages of the classical JPEG pipeline while allowing for customized configurations through YAML files. In this section, we describe the architecture and underlying algorithms for each major component of our system, which include preprocessing, block-based Descrete Cosine Transform, quantization, entropy encoding, and full decompression support.
+Our Python-based JPEG-like compression system is designed with modularity and experimentation in mind. It mirrors key stages of the classical JPEG pipeline while allowing for customized configurations through YAML files. In this section, we describe the architecture and underlying algorithms for each major component of our system, which include preprocessing, block-based Discrete Cosine Transform, quantization, entropy encoding, and full decompression support.
 
 \subsection{Overall Compression Pipeline Structure}
 The compression process consists of the following sequential stages:
@@ -65,7 +65,7 @@ If \(d = 1\), or in other words downsampling is not to be applied, it will just 
 It is important to note that this is different than how downsampling is executed in the JPEG standard. 
 With JPEG compression, the downsampling is performed by keeping individual pixels values in a pattern.
 This is done with speed, rather than accuracy or quality in mind. 
-For small downsample factors, keeping individual pixel values and averaging nearby pixels does essentially the same thing, but we are also interested in the compression behavior when downsample factors become very large, at which point there will be a noticable difference between individual pixels and average pixel downsampling approaches.
+For small downsample factors, keeping individual pixel values and averaging nearby pixels does essentially the same thing, but we are also interested in the compression behavior when downsample factors become very large, at which point there will be a noticeable difference between individual pixels and average pixel downsampling approaches.
 
 \subsection{Block Processing}
 To go from here, each channel is divided into usually square non-overlapping blocks using the block size parameter \(b \in \mathbb{N}^+\) (e.g. 8 is used in standard JPEG, ours is configurable). In cases where \(h \mod b \neq 0\) or \(w \mod b \neq 0\) for either the regular or the chrominance dimensions, the blocks will not be square, which is something that needs to be accounted for later. 
@@ -80,7 +80,7 @@ Then, an orthonormal type II 2D Discrete Cosine Transformation (DCT), which is a
   &\cos\left( \frac{(2x+1)u\pi}{2N} \right) \cdot \cos\left( \frac{(2y+1)v\pi}{2M} \right)
 \end{align}
 
-where $C(k) = \frac{1}{\sqrt{2}}$ if $k = 0$ and $C(k) = 1$ otherwise. The two axes (x and y) have their own respective sum indicies because our compression pipeline tolerates images with lengths and widths in pixels not divisible by the block size. This leaves results in some of the blocks being rectangular, so the axes need to be dealt with seperately. Because the block represents only a small portion of the image, which usually includes very little varriation across the block, most of the image energy is usually concentrated into the upper-left lower-frequency corner of the DCT block.
+where $C(k) = \frac{1}{\sqrt{2}}$ if $k = 0$ and $C(k) = 1$ otherwise. The two axes (x and y) have their own respective sum indicies because our compression pipeline tolerates images with lengths and widths in pixels not divisible by the block size. This leaves results in some of the blocks being rectangular, so the axes need to be dealt with separately. Because the block represents only a small portion of the image, which usually includes very little varriation across the block, most of the image energy is usually concentrated into the upper-left lower-frequency corner of the DCT block.
 
 Our implementation hereby leverages \texttt{scipy.fftpack.dct} for speed and numerical accuracy.
 
@@ -139,7 +139,7 @@ D_{ab, N} = ((x_a - x_b)^N + (y_a - y_b)^N)^{(1/N)}
 \label{eq:ln_norm}
 \end{equation}
 
-Choosing $N\in[1,2]$ will result central elements in the quantization matrix being closer to the top left, so those frequencies will be quantized less agressivly. Choosing $N\in[2,\inf]$ will result in mid-range frequencies being quantized more similarly to the high frequency elements. 
+Choosing $N\in[1,2]$ will result central elements in the quantization matrix being closer to the top left, so those frequencies will be quantized less aggressively. Choosing $N\in[2,\inf]$ will result in mid-range frequencies being quantized more similarly to the high frequency elements. 
 A visualization of these effects is shown in figure \ref{fig:LN-norm}.
 
 \begin{figure}
@@ -154,7 +154,7 @@ The quantized channels are now transferred to the entropy coding method, where t
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.8\linewidth]{zigzag.png}
+	\includegraphics[width=0.8\linewidth]{assets/zigzag.png}
 	\caption{Rearrangement of a \(8\times8\) block using zigzag pattern}
 	\label{fig:zigzag}
 \end{figure}
@@ -275,7 +275,7 @@ In order to evaluate compression distortion, two metrics are used: Structrual Si
 While JPEG and other compression algorithms where designed largely with aesthetic quality preservation in mind, an important metric for modern compression algorithms is the preservation of semantic information. 
 Evaluating the Semantic Preservation of a compression algorithm is essentially asking \enquote {Does the compressed image produce the same classification result with the same model input parameters?}. A competing requirement for compression performance is compression ratio, or the fraction of image data the compressed encoded image takes up. As the compression ratio approaches zero, it's expected that the semantic content of the image would be lost. Therefore, understanding what compression parameters improve compression rate without degrading semantic content is the subject of exploration for this next section.
 
-We propose Confidence Error as a general summary metric for Semantic Preservation. Let $C_{err}$ represent our metric, the Confidence Error. Let $L_{max}$ be the highest probability label from and inference pass with Resnet50 on the uncompressed image. Let $P^{Lmax}_{uncompressed}$ be the probability of this label. Let $P^{Lmax}_{compressed}$ be the classification probability of label $L_{max}$ on the compressed image.
+We propose Confidence Error as a general summary metric for Semantic Preservation. Let $C_{err}$ represent our metric, the Confidence Error. Let $L_{max}$ be the highest probability label from and inference pass with ResNet50 on the uncompressed image. Let $P^{Lmax}_{uncompressed}$ be the probability of this label. Let $P^{Lmax}_{compressed}$ be the classification probability of label $L_{max}$ on the compressed image.
 
 $$
 \textrm{C}_{err} = \frac{\|P^{Lmax}_{uncompressed} - P^{Lmax}_{compressed}\|}{P^{Lmax}_{uncompressed}}
@@ -301,13 +301,13 @@ When performing parameter sweeps across various compression parameters, we evalu
 	\end{algorithmic}
 \end{algorithm}
 
-%TODO: Add Description of preprocessing and classification for resnet50 to Implementation Section.
+%TODO: Add Description of preprocessing and classification for ResNet50 to Implementation Section.
 
 In this way, the semantic content is systematically compared and evaluated for each of the test images.
 
-\subsubsection{Image Preprocessing for Resnet50}
+\subsubsection{Image Preprocessing for ResNet50}
 
-Resnet50 requires images to be passed in cropped to a size of 224x224, and normalized to a pixel value range per channel of approximately -1 to 1. In order to avoid unfavorable crops of images, each image scalled down to a height of 256, and then center-cropped to 224x224 pixels. This way, a large portion of the center of the image is passed into the classifier. It is worth noting that this resize and crop preprocessing is essentially a lossy compression before the semantic information is extracted. If the only purpose of an compression algorithm is to extract semantic information, and the visual quality is of no concern, likley the most effective way to compress that image would be to downsample the image uniformally to the required size and perform a lossless encoding from there. There are many cases however, where the aesthetic quality of the image is important, and for these, the full image resolution is needed.
+ResNet50 requires images to be passed in cropped to a size of 224x224, and normalized to a pixel value range per channel of approximately -1 to 1. In order to avoid unfavorable crops of images, each image scalled down to a height of 256, and then center-cropped to 224x224 pixels. This way, a large portion of the center of the image is passed into the classifier. It is worth noting that this resize and crop preprocessing is essentially a lossy compression before the semantic information is extracted. If the only purpose of an compression algorithm is to extract semantic information, and the visual quality is of no concern, likely the most effective way to compress that image would be to downsample the image uniformally to the required size and perform a lossless encoding from there. There are many cases however, where the aesthetic quality of the image is important, and for these, the full image resolution is needed.
 
 \subsection{Configuration Management}
 \label{sec:config_management}
