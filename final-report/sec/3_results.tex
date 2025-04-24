@@ -299,7 +299,7 @@ Similar to compression quality, among all tested parameters, quantization proved
 \subsection{Runtime and Performance}
 Execution time for both compression and decompression is measured and stored during sweeps. Aggregate runtime plots can be shown here.
 
-One main difference between our compression pipeline JPEG compression is that the huffman tables are not pre-computed. Through our tests we note that this accounts for a significant portion of the computational load for compression and decompression \ref{fig:runtimes}. It is important to note that these runtimes are not comparable to well established codex standards, as most machines have dedicated hardware for performing these computations. The computed runtimes are only comparable to other internal results. 
+One main difference between our compression pipeline and JPEG compression is that the huffman tables are not pre-computed. Through our tests we note that this accounts for a significant portion of the computational load for compression and decompression \ref{fig:runtimes}. It is important to note that these runtimes are not comparable to well established codex standards, as most machines have dedicated hardware for performing these computations. The computed runtimes are only comparable to other internal results. 
 
 \begin{figure}
     \includegraphics[width=0.5\textwidth]{assets/Runtimes Summary.png}
