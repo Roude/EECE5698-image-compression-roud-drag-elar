@@ -202,7 +202,7 @@ Since the number of zeroes is concentrated in the end after the zigzag ordering,
 Both the AC and the delta-encoded DC values of all blocks are finally forwarded, separated both by AC and DC as well as by luminance and chrominance, to the Huffman encoding algorithm. Here each symbol is counted and thus has its frequency determined. This frequency shall axiomatically serve as the probability of a symbol \(p(x_i)\) from now on.
 
 Huffman encoding is a widely used lossless data compression algorithm that assigns variable-length codewords to symbols based on their probabilities. The key idea is to use shorter codes for more frequent symbols and longer codes for less frequent ones, minimizing the average codeword length. To further understand Huffman encoding, we first need some basic concepts from information theory. 
-The information content \cite{sha48} of a symbol \( x_i \) with probability \( p(x_i) \) is defined as:
+The information content\cite{sha48} of a symbol \( x_i \) with probability \( p(x_i) \) is defined as:
 \[
 I(x_i) = \log_2 \left( \frac{1}{p(x_i)} \right) = -\log_2 p(x_i).
 \]
