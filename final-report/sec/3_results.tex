@@ -63,23 +63,24 @@ To test the sensitivity of our various metrics across a variety of compression p
         \ & \textbf{Max, Min} & \textbf{Max, Min} \\
         \midrule
         No Quantization & 1 , 1 & 1, 1 \\
-        L1.5 HQ & 10, 5 & 20, 10 \\
-        L1.5 Q & 40, 20 & 50, 30 \\
-        L1.5 M Quality & 50, 20 & 60, 30 \\
-        L1.5 LQ & 100, 30 & 125, 40 \\
-        L1.5 VLQ & 200, 80 & 150, 60 \\
-        L2 HQ & 10, 5 & 20, 10 \\
-        L2 Q & 40, 20 & 50, 30 \\
-        L2 M Quality & 50, 20 & 60, 30 \\
-        L2 LQ & 100, 30 & 125, 40 \\
-        L2 VLQ & 200, 80 & 150, 60 \\
-        L3 HQ & 10, 5 & 20, 10 \\
-        L3 Q & 40, 20 & 50, 30 \\
-        L3 M Quality & 50, 20 & 60, 30 \\
-        L3 LQ & 100, 30 & 125, 40 \\
-        L3 VLQ & 200, 80 & 150, 60 \\
+        L1.5 High Quality & 10, 5 & 20, 10 \\
+        L1.5 Quality & 40, 20 & 50, 30 \\
+        L1.5 Med Quality & 50, 20 & 60, 30 \\
+        L1.5 Low Quality & 100, 30 & 125, 40 \\
+        L1.5 Very Low Quality & 200, 80 & 150, 60 \\
+        L2 High Quality & 10, 5 & 20, 10 \\
+        L2 Quality & 40, 20 & 50, 30 \\
+        L2 Med Quality & 50, 20 & 60, 30 \\
+        L2 Low Quality & 100, 30 & 125, 40 \\
+        L2 Very Low Quality & 200, 80 & 150, 60 \\
+        L3 High Quality & 10, 5 & 20, 10 \\
+        L3 Quality & 40, 20 & 50, 30 \\
+        L3 Med Quality & 50, 20 & 60, 30 \\
+        L3 Low Quality & 100, 30 & 125, 40 \\
+        L3 Very Low Quality & 200, 80 & 150, 60 \\
         \bottomrule
     \end{tabularx}
+    \caption{Quantization Parameters for Gaussian Quantization Sweeps. Max is the quantization value in the bottom left entry of the quantization matrix, and sigma is the width parameter for the gaussian curve which defines the rest of the entries in the matrix. See \ref{fig:gaussian_quant} for more detail.}
     \label{tab:Quantization-Parameters-LN-Norm}
 \end{table}
 

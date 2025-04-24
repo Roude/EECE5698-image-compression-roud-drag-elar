@@ -76,11 +76,11 @@ First, the unsigned 8 bit integer blocks are converted to signed 16 bit integers
 Then, an orthonormal type II 2D Discrete Cosine Transformation (DCT), which is a real-valued offshoot of the Discrete Fourier Transformation (DFT), is applied to each block using the following formula:
 
 \begin{align}
-  &F(u, v) = \frac{1}{\sqrt{2N}} C(u)C(v) \\ \sum_{x=0}^{N} \sum_{y=0}^{N} f(x,y)
-  &\cos\left( \frac{(2x+1)u\pi}{2N} \right) \cdot \cos\left( \frac{(2y+1)v\pi}{2N} \right)
+  &F(u, v) = \frac{1}{\sqrt{N*M}} C(u)C(v) \\ \sum_{x=0}^{N} \sum_{y=0}^{M} f(x,y)
+  &\cos\left( \frac{(2x+1)u\pi}{2N} \right) \cdot \cos\left( \frac{(2y+1)v\pi}{2M} \right)
 \end{align}
 
-where $C(k) = \frac{1}{\sqrt{2}}$ if $k = 0$ and $C(k) = 1$ otherwise. Because the block represents only a small portion of the image, which usually includes very little varriation across the block, most of the image energy is usually concentrated into the upper-left lower-frequency corner of the DCT block.
+where $C(k) = \frac{1}{\sqrt{2}}$ if $k = 0$ and $C(k) = 1$ otherwise. The two axes (x and y) have their own respective sum indicies because our compression pipeline tolerates images with lengths and widths in pixels not divisible by the block size. This leaves results in some of the blocks being rectangular, so the axes need to be dealt with seperately. Because the block represents only a small portion of the image, which usually includes very little varriation across the block, most of the image energy is usually concentrated into the upper-left lower-frequency corner of the DCT block.
 
 Our implementation hereby leverages \texttt{scipy.fftpack.dct} for speed and numerical accuracy.
 
@@ -285,21 +285,21 @@ When performing parameter sweeps across various compression parameters, we evalu
 \begin{algorithm}
     \label{alg:Confidence Error Algorithm}
     \caption{Evaluating Confidence Error during compression parameter sweeps}
-    \textbf{Input: } Reference image $I_{ref}$, compressed image $I_{cmp}$, pretrained model $Res50$
-    \textbf{Output: } $C_{err}$ for the two images
-    \begin{itemize}
-        \item $I_{ref, pp}$ = preprocess($I_{ref}$)
-        \item $W_{ref \ outputs}$ = $Res50$.infer($I_{ref, pp}$)
-        \item $P_{ref \ classes}$ = softmax($W_{outputs}$)
-        \item $L_{max}$ = argmax({$P_{ref classes}$})
-        \item $P^{Lmax}_{uncompressed}$ = $P_{classes}$[$L_{max}$]
-        \item $I_{cmp, pp}$ = preprocess($I_{comp}$)
-        \item $W_{comp \ outputs}$ = $Res50$.infer($I_{cmp, pp}$)
-        \item $P_{cmp \ classes}$ = softmax($W_{outputs}$)
-        \item $P^{Lmax}_{compressed}$ =  $P_{cmp \ classes}$[$L_{max}$]
-        \item $\textbf{return}\ \frac{P^{Lmax}_{uncompressed} - P^{Lmax}_{compressed}}{P^{Lmax}_{uncompressed}}$
-        \end{itemize}
-    \end{algorithm}
+	\begin{algorithmic}[1]
+    \Require{ Reference image $I_{ref}$, compressed image $I_{cmp}$, pretrained model $Res50$}
+    \Ensure{ $C_{err}$ for the two images}
+	\State $I_{ref, pp}$ = preprocess($I_{ref}$)
+	\State $W_{ref \ outputs}$ = $Res50$.infer($I_{ref, pp}$)
+	\State $P_{ref \ classes}$ = softmax($W_{outputs}$)
+	\State $L_{max}$ = argmax({$P_{ref classes}$})
+	\State $P^{Lmax}_{uncompressed}$ = $P_{classes}$[$L_{max}$]
+	\State $I_{cmp, pp}$ = preprocess($I_{comp}$)
+	\State $W_{comp \ outputs}$ = $Res50$.infer($I_{cmp, pp}$)
+	\State $P_{cmp \ classes}$ = softmax($W_{outputs}$)
+	\State $P^{Lmax}_{compressed}$ =  $P_{cmp \ classes}$[$L_{max}$]
+	\State $\textbf{return}\ \frac{P^{Lmax}_{uncompressed} - P^{Lmax}_{compressed}}{P^{Lmax}_{uncompressed}}$
+	\end{algorithmic}
+\end{algorithm}
 
 %TODO: Add Description of preprocessing and classification for resnet50 to Implementation Section.
 
