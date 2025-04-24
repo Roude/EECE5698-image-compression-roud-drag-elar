@@ -70,13 +70,13 @@ For small downsample factors, keeping individual pixel values and averaging near
 \subsection{Block Processing}
 To go from here, each channel is divided into usually square non-overlapping blocks using the block size parameter \(b \in \mathbb{N}^+\) (e.g. 8 is used in standard JPEG, ours is configurable). In cases where \(h \mod b \neq 0\) or \(w \mod b \neq 0\) for either the regular or the chrominance dimensions, the blocks will not be square, which is something that needs to be accounted for later. 
 
-\subsubsection{Discrete Cosine Transformation}
+\subsubsection{Discrete Cosine Transform}
 First, the unsigned 8 bit integer blocks are converted to signed 16 bit integers, while getting centered to zero by subtracting 128.
 
-Then, an orthonormal type II 2D Discrete Cosine Transformation (DCT), which is a real-valued offshoot of the Discrete Fourier Transformation (DFT), is applied to each block using the following formula:
+Then, an orthonormal type II 2D Discrete Cosine Transform (DCT), which is a real-valued offshoot of the Discrete Fourier Transform (DFT), is applied to each block using the following formula:
 
 \begin{align}
-  &F(u, v) = \frac{1}{\sqrt{N*M}} C(u)C(v) \\ \sum_{x=0}^{N} \sum_{y=0}^{M} f(x,y)
+  &F(u, v) = \frac{2}{\sqrt{N*M}} C(u)C(v) \\ \sum_{x=0}^{N-1} \sum_{y=0}^{M-1} f(x,y)
   &\cos\left( \frac{(2x+1)u\pi}{2N} \right) \cdot \cos\left( \frac{(2y+1)v\pi}{2M} \right)
 \end{align}
 
@@ -202,7 +202,7 @@ Since the number of zeroes is concentrated in the end after the zigzag ordering,
 Both the AC and the delta-encoded DC values of all blocks are finally forwarded, separated both by AC and DC as well as by luminance and chrominance, to the Huffman encoding algorithm. Here each symbol is counted and thus has its frequency determined. This frequency shall axiomatically serve as the probability of a symbol \(p(x_i)\) from now on.
 
 Huffman encoding is a widely used lossless data compression algorithm that assigns variable-length codewords to symbols based on their probabilities. The key idea is to use shorter codes for more frequent symbols and longer codes for less frequent ones, minimizing the average codeword length. To further understand Huffman encoding, we first need some basic concepts from information theory. 
-The information content of a symbol \( x_i \) with probability \( p(x_i) \) is defined as:
+The information content \cite{sha48} of a symbol \( x_i \) with probability \( p(x_i) \) is defined as:
 \[
 I(x_i) = \log_2 \left( \frac{1}{p(x_i)} \right) = -\log_2 p(x_i).
 \]
